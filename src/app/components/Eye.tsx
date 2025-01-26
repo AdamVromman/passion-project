@@ -1,6 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+interface Props {
+  eyeOpen: boolean;
+  killed: number;
+}
+
+import { ReactNode, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { MorphSVGPlugin } from "gsap-trial/MorphSVGPlugin";
 import { useGSAP } from "@gsap/react";
@@ -16,87 +21,177 @@ const OPEN_CLIP =
 const CLOSED_CLIP =
   "M293.77,347.55s136.19,194.1,369.31,194.1,369.31-196.27,369.31-196.27v373.85H293.77v-371.68Z";
 
-const Eye = () => {
+const Eye = ({ eyeOpen, killed }: Props) => {
   gsap.registerPlugin(MorphSVGPlugin);
 
   const ref = useRef(null);
   const eyeRef = useRef(null);
   const clipRef = useRef(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const { contextSafe } = useGSAP({ scope: ref });
+
+  const [svgData, setSVGdata] = useState<ReactNode[]>([]);
+
+  const [timeline, setTimeline] = useState<gsap.core.Timeline | null>(null);
+
+  const { contextSafe } = useGSAP(
+    () => {
+      const tl = gsap.timeline();
+      tl.to(eyeRef.current, {
+        morphSVG: OPEN_LID,
+        duration: 0.4,
+        ease: "power2.inOut",
+        overwrite: false,
+      }).to(
+        clipRef.current,
+        {
+          morphSVG: OPEN_CLIP,
+          duration: 0.4,
+          ease: "power2.inOut",
+          overwrite: false,
+        },
+        "<"
+      );
+      tl.pause();
+      setTimeline(tl);
+    },
+    { scope: ref }
+  );
   const openEye = contextSafe(() => {
-    setIsOpen(true);
-    gsap.to(eyeRef.current, { morphSVG: OPEN_LID });
-    gsap.to(clipRef.current, { morphSVG: OPEN_CLIP });
+    if (timeline) {
+      timeline.play();
+    }
   });
 
   const closeEye = contextSafe(() => {
-    setIsOpen(false);
-    gsap.to(eyeRef.current, { morphSVG: CLOSED_LID });
-    gsap.to(clipRef.current, { morphSVG: CLOSED_CLIP });
+    if (timeline) {
+      timeline.reverse();
+    }
   });
+
+  useGSAP(
+    () => {
+      if (eyeOpen) openEye();
+      else closeEye();
+    },
+    { scope: ref, dependencies: [eyeOpen] }
+  );
+
+  useGSAP(
+    () => {
+      const localSvgData = [];
+
+      if (killed) {
+        for (let i = 0; i < killed; i++) {
+          localSvgData.push(
+            <use
+              id={`shape-${i}`}
+              x={0}
+              y={0}
+              key={`woman-${i}`}
+              className="eye-line-2"
+              href="#trapezium1"
+              fill={`rgb(0, ${151 + (-10 + Math.random() * 20)}, 53)`}
+            />
+          );
+        }
+      }
+
+      setSVGdata(localSvgData);
+
+      setTimeout(() => {
+        new Array(killed).fill(0).forEach((_, i) => {
+          gsap.fromTo(
+            `#shape-${i}`,
+            {
+              rotate: 0,
+              transformOrigin: "50% 100%",
+              scale: 1,
+            },
+            {
+              duration: 3 * Math.random() + 2,
+              rotate: 360 * Math.random(),
+              ease: "power3.out",
+              scale: 1 + 0.1 * Math.random(),
+            }
+          );
+        });
+        gsap.fromTo(
+          "#circle-1",
+          {
+            x: 0,
+            y: 0,
+          },
+          {
+            x: 20 + 10 - Math.random() * 20,
+            y: 20 + 10 - Math.random() * 20,
+            duration: 4 + Math.random(),
+          }
+        );
+        gsap.fromTo(
+          "#circle-2",
+          {
+            x: 0,
+            y: 0,
+          },
+          {
+            x: 20 + 10 - Math.random() * 20,
+            y: 20 + 10 - Math.random() * 20,
+            duration: 4 + Math.random(),
+          }
+        );
+      }, 1000);
+    },
+    { dependencies: [killed] }
+  );
 
   return (
     <div>
       <svg
-        onClick={() => {
-          console.log("clicked");
-          if (isOpen) closeEye();
-          else openEye();
-        }}
         ref={ref}
         className="absolute top-0 left-0 w-screen h-screen p-60 pb-120 fill-BEIGE"
         viewBox="0 0 1356.03 696.86"
       >
+        <defs>
+          <path
+            id="trapezium1"
+            d="M684.67,191.89c.2.13-31.63.29-32,0-.48-.18,1.82,4.72.66,11.18-.26,6.45,1.83,15.91,1.64,28.48,1.17,10.72.29,23.45,2.26,36.85,1.24,13.13-.8,25.37,2.02,36.82-.36,13.79-1.24,21.35,1.55,28.44.17,6.51.62,11.07.76,11.22-.46-.02,14.41,1.57,14.23,0-.01.3,1.91-5,.57-11.38,1.13-8.22,1.98-16.7,1.73-28.29,1.22-11.58.67-23.85,2.25-36.73,2.38-12.82,2.11-24.82,2.02-36.94,1.34-10.66,1.89-20.57,1.9-28.35-.34-7.08,1.68-11.16.4-11.32Z"
+          />
+        </defs>
         <clipPath id="clippath">
-          <path ref={clipRef} className="fill-RED" d={CLOSED_CLIP} />
+          <path ref={clipRef} d={CLOSED_CLIP} />
         </clipPath>
         <clipPath id="clippath-1">
-          <path
-            className="fill-none"
-            d="M293.79,351.81s136.34-155.89,369.71-155.89,369.71,153.71,369.71,153.71v374.26H293.79v-372.08Z"
-          />
+          <path d="M293.79,351.81s136.34-155.89,369.71-155.89,369.71,153.71,369.71,153.71v374.26H293.79v-372.08Z" />
         </clipPath>
 
         <g id="eye-2">
           <g id="closed">
             <g clipPath="url(#clippath)">
               <g>
+                {svgData}
                 <circle
-                  className="fill-RED"
-                  cx="668.3"
-                  cy="349.63"
-                  r="185.79"
-                />
-                <circle
-                  className="fill-GREEN"
+                  className="fill-black"
                   cx="667.64"
                   cy="348.96"
                   r="59.48"
+                />
+                <circle
+                  id="circle-1"
+                  className="fill-white"
+                  cx="705.64"
+                  cy="308.96"
+                  r="19.48"
+                />
+                <circle
+                  id="circle-2"
+                  className="fill-white"
+                  cx="715.64"
+                  cy="330.96"
+                  r="9.48"
                 />
               </g>
             </g>
             <path ref={eyeRef} d={CLOSED_LID} />
           </g>
-          {/* <g id="open">
-            <g clipPath="url(#clippath-1)">
-              <g>
-                <circle
-                  className="fill-RED"
-                  cx="668.3"
-                  cy="349.63"
-                  r="185.79"
-                />
-                <circle
-                  className="fill-GREEN"
-                  cx="667.64"
-                  cy="348.96"
-                  r="59.48"
-                />
-              </g>
-            </g>
-            <path d="M1037.21,346.09c-10-11.77-23.57-28.16-35.18-39.33-14.09-11.91-25.97-24.47-40.17-34.26-14.77-12-29.72-20.32-43.85-29.79-15.28-8.31-30.65-17.2-46.73-24.75-12.86-5.44-32.72-14.98-48.11-19.4-17.8-5.98-35.13-10.1-50.63-13.83-18.52-3.31-34.31-4.39-51.18-7.91-15.43.02-34.93-3.91-51.72-3.97-.41-.55-.18-42.43,0-41.08,1.64-.21-10.62,3.08-13.37,0-1.7-.77.36,39.75,0,41.11-19.49.8-31.77,1.88-52.02,3.21-17.47,2.7-33.94,4.02-50.86,9.07-17.79,1.28-34.33,8.48-50.18,13.45-16.13,6.17-31.19,11.36-48.39,20.29-18.19,6.75-31.84,16.81-46.52,25.38-14.94,10.96-28.91,18.84-43.74,29.88-13.63,10.46-27.71,23.9-39.92,34.56-14.17,12.05-25.49,23.46-34.89,39.57-1.64,1.81-1.1,4.81.29,6.61,1.17,2.06,6.06,3.37,7.57.58,13.36-10.43,26.49-20.32,40.1-30.77,16.55-10.18,27.8-18.89,42.68-27.08,25.88-15.3,52.69-29.08,79.61-39.42,27.34-10.6,55.01-17.81,83.84-25.56,28.38-6.8,58.19-10.76,85.2-11.12,27.23-3.14,58.78-3.36,84.25.17,29.82,3.73,56.33,7.52,83.59,13.18,27.57,6.31,53.37,16.23,81.61,27.72,27.76,10.42,53.68,22.62,77.8,39.22,23.01,13.2,47.4,31.25,72.9,51.36,5.6,4.9,10.96-.57,8-7.1Z" />
-          </g> */}
         </g>
       </svg>
     </div>
