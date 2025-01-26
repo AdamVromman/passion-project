@@ -3,7 +3,7 @@ import Eye from "./components/Eye";
 
 export default function Home() {
   return (
-    <div>
+    <div className="bg-BLACK">
       <BackgroundText />
       <Eye />
     </div>
