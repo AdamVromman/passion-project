@@ -26,6 +26,8 @@ export default {
         BEIGE: "#F5F5F5",
       },
       padding: VALUES,
+      margin: VALUES,
+      inset: VALUES,
     },
   },
   plugins: [],
