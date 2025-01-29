@@ -22,8 +22,4 @@ export interface Timeline {
   };
 }
 
-export const timeline: Timeline = {
-  1948: {
-    events: [],
-  },
-};
+export const timeline: Timeline = {};
