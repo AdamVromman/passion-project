@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import BackgroundText from "./components/BackgroundText";
 import Eye from "./components/Eye";
-
-interface data {
-  report_date: string;
-  killed: number;
-}
+import { DailyData, GazaData, WestBankData } from "./services/types";
 
 export default function Home() {
   const [eyeOpen, setEyeOpen] = useState(false);
@@ -18,26 +14,55 @@ export default function Home() {
     new Date(date.getFullYear(), date.getMonth() - 1, date.getDate(), 1, 0)
   );
 
-  const [killed, setKilled] = useState(0);
+  const [dailyData, setDailyData] = useState<DailyData | null>(null);
 
-  const getData = async (day: Date) => {
+  const [dataGaza, setDataGaza] = useState<GazaData | null>(null);
+  const [dataWestBank, setDataWestBank] = useState<WestBankData | null>(null);
+  const [dataWestBankPrevious, setDataWestBankPrevious] =
+    useState<WestBankData | null>(null);
+
+  const getDataGaza = async (day: Date) => {
     await fetch(
       "https://data.techforpalestine.org/api/v2/casualties_daily.json"
     ).then(async (response) => {
       if (response.ok) {
-        await response.json().then((data: data[]) => {
-          const date1 = data.find((d: data) => {
+        await response.json().then((data: GazaData[]) => {
+          const date1 = data.find((d: GazaData) => {
             const date = new Date(d.report_date);
             return date.getTime() === day.getTime();
           });
 
-          console.log(date1);
+          if (date1) {
+            setDataGaza(date1);
+          }
+        });
+      }
+    });
+  };
+
+  const getDataWestBank = async (day: Date) => {
+    await fetch(
+      "https://data.techforpalestine.org/api/v2/west_bank_daily.json"
+    ).then(async (response) => {
+      if (response.ok) {
+        await response.json().then((data: WestBankData[]) => {
+          const date1 = data.find((d: WestBankData) => {
+            const date = new Date(d.report_date);
+            return date.getTime() === day.getTime();
+          });
 
           if (date1) {
-            setKilled(date1.killed);
-            setTimeout(() => {
-              setEyeOpen(true);
-            }, 1000);
+            setDataWestBank(date1);
+            if (!date1.verified) {
+              const previousDay = data.find((d: WestBankData) => {
+                const date = new Date(d.report_date);
+                return date.getTime() === day.getTime() - 24 * 60 * 60 * 1000;
+              });
+
+              if (previousDay) {
+                setDataWestBankPrevious(previousDay);
+              }
+            }
           }
         });
       }
@@ -45,8 +70,61 @@ export default function Home() {
   };
 
   useEffect(() => {
-    getData(day);
+    getDataGaza(day);
+    getDataWestBank(day);
   }, [day]);
+
+  useEffect(() => {
+    if (
+      dataGaza &&
+      dataWestBank &&
+      dataGaza.report_date === dataWestBank.report_date
+    ) {
+      if (dataWestBank.verified) {
+        setDailyData(() => {
+          return {
+            gazaInjured: dataGaza.injured,
+            gazaKilled: dataGaza.killed,
+            westBankInjured: dataWestBank.verified.injured,
+            westBankKilled: dataWestBank.verified.killed,
+          };
+        });
+      } else {
+        if (dataWestBankPrevious) {
+          setDailyData(() => {
+            return {
+              gazaInjured: dataGaza.injured,
+              gazaKilled: dataGaza.killed,
+              westBankInjured:
+                dataWestBank.injured_cum - dataWestBankPrevious.injured_cum,
+              westBankKilled:
+                dataWestBank.killed_cum - dataWestBankPrevious.killed_cum,
+            };
+          });
+        }
+      }
+    }
+  }, [dataGaza, dataWestBank, dataWestBankPrevious]);
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (dailyData) {
+      timeout = setTimeout(() => {
+        if (
+          dailyData.gazaInjured !== 0 ||
+          dailyData.gazaKilled !== 0 ||
+          dailyData.westBankInjured !== 0 ||
+          dailyData.westBankKilled !== 0
+        ) {
+          setEyeOpen(true);
+        }
+      }, 500);
+    }
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [dailyData]);
 
   return (
     <div className="bg-BLACK">
@@ -69,7 +147,18 @@ export default function Home() {
         Day ++
       </button>
       <BackgroundText eyeOpen={eyeOpen} />
-      <Eye eyeOpen={eyeOpen} killed={killed} />
+      <Eye eyeOpen={eyeOpen} dailyData={dailyData} />
+      <div className="fixed top-0 left-0 w-screen h-screen bg-red flex flex-col p-20 items-center text-WHITE">
+        <p className=" w-fit">{day.toLocaleDateString("nl-BE")}</p>
+        {dailyData && (
+          <div className="flex gap-4">
+            <span className="">{dailyData.gazaKilled}</span>
+            <span className="">{dailyData.gazaInjured}</span>
+            <span className="">{dailyData.westBankKilled}</span>
+            <span className="">{dailyData.westBankInjured}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
