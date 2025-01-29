@@ -19,3 +19,11 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.timeline-section {
+  @apply bg-BEIGE;
+  @apply absolute left-30 top-30;
+  @apply rounded-90;
+  width: calc(100vw - 60px);
+  height: calc(100vh - 60px);
+}
