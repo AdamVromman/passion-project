@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { timeline } from "../services/timeline";
 import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 const PADDING = { top: 30, left: 60, right: 60, bottom: 30 };
 const HEIGHT_TIMELINE = 150;
 
 const Timeline = () => {
   const graphRef = useRef<SVGSVGElement | null>(null);
+
+  const { contextSafe } = useGSAP({ scope: graphRef });
 
   const getDimensions = () => {
     if (graphRef.current)
@@ -34,7 +37,6 @@ const Timeline = () => {
       .enter()
       .append("svg")
       .attr("x", (_, i) => PADDING.left + i * tickWidth)
-      .attr("opacity", 0)
       .attr("class", (d, i) => {
         let className = "tick";
 
@@ -48,39 +50,42 @@ const Timeline = () => {
 
     groups
       .append("text")
-      .attr("class", "unzoom")
+      .attr("class", "unzoom text")
       .text((d) => d.year)
       .attr("width", 100)
       .attr("y", HEIGHT_TIMELINE / 4)
       .attr("x", 25)
+      .attr("opacity", 0)
+
       .attr("text-anchor", "middle");
 
     groups
       .append("line")
       .attr("x1", 25)
       .attr("x2", 25)
+
       .attr("y1", HEIGHT_TIMELINE / 2)
       .attr("y2", HEIGHT_TIMELINE)
-      .attr("class", "stroke-4 stroke-BLACK unzoom");
+      .attr("opacity", 0)
+      .attr("transform", "translate(0, 50)")
+      .attr("class", "stroke-4 stroke-BLACK unzoom line");
 
     const handleZoom = (e: any) => {
       const zoomLevel = e.transform.k;
 
       //TODO: ANIMATE ZOOM
       console.log(zoomLevel);
-      d3.select(graphRef.current).selectAll(".decade").attr("y", 0);
-      d3.select(graphRef.current).selectAll(".always-show").attr("y", 0);
 
       if (zoomLevel > 6) {
-        d3.select(graphRef.current).selectAll(".regular").attr("y", 0);
+        animateTickIn("regular", zoomLevel);
       } else {
-        d3.select(graphRef.current).selectAll(".regular").attr("y", 50);
+        animateTickOut("regular", zoomLevel);
       }
 
       if (zoomLevel > 2) {
-        d3.select(graphRef.current).selectAll(".lustrum").attr("y", 0);
+        animateTickIn("lustrum", zoomLevel);
       } else {
-        d3.select(graphRef.current).selectAll(".lustrum").attr("y", 50);
+        animateTickOut("lustrum", zoomLevel);
       }
 
       d3.select(graphRef.current)
@@ -109,9 +114,48 @@ const Timeline = () => {
     d3.select(graphRef.current).call(zoomFunction);
   };
 
-  const initialAnimation = () => {
-    gsap.to(".always-show", { y: 0, opacity: 1, duration: 1 });
+  const animateTickIn = (className: string, zoomLevel: number) => {
+    gsap.to(`.${className} .line`, {
+      y: 0,
+      opacity: 1,
+      duration: 1,
+      ease: "power4.out",
+    });
+
+    gsap.to(`.${className} .text`, {
+      opacity: 1,
+      duration: 1,
+      ease: "power4.out",
+    });
+
+    gsap.set(".unzoom", {
+      scaleX: 1 / zoomLevel,
+    });
   };
+
+  const animateTickOut = (className: string, zoomLevel: number) => {
+    gsap.to(`.${className} .line`, {
+      y: 50,
+
+      opacity: 0,
+      duration: 1,
+      ease: "power4.out",
+    });
+
+    gsap.to(`.${className} .text`, {
+      opacity: 0,
+      duration: 1,
+      ease: "power4.out",
+    });
+
+    gsap.set(".unzoom", {
+      scaleX: 1 / zoomLevel,
+    });
+  };
+
+  const initialAnimation = contextSafe(() => {
+    animateTickIn("always-show", 1);
+  });
 
   const resize = () => {
     if (getDimensions().height < HEIGHT_TIMELINE + 120) {
@@ -137,19 +181,6 @@ const Timeline = () => {
       .select("#svg-wrapper")
       .attr("width", getDimensions().width - 4)
       .attr("height", getDimensions().height - 4);
-
-    // const x = d3
-    //   .scaleBand()
-    //   .domain(
-    //     timeline.sort((a, b) => a.year - b.year).map((d) => d.year.toString())
-    //   )
-    //   .range([PADDING.left, getDimensions().width - PADDING.right]);
-
-    // d3.select(graphRef.current)
-    //   .select("#group-timeline")
-    //   .select("g")
-    //   .transition()
-    //   .call(d3.axisBottom(x));
   };
 
   useEffect(() => {
