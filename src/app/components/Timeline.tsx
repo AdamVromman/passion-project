@@ -56,6 +56,7 @@ const Timeline = () => {
       .append("text")
       .attr("x", (d, i) => PADDING.left + i * tickWidth)
       .attr("y", HEIGHT_TIMELINE / 4)
+      .attr("class", "year")
       .text((d) => d.year)
       .attr("text-anchor", "middle");
 
@@ -65,14 +66,45 @@ const Timeline = () => {
       .attr("x2", (d, i) => PADDING.left + i * tickWidth)
       .attr("y1", HEIGHT_TIMELINE / 2)
       .attr("y2", HEIGHT_TIMELINE)
-      .attr("class", "stroke-4 stroke-BLACK");
+      .attr("class", "stroke-4 stroke-BLACK lines");
 
     const handleZoom = (e: any) => {
-      console.log(e.transform);
+      const zoomLevel = e.transform.k;
+      console.log(zoomLevel);
+
+      // d3.select(graphRef.current)
+      //   .select("#zoomable")
+      //   .attr("transform", `scale(${e.transform.k}, 1)`);
+
+      // d3.selectAll(".keep-width").attr(
+      //   "transform",
+      //   `scale(${1 / e.transform.k}, 1)`
+      // );
+
+      const mouseX =
+        e.sourceEvent.clientX -
+        graphRef.current?.getBoundingClientRect().left +
+        PADDING.left;
 
       d3.select(graphRef.current)
         .select("#zoomable")
-        .attr("transform", `scale(${e.transform.k}, 1)`);
+        .attr("transform", `translate(${-mouseX * zoomLevel}, 0)`);
+
+      d3.selectAll(".year").each((d, i, nodes) => {
+        d3.select(nodes[i]).attr("x", PADDING.left + i * tickWidth * zoomLevel);
+      });
+
+      d3.selectAll(".lines").each((d, i, nodes) => {
+        d3.select(nodes[i]).attr(
+          "x1",
+          PADDING.left + i * tickWidth * zoomLevel
+        );
+
+        d3.select(nodes[i]).attr(
+          "x2",
+          PADDING.left + i * tickWidth * zoomLevel
+        );
+      });
     };
 
     // This function allows zoom/pan and also limits the zoom and the pan to a certain extent.
@@ -114,12 +146,12 @@ const Timeline = () => {
       .attr("width", getDimensions().width - 4)
       .attr("height", getDimensions().height - 4);
 
-    const x = d3
-      .scaleBand()
-      .domain(
-        timeline.sort((a, b) => a.year - b.year).map((d) => d.year.toString())
-      )
-      .range([PADDING.left, getDimensions().width - PADDING.right]);
+    // const x = d3
+    //   .scaleBand()
+    //   .domain(
+    //     timeline.sort((a, b) => a.year - b.year).map((d) => d.year.toString())
+    //   )
+    //   .range([PADDING.left, getDimensions().width - PADDING.right]);
 
     // d3.select(graphRef.current)
     //   .select("#group-timeline")
@@ -153,7 +185,7 @@ const Timeline = () => {
         <rect
           x={2}
           y={HEIGHT_TIMELINE + 2}
-          className="fill-none stroke-BLACK stroke-4"
+          className="pointer-events-none fill-none stroke-BLACK stroke-4"
           id="main-graph-stroke"
           rx="60"
         />
