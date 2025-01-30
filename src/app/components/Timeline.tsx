@@ -3,9 +3,9 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { timeline } from "../services/timeline";
-import { get } from "http";
+import gsap from "gsap";
 
-const PADDING = { top: 30, left: 30, right: 30, bottom: 30 };
+const PADDING = { top: 30, left: 60, right: 60, bottom: 30 };
 const HEIGHT_TIMELINE = 150;
 
 const Timeline = () => {
@@ -23,88 +23,76 @@ const Timeline = () => {
   };
 
   const drawTimeline = () => {
-    // const x = d3
-    //   .scaleBand()
-    //   .domain(
-    //     timeline.sort((a, b) => a.year - b.year).map((d) => d.year.toString())
-    //   )
-    //   .range([PADDING.left, getDimensions().width - PADDING.right]);
-
-    // d3.select(graphRef.current)
-    //   .select("#group-timeline")
-    //   .append("g")
-    //   .attr("class", "stroke-4")
-    //   .attr("transform", `translate(0, ${HEIGHT_TIMELINE / 2})`)
-    //   .call(d3.axisBottom(x))
-    //   .selectAll("text")
-    //   .attr("transform", `translate(0, -${HEIGHT_TIMELINE / 4})`)
-    //   .attr("class", "text-2xl font-bold");
-
     const tickWidth =
       (getDimensions().width - PADDING.left - PADDING.right) / timeline.length;
 
     const groups = d3
       .select(graphRef.current)
       .select("#group-timeline")
-      .selectAll("g.tick")
+      .selectAll("svg.tick")
       .data(timeline)
       .enter()
-      .append("g")
-      .attr("class", "tick");
+      .append("svg")
+      .attr("x", (_, i) => PADDING.left + i * tickWidth)
+      .attr("opacity", 0)
+      .attr("class", (d, i) => {
+        let className = "tick";
+
+        if (i === 0 || i === timeline.length - 1 || d.year % 10 === 0)
+          className += " always-show";
+        else if (d.year % 5 === 0) className += " lustrum";
+        else className += " regular";
+
+        return className;
+      });
 
     groups
       .append("text")
-      .attr("x", (d, i) => PADDING.left + i * tickWidth)
-      .attr("y", HEIGHT_TIMELINE / 4)
-      .attr("class", "year")
+      .attr("class", "unzoom")
       .text((d) => d.year)
+      .attr("width", 100)
+      .attr("y", HEIGHT_TIMELINE / 4)
+      .attr("x", 25)
       .attr("text-anchor", "middle");
 
     groups
       .append("line")
-      .attr("x1", (d, i) => PADDING.left + i * tickWidth)
-      .attr("x2", (d, i) => PADDING.left + i * tickWidth)
+      .attr("x1", 25)
+      .attr("x2", 25)
       .attr("y1", HEIGHT_TIMELINE / 2)
       .attr("y2", HEIGHT_TIMELINE)
-      .attr("class", "stroke-4 stroke-BLACK lines");
+      .attr("class", "stroke-4 stroke-BLACK unzoom");
 
     const handleZoom = (e: any) => {
       const zoomLevel = e.transform.k;
+
+      //TODO: ANIMATE ZOOM
       console.log(zoomLevel);
+      d3.select(graphRef.current).selectAll(".decade").attr("y", 0);
+      d3.select(graphRef.current).selectAll(".always-show").attr("y", 0);
 
-      // d3.select(graphRef.current)
-      //   .select("#zoomable")
-      //   .attr("transform", `scale(${e.transform.k}, 1)`);
+      if (zoomLevel > 6) {
+        d3.select(graphRef.current).selectAll(".regular").attr("y", 0);
+      } else {
+        d3.select(graphRef.current).selectAll(".regular").attr("y", 50);
+      }
 
-      // d3.selectAll(".keep-width").attr(
-      //   "transform",
-      //   `scale(${1 / e.transform.k}, 1)`
-      // );
-
-      const mouseX =
-        e.sourceEvent.clientX -
-        graphRef.current?.getBoundingClientRect().left +
-        PADDING.left;
+      if (zoomLevel > 2) {
+        d3.select(graphRef.current).selectAll(".lustrum").attr("y", 0);
+      } else {
+        d3.select(graphRef.current).selectAll(".lustrum").attr("y", 50);
+      }
 
       d3.select(graphRef.current)
         .select("#zoomable")
-        .attr("transform", `translate(${-mouseX * zoomLevel}, 0)`);
-
-      d3.selectAll(".year").each((d, i, nodes) => {
-        d3.select(nodes[i]).attr("x", PADDING.left + i * tickWidth * zoomLevel);
-      });
-
-      d3.selectAll(".lines").each((d, i, nodes) => {
-        d3.select(nodes[i]).attr(
-          "x1",
-          PADDING.left + i * tickWidth * zoomLevel
+        .attr(
+          "transform",
+          `translate(${e.transform.x}, 0) scale(${zoomLevel}, 1)`
         );
 
-        d3.select(nodes[i]).attr(
-          "x2",
-          PADDING.left + i * tickWidth * zoomLevel
-        );
-      });
+      d3.select(graphRef.current)
+        .selectAll(".unzoom")
+        .attr("transform", `scale(${1 / zoomLevel}, 1)`);
     };
 
     // This function allows zoom/pan and also limits the zoom and the pan to a certain extent.
@@ -119,6 +107,10 @@ const Timeline = () => {
 
     // Attach the zoom/pan functionality to the svg element.
     d3.select(graphRef.current).call(zoomFunction);
+  };
+
+  const initialAnimation = () => {
+    gsap.to(".always-show", { y: 0, opacity: 1, duration: 1 });
   };
 
   const resize = () => {
@@ -163,6 +155,7 @@ const Timeline = () => {
   useEffect(() => {
     resize();
     drawTimeline();
+    initialAnimation();
 
     window.addEventListener("resize", resize);
     return () => {
