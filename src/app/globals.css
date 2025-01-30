@@ -1,6 +1,40 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-BEIGE: #f5f5f5;
+  --color-BLACK: #171717;
+  --color-WHITE: #ebebeb;
+  --color-RED: #ee2a35;
+  --color-GREEN: #009736;
+
+  --padding-7_5: 7.5px;
+  --padding-15: 15px;
+  --padding-30: 30px;
+  --padding-60: 60px;
+  --padding-90: 90px;
+  --padding-120: 120px;
+
+  --margin-7_5: 7.5px;
+  --margin-15: 15px;
+  --margin-30: 30px;
+  --margin-60: 60px;
+  --margin-90: 90px;
+  --margin-120: 120px;
+
+  --inset-7_5: 7.5px;
+  --inset-15: 15px;
+  --inset-30: 30px;
+  --inset-60: 60px;
+  --inset-90: 90px;
+  --inset-120: 120px;
+
+  --radius-7_5: 7.5px;
+  --radius-15: 15px;
+  --radius-30: 30px;
+  --radius-60: 60px;
+  --radius-90: 90px;
+  --radius-120: 120px;
+}
 
 :root {
   --background: #ffffff;
@@ -23,7 +57,7 @@ body {
 .timeline-section {
   @apply bg-BEIGE;
   @apply absolute left-30 top-30;
-  @apply rounded-90;
+  @apply rounded-90 p-60;
   width: calc(100vw - 60px);
   height: calc(100vh - 60px);
 }

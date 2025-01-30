@@ -5,7 +5,7 @@ const Timeline = () => {
 
   return (
     <div className="timeline-section">
-      <svg></svg>
+      <svg className="bg-black w-full aspect-22/9 rounded-60"></svg>
     </div>
   );
 };

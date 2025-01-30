@@ -17,20 +17,5 @@ export default {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  theme: {
-    extend: {
-      colors: {
-        BLACK: "#2A2A2A",
-        WHITE: "#EBEBEB",
-        GREEN: "#009736",
-        RED: "#EE2A35",
-        BEIGE: "#F5F5F5",
-      },
-      padding: VALUES,
-      margin: VALUES,
-      inset: VALUES,
-      borderRadius: VALUES,
-    },
-  },
   plugins: [],
 } satisfies Config;
