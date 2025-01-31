@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { timeline } from "../services/timeline";
 import gsap from "gsap";
@@ -89,9 +89,6 @@ const Timeline = () => {
       .attr("id", (d) => `tick-${d.year}`)
       .attr("x", (_, i) => PADDING.left + i * tickWidth)
       .attr("y", 0)
-      .attr("width", 200)
-      .attr("height", 200)
-      .attr("viewBox", "0 0 200 200")
       .attr("class", (d, i) => {
         let className = "tick";
 
@@ -122,7 +119,17 @@ const Timeline = () => {
       .attr("y2", HEIGHT_TIMELINE / 2 - 16)
       .attr("opacity", 0)
       .attr("stroke-linecap", "round")
-      .attr("class", "stroke-4 stroke-[#C4C0B6] unzoom line mt-[50]");
+      .attr("class", "stroke-4 stroke-[#C4C0B6] unzoom line");
+
+    groups
+      .append("line")
+      .attr("x1", 25)
+      .attr("x2", 25)
+      .attr("y1", HEIGHT_TIMELINE + 16)
+      .attr("y2", HEIGHT_TIMELINE + 16)
+      .attr("opacity", 0)
+      .attr("stroke-linecap", "round")
+      .attr("class", "stroke-4 stroke-[#C4C0B6] unzoom line-2");
 
     d3.select(graphRef.current)
       .append("use")
@@ -149,6 +156,14 @@ const Timeline = () => {
     gsap.to(`.${className} .line`, {
       opacity: 1,
       attr: { y2: HEIGHT_TIMELINE - 8 },
+      duration: 0.4,
+      ease: "power4.out",
+      stagger: 0.05,
+    });
+
+    gsap.to(`.${className} .line-2`, {
+      opacity: 1,
+      attr: { y2: getDimensions().height - PADDING.bottom - 16 },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.05,
@@ -325,7 +340,7 @@ const Timeline = () => {
         <rect
           x={4}
           y={HEIGHT_TIMELINE + 4}
-          className="pointer-events-none stroke-BLACK fill-WHITE stroke-8"
+          className="pointer-events-none stroke-BLACK fill-none stroke-8"
           id="main-graph-stroke"
           rx="60"
         />
