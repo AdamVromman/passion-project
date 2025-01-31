@@ -16,15 +16,6 @@ const Timeline = () => {
   const [rightYear, setRightYear] = useState(
     timeline[timeline.length - 1].year
   );
-
-  const mainGSAPTimeline = useRef<gsap.core.Timeline>(null);
-
-  const decadesGSAPTimeline = useRef<gsap.core.Timeline>(null);
-
-  const lustrumGSAPTimeline = useRef<gsap.core.Timeline>(null);
-
-  const regularGSAPTimeline = useRef<gsap.core.Timeline>(null);
-
   const [zoomLevel, setZoomLevel] = useState(1);
 
   const { contextSafe } = useGSAP({ scope: graphRef });
@@ -40,35 +31,151 @@ const Timeline = () => {
     return { width: -1, height: -1 };
   };
 
+  const animateMain = contextSafe(() => {
+    gsap.to("#horizontal-axis line", {
+      duration: 1,
+      attr: { x2: getDimensions().width - PADDING.right },
+      ease: "power4.out",
+    });
+
+    gsap.to("#horizontal-axis polyline", {
+      duration: 1,
+      attr: {
+        points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
+          getDimensions().width - PADDING.right
+        }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
+      },
+      ease: "power4.out",
+    });
+    gsap.to("#vertical-axis line", {
+      duration: 1,
+      attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
+      ease: "power4.out",
+    });
+    gsap.to("#vertical-axis polyline", {
+      duration: 1,
+      attr: {
+        points: `${PADDING.left - 15}, ${
+          PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
+        } , ${PADDING.left}, ${PADDING.top + HEIGHT_TIMELINE + PADDING.top}, ${
+          PADDING.left + 15
+        }, ${PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15}`,
+      },
+      ease: "power4.out",
+    });
+  });
+
+  const animateDecades = contextSafe(() => {
+    gsap.to(`.decade .line`, {
+      opacity: 1,
+      attr: { y2: HEIGHT_TIMELINE - 8 },
+      duration: 0.4,
+      ease: "power4.out",
+      stagger: 0.05,
+    });
+    gsap.to(`.decade .line-2`, {
+      opacity: 1,
+      attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+      duration: 0.4,
+      ease: "power4.out",
+      stagger: 0.05,
+    });
+    gsap.to(`.decade .text`, {
+      opacity: 1,
+      duration: 0.4,
+      ease: "power4.out",
+      stagger: 0.05,
+    });
+  });
+
+  const animateLustra = contextSafe(() => {
+    gsap.to(`.lustrum .line`, {
+      opacity: 1,
+      attr: { y2: HEIGHT_TIMELINE - 8 },
+      duration: 0.4,
+      ease: "power4.out",
+      stagger: 0.01,
+    });
+    gsap.to(`.lustrum .line-2`, {
+      opacity: 1,
+      attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+      duration: 0.4,
+      ease: "power4.out",
+      stagger: 0.01,
+    });
+    gsap.to(`.lustrum .text`, {
+      opacity: 1,
+      duration: 0.4,
+      ease: "power4.out",
+      stagger: 0.01,
+    });
+  });
+
+  const reverseLustra = contextSafe(() => {
+    gsap.to(`.lustrum .line`, {
+      opacity: 0,
+      attr: { y2: HEIGHT_TIMELINE / 2 - 16 },
+      duration: 0.6,
+      ease: "power4.out",
+    });
+    gsap.to(`.lustrum .line-2`, {
+      opacity: 0,
+      attr: { y2: HEIGHT_TIMELINE + 16 },
+      duration: 0.6,
+      ease: "power4.out",
+    });
+    gsap.to(`.lustrum .text`, {
+      opacity: 0,
+      duration: 0.6,
+      ease: "power4.out",
+    });
+  });
+
+  const animateRegular = contextSafe(() => {
+    gsap.to(`.regular *`, {
+      opacity: 1,
+      duration: 0.2,
+      ease: "power4.out",
+      overwrite: true,
+    });
+  });
+
+  const reverseRegular = contextSafe(() => {
+    gsap.to(`.regular *`, {
+      opacity: 0,
+      duration: 0.2,
+      ease: "power4.out",
+      overwrite: true,
+    });
+  });
+
   const handleZoom = (e: any) => {
-    const zoomLevel = e.transform.k;
+    const zoom = e.transform.k;
 
     updateYears();
 
-    setZoomLevel(zoomLevel);
+    //TODO: Correctly set the zoom level
+    setZoomLevel(() => zoom);
 
-    if (zoomLevel > 6) {
-      regularGSAPTimeline?.current?.play();
+    if (zoom > 6) {
+      animateRegular();
     } else {
-      regularGSAPTimeline?.current?.reverse();
+      reverseRegular();
     }
 
-    if (zoomLevel > 2) {
-      lustrumGSAPTimeline?.current?.play();
+    if (zoom > 2) {
+      animateLustra();
     } else {
-      lustrumGSAPTimeline?.current?.reverse();
+      reverseLustra();
     }
 
     d3.select(graphRef.current)
       .select("#zoomable")
-      .attr(
-        "transform",
-        `translate(${e.transform.x}, 0) scale(${zoomLevel}, 1)`
-      );
+      .attr("transform", `translate(${e.transform.x}, 0) scale(${zoom}, 1)`);
 
     d3.select(graphRef.current)
       .selectAll(".unzoom")
-      .attr("transform", `scale(${1 / zoomLevel}, 1)`);
+      .attr("transform", `scale(${1 / zoom}, 1)`);
   };
 
   const drawTicks = () => {
@@ -130,6 +237,7 @@ const Timeline = () => {
   };
 
   const updateTicks = () => {
+    //TODO: Correctly update ticks when zoomed in
     const tickWidth =
       (getDimensions().width - PADDING.left - PADDING.right) / timeline.length;
 
@@ -158,7 +266,11 @@ const Timeline = () => {
 
   const resize = () => {
     updateTicks();
-    decadesGSAPTimeline?.current?.play();
+    animateMain();
+    animateDecades();
+    console.log(zoomLevel);
+    if (zoomLevel > 2) animateLustra();
+    if (zoomLevel > 6) animateRegular();
 
     if (getDimensions().height < HEIGHT_TIMELINE + 120) {
       //TODO: ANIMATE EXIT GRAPH
@@ -223,162 +335,8 @@ const Timeline = () => {
     }
   };
 
-  const initializeGSAPTimelines = contextSafe(() => {
-    mainGSAPTimeline.current = gsap
-      .timeline({ paused: true })
-      .to(
-        "#horizontal-axis line",
-        {
-          duration: 1,
-          attr: { x2: getDimensions().width - PADDING.right },
-          ease: "power4.out",
-        },
-        "0"
-      )
-      .to(
-        "#horizontal-axis polyline",
-        {
-          duration: 1,
-          attr: {
-            points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
-              getDimensions().width - PADDING.right
-            }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
-          },
-          ease: "power4.out",
-        },
-        "<"
-      )
-      .to(
-        "#vertical-axis line",
-        {
-          duration: 1,
-          attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
-          ease: "power4.out",
-        },
-        "<"
-      )
-      .to(
-        "#vertical-axis polyline",
-        {
-          duration: 1,
-          attr: {
-            points: `${PADDING.left - 15}, ${
-              PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
-            } , ${PADDING.left}, ${
-              PADDING.top + HEIGHT_TIMELINE + PADDING.top
-            }, ${PADDING.left + 15}, ${
-              PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
-            }`,
-          },
-          ease: "power4.out",
-        },
-        "<"
-      );
-
-    decadesGSAPTimeline.current = gsap
-      .timeline({ paused: true })
-      .to(
-        `.decade .line`,
-        {
-          opacity: 1,
-          attr: { y2: HEIGHT_TIMELINE - 8 },
-          duration: 0.4,
-          ease: "power4.out",
-          stagger: 0.05,
-        },
-        "<"
-      )
-      .to(
-        `.decade .line-2`,
-        {
-          opacity: 1,
-          attr: { y2: getDimensions().height - PADDING.bottom - 16 },
-          duration: 0.4,
-          ease: "power4.out",
-          stagger: 0.05,
-        },
-        "<"
-      )
-      .to(
-        `.decade .text`,
-        {
-          opacity: 1,
-          duration: 0.4,
-          ease: "power4.out",
-          stagger: 0.05,
-        },
-        "<"
-      );
-
-    lustrumGSAPTimeline.current = gsap
-      .timeline({ paused: true })
-      .to(
-        `.lustrum .line`,
-        {
-          opacity: 1,
-          attr: { y2: HEIGHT_TIMELINE - 8 },
-          duration: 0.4,
-          ease: "power4.out",
-        },
-        "<"
-      )
-      .to(
-        `.lustrum .line-2`,
-        {
-          opacity: 1,
-          attr: { y2: getDimensions().height - PADDING.bottom - 16 },
-          duration: 0.4,
-          ease: "power4.out",
-        },
-        "<"
-      )
-      .to(
-        `.lustrum .text`,
-        {
-          opacity: 1,
-          duration: 0.4,
-          ease: "power4.out",
-        },
-        "<"
-      );
-
-    regularGSAPTimeline.current = gsap
-      .timeline({ paused: true })
-      .to(
-        `.regular .line`,
-        {
-          opacity: 1,
-          attr: { y2: HEIGHT_TIMELINE - 8 },
-          duration: 0.2,
-          ease: "power4.out",
-        },
-        "<"
-      )
-      .to(
-        `.regular .line-2`,
-        {
-          opacity: 1,
-          attr: { y2: getDimensions().height - PADDING.bottom - 16 },
-          duration: 0.2,
-          ease: "power4.out",
-        },
-        "<"
-      )
-      .to(
-        `.regular .text`,
-        {
-          opacity: 1,
-          duration: 0.2,
-          ease: "power4.out",
-        },
-        "<"
-      );
-  });
-
   useEffect(() => {
     drawTimeline();
-    initializeGSAPTimelines();
-    mainGSAPTimeline?.current?.play();
     resize();
 
     window.addEventListener("resize", resize);
