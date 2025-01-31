@@ -83,22 +83,13 @@ const Timeline = () => {
       .select(graphRef.current)
       .select("#group-timeline")
       .selectAll("svg.tick")
-      .data(timeline)
+      .data(timeline.filter((d) => d.year % 10 === 0))
       .enter()
       .append("svg")
       .attr("id", (d) => `tick-${d.year}`)
-      .attr("x", (_, i) => PADDING.left + i * tickWidth)
+      .attr("x", (_, i) => PADDING.left + i * 10 * tickWidth)
       .attr("y", 0)
-      .attr("class", (d, i) => {
-        let className = "tick";
-
-        if (i === 0 || i === timeline.length - 1 || d.year % 10 === 0)
-          className += " always-show";
-        else if (d.year % 5 === 0) className += " lustrum";
-        else className += " regular";
-
-        return className;
-      });
+      .attr("class", "tick decade");
 
     groups
       .append("text")
@@ -152,32 +143,69 @@ const Timeline = () => {
     d3.select(graphRef.current).call(zoomFunction);
   };
 
-  const animateTickIn = (className: string, zoomLevel: number) => {
-    gsap.to(`.${className} .line`, {
-      opacity: 1,
-      attr: { y2: HEIGHT_TIMELINE - 8 },
-      duration: 0.4,
-      ease: "power4.out",
-      stagger: 0.05,
-    });
+  const animateTickIn = (className: string, tl?: gsap.core.Timeline) => {
+    if (tl) {
+      tl.to(
+        `.${className} .line`,
+        {
+          opacity: 1,
+          attr: { y2: HEIGHT_TIMELINE - 8 },
+          duration: 0.4,
+          ease: "power4.out",
+          stagger: 0.05,
+        },
+        "<"
+      );
 
-    gsap.to(`.${className} .line-2`, {
-      opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - 16 },
-      duration: 0.4,
-      ease: "power4.out",
-      stagger: 0.05,
-    });
+      tl.to(
+        `.${className} .line-2`,
+        {
+          opacity: 1,
+          attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+          duration: 0.4,
+          ease: "power4.out",
+          stagger: 0.05,
+        },
+        "<"
+      );
 
-    gsap.to(`.${className} .text`, {
-      opacity: 1,
-      duration: 0.4,
-      ease: "power4.out",
-      stagger: 0.05,
-    });
+      tl.to(
+        `.${className} .text`,
+        {
+          opacity: 1,
+          duration: 0.4,
+          ease: "power4.out",
+          stagger: 0.05,
+        },
+        "<"
+      );
+    } else {
+      gsap.to(`.${className} .line`, {
+        opacity: 1,
+        attr: { y2: HEIGHT_TIMELINE - 8 },
+        duration: 0.4,
+        ease: "power4.out",
+        stagger: 0.05,
+      });
+
+      gsap.to(`.${className} .line-2`, {
+        opacity: 1,
+        attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+        duration: 0.4,
+        ease: "power4.out",
+        stagger: 0.05,
+      });
+
+      gsap.to(`.${className} .text`, {
+        opacity: 1,
+        duration: 0.4,
+        ease: "power4.out",
+        stagger: 0.05,
+      });
+    }
   };
 
-  const animateTickOut = (className: string, zoomLevel: number) => {
+  const animateTickOut = (className: string) => {
     gsap.to(`.${className} .line`, {
       attr: { y2: HEIGHT_TIMELINE / 2 - 16 },
       opacity: 0,
@@ -193,45 +221,61 @@ const Timeline = () => {
   };
 
   const initialAnimation = contextSafe(() => {
-    animateTickIn("always-show", 1);
+    const GSAPTimeline = gsap.timeline();
 
-    gsap.to("#horizontal-axis line", {
-      duration: 1,
-      attr: { x2: getDimensions().width - PADDING.right },
-      ease: "power4.out",
-      delay: 0.5,
-    });
-
-    gsap.to("#horizontal-axis polyline", {
-      duration: 1,
-      attr: {
-        points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
-          getDimensions().width - PADDING.right
-        }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
+    GSAPTimeline.to(
+      "#horizontal-axis line",
+      {
+        duration: 1,
+        attr: { x2: getDimensions().width - PADDING.right },
+        ease: "power4.out",
       },
-      ease: "power4.out",
-      delay: 0.5,
-    });
+      "2"
+    );
 
-    gsap.to("#vertical-axis line", {
-      duration: 1,
-      attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
-      ease: "power4.out",
-      delay: 0.5,
-    });
-
-    gsap.to("#vertical-axis polyline", {
-      duration: 1,
-      delay: 0.5,
-      attr: {
-        points: `${PADDING.left - 15}, ${
-          PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
-        } , ${PADDING.left}, ${PADDING.top + HEIGHT_TIMELINE + PADDING.top}, ${
-          PADDING.left + 15
-        }, ${PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15}`,
+    GSAPTimeline.to(
+      "#horizontal-axis polyline",
+      {
+        duration: 1,
+        attr: {
+          points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
+            getDimensions().width - PADDING.right
+          }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
+        },
+        ease: "power4.out",
       },
-      ease: "power4.out",
-    });
+      "<"
+    );
+
+    GSAPTimeline.to(
+      "#vertical-axis line",
+      {
+        duration: 1,
+        attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
+        ease: "power4.out",
+      },
+      "<"
+    );
+
+    GSAPTimeline.to(
+      "#vertical-axis polyline",
+      {
+        duration: 1,
+        attr: {
+          points: `${PADDING.left - 15}, ${
+            PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
+          } , ${PADDING.left}, ${
+            PADDING.top + HEIGHT_TIMELINE + PADDING.top
+          }, ${PADDING.left + 15}, ${
+            PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
+          }`,
+        },
+        ease: "power4.out",
+      },
+      "<"
+    );
+
+    animateTickIn("decade", GSAPTimeline);
   });
 
   const resize = () => {
