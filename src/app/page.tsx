@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import BackgroundText from "./components/BackgroundText";
 import Eye from "./components/Eye";
 import { DailyData, GazaData, WestBankData } from "./services/types";
+import Timeline from "./components/Timeline";
 
 export default function Home() {
   const [eyeOpen, setEyeOpen] = useState(false);
@@ -159,6 +160,7 @@ export default function Home() {
           </div>
         )}
       </div>
+      <Timeline />
     </div>
   );
 }
