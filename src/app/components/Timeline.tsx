@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { timeline } from "../services/timeline";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { motion } from "motion/react";
-import { get } from "http";
 
 const PADDING = { top: 30, left: 60, right: 60, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
 
 const Timeline = () => {
   const graphRef = useRef<SVGSVGElement | null>(null);
+
+  const [leftYear, setLeftYear] = useState(timeline[0].year);
+  const [rightYear, setRightYear] = useState(
+    timeline[timeline.length - 1].year
+  );
+
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const { contextSafe } = useGSAP({ scope: graphRef });
 
@@ -27,6 +32,49 @@ const Timeline = () => {
     return { width: -1, height: -1 };
   };
 
+  // const updateAfterTimeout = useCallback(() => {
+  //   updateYears();
+  // }, []);
+
+  // useEffect(() => {
+  //   const delayDebounceFn = setTimeout(() => {
+  //     updateAfterTimeout();
+  //   }, 500);
+
+  //   return () => clearTimeout(delayDebounceFn);
+  // }, [updateAfterTimeout, zoomLevel]);
+
+  const handleZoom = (e: any) => {
+    const zoomLevel = e.transform.k;
+
+    updateYears();
+
+    setZoomLevel(zoomLevel);
+
+    if (zoomLevel > 6) {
+      animateTickIn("regular", zoomLevel);
+    } else {
+      animateTickOut("regular", zoomLevel);
+    }
+
+    if (zoomLevel > 2) {
+      animateTickIn("lustrum", zoomLevel);
+    } else {
+      animateTickOut("lustrum", zoomLevel);
+    }
+
+    d3.select(graphRef.current)
+      .select("#zoomable")
+      .attr(
+        "transform",
+        `translate(${e.transform.x}, 0) scale(${zoomLevel}, 1)`
+      );
+
+    d3.select(graphRef.current)
+      .selectAll(".unzoom")
+      .attr("transform", `scale(${1 / zoomLevel}, 1)`);
+  };
+
   const drawTimeline = () => {
     const tickWidth =
       (getDimensions().width - PADDING.left - PADDING.right) / timeline.length;
@@ -38,6 +86,7 @@ const Timeline = () => {
       .data(timeline)
       .enter()
       .append("svg")
+      .attr("id", (d) => `tick-${d.year}`)
       .attr("x", (_, i) => PADDING.left + i * tickWidth)
       .attr("y", 0)
       .attr("width", 200)
@@ -81,36 +130,6 @@ const Timeline = () => {
       .attr("y", HEIGHT_TIMELINE / 2)
       .attr("y2", HEIGHT_TIMELINE / 2)
       .attr("href", "#horizontal-axis");
-
-    const handleZoom = (e: any) => {
-      const zoomLevel = e.transform.k;
-
-      //TODO: ANIMATE ZOOM
-      console.log(zoomLevel);
-
-      if (zoomLevel > 6) {
-        animateTickIn("regular", zoomLevel);
-      } else {
-        animateTickOut("regular", zoomLevel);
-      }
-
-      if (zoomLevel > 2) {
-        animateTickIn("lustrum", zoomLevel);
-      } else {
-        animateTickOut("lustrum", zoomLevel);
-      }
-
-      d3.select(graphRef.current)
-        .select("#zoomable")
-        .attr(
-          "transform",
-          `translate(${e.transform.x}, 0) scale(${zoomLevel}, 1)`
-        );
-
-      d3.select(graphRef.current)
-        .selectAll(".unzoom")
-        .attr("transform", `scale(${1 / zoomLevel}, 1)`);
-    };
 
     // This function allows zoom/pan and also limits the zoom and the pan to a certain extent.
     const zoomFunction = d3
@@ -238,8 +257,41 @@ const Timeline = () => {
     };
   }, []);
 
+  const updateYears = () => {
+    const container = document.getElementById("svg-wrapper");
+
+    if (container) {
+      const { left, right } = container.getBoundingClientRect();
+
+      for (let i = 0; i < timeline.length; i++) {
+        const tick = document.getElementById(`tick-${timeline[i].year}`);
+        if (tick) {
+          const tickLeft = tick.getBoundingClientRect().left;
+          if (tickLeft >= left) {
+            setLeftYear(timeline[i + (-1 + zoomLevel)].year);
+            break;
+          }
+        }
+      }
+
+      for (let i = timeline.length - 1; i >= 0; i--) {
+        const tick = document.getElementById(`tick-${timeline[i].year}`);
+        if (tick) {
+          const tickRight = tick.getBoundingClientRect().right;
+          if (tickRight <= right) {
+            setRightYear(timeline[i + (1 - zoomLevel)].year);
+            break;
+          }
+        }
+      }
+    }
+  };
+
   return (
     <div className="timeline-section">
+      <div>
+        {leftYear} - {rightYear}
+      </div>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         id="svg-graph"
