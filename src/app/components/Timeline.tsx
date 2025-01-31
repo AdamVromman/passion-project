@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { timeline } from "../services/timeline";
+import { timeline } from "../services/timelineService";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -26,8 +26,6 @@ const Timeline = () => {
         width: graphRef.current.clientWidth,
         height: graphRef.current.clientHeight,
       };
-    const svg = document.getElementById("svg-graph");
-    if (svg) return { width: svg.clientWidth, height: svg.clientHeight };
     return { width: -1, height: -1 };
   };
 
@@ -149,6 +147,7 @@ const Timeline = () => {
     });
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleZoom = (e: any) => {
     const zoom = e.transform.k;
 
@@ -252,7 +251,7 @@ const Timeline = () => {
 
     // This function allows zoom/pan and also limits the zoom and the pan to a certain extent.
     const zoomFunction = d3
-      .zoom()
+      .zoom<SVGSVGElement, unknown>()
       .on("zoom", handleZoom)
       .scaleExtent([1, 10])
       .translateExtent([
@@ -261,7 +260,9 @@ const Timeline = () => {
       ]);
 
     // Attach the zoom/pan functionality to the svg element.
-    d3.select(graphRef.current).call(zoomFunction);
+    if (graphRef.current) {
+      d3.select(graphRef.current).call(zoomFunction);
+    }
   };
 
   const resize = () => {
@@ -306,13 +307,13 @@ const Timeline = () => {
   };
 
   const updateYears = () => {
-    const container = document.getElementById("svg-wrapper");
+    const container = document?.getElementById("svg-wrapper");
 
     if (container) {
       const { left, right } = container.getBoundingClientRect();
 
       for (let i = 0; i < timeline.length; i++) {
-        const tick = document.getElementById(`tick-${timeline[i].year}`);
+        const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickLeft = tick.getBoundingClientRect().left;
           if (tickLeft >= left) {
@@ -323,7 +324,7 @@ const Timeline = () => {
       }
 
       for (let i = timeline.length - 1; i >= 0; i--) {
-        const tick = document.getElementById(`tick-${timeline[i].year}`);
+        const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickRight = tick.getBoundingClientRect().right;
           if (tickRight <= right) {
@@ -343,7 +344,7 @@ const Timeline = () => {
     return () => {
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  });
 
   return (
     <div className="timeline-section">
