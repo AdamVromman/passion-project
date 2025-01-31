@@ -5,6 +5,7 @@ import * as d3 from "d3";
 import { timeline } from "../services/timeline";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { get } from "http";
 
 const PADDING = { top: 30, left: 60, right: 60, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
@@ -32,18 +33,6 @@ const Timeline = () => {
     return { width: -1, height: -1 };
   };
 
-  // const updateAfterTimeout = useCallback(() => {
-  //   updateYears();
-  // }, []);
-
-  // useEffect(() => {
-  //   const delayDebounceFn = setTimeout(() => {
-  //     updateAfterTimeout();
-  //   }, 500);
-
-  //   return () => clearTimeout(delayDebounceFn);
-  // }, [updateAfterTimeout, zoomLevel]);
-
   const handleZoom = (e: any) => {
     const zoomLevel = e.transform.k;
 
@@ -52,15 +41,15 @@ const Timeline = () => {
     setZoomLevel(zoomLevel);
 
     if (zoomLevel > 6) {
-      animateTickIn("regular", zoomLevel);
+      animateTickIn("regular");
     } else {
-      animateTickOut("regular", zoomLevel);
+      animateTickOut("regular");
     }
 
     if (zoomLevel > 2) {
-      animateTickIn("lustrum", zoomLevel);
+      animateTickIn("lustrum");
     } else {
-      animateTickOut("lustrum", zoomLevel);
+      animateTickOut("lustrum");
     }
 
     d3.select(graphRef.current)
@@ -75,7 +64,7 @@ const Timeline = () => {
       .attr("transform", `scale(${1 / zoomLevel}, 1)`);
   };
 
-  const drawTimeline = () => {
+  const drawTicks = () => {
     const tickWidth =
       (getDimensions().width - PADDING.left - PADDING.right) / timeline.length;
 
@@ -83,13 +72,23 @@ const Timeline = () => {
       .select(graphRef.current)
       .select("#group-timeline")
       .selectAll("svg.tick")
-      .data(timeline.filter((d) => d.year % 10 === 0))
+      .data(timeline)
       .enter()
       .append("svg")
       .attr("id", (d) => `tick-${d.year}`)
-      .attr("x", (_, i) => PADDING.left + i * 10 * tickWidth)
+      .attr("x", (_, i) => PADDING.left + i * tickWidth)
       .attr("y", 0)
-      .attr("class", "tick decade");
+      .attr(
+        "class",
+        (d) =>
+          `tick ${
+            d.year % 10 === 0
+              ? "decade"
+              : d.year % 5 === 0
+              ? "lustrum"
+              : "regular"
+          }`
+      );
 
     groups
       .append("text")
@@ -121,13 +120,20 @@ const Timeline = () => {
       .attr("opacity", 0)
       .attr("stroke-linecap", "round")
       .attr("class", "stroke-4 stroke-[#C4C0B6] unzoom line-2");
+  };
+
+  const updateTicks = () => {
+    const tickWidth =
+      (getDimensions().width - PADDING.left - PADDING.right) / timeline.length;
 
     d3.select(graphRef.current)
-      .append("use")
-      .attr("x", 0)
-      .attr("y", HEIGHT_TIMELINE / 2)
-      .attr("y2", HEIGHT_TIMELINE / 2)
-      .attr("href", "#horizontal-axis");
+      .select("#group-timeline")
+      .selectAll("svg.tick")
+      .attr("x", (_, i) => PADDING.left + i * tickWidth);
+  };
+
+  const drawTimeline = () => {
+    drawTicks();
 
     // This function allows zoom/pan and also limits the zoom and the pan to a certain extent.
     const zoomFunction = d3
@@ -230,7 +236,7 @@ const Timeline = () => {
         attr: { x2: getDimensions().width - PADDING.right },
         ease: "power4.out",
       },
-      "2"
+      "0"
     );
 
     GSAPTimeline.to(
@@ -279,6 +285,7 @@ const Timeline = () => {
   });
 
   const resize = () => {
+    updateTicks();
     initialAnimation();
 
     if (getDimensions().height < HEIGHT_TIMELINE + 120) {
@@ -294,6 +301,14 @@ const Timeline = () => {
         .select("#group-graph")
         .attr("display", "block");
     }
+
+    d3.select(graphRef.current)
+      .select("#horizontal-axis-bottom")
+      .attr("y", getDimensions().height - PADDING.bottom);
+
+    d3.select(graphRef.current)
+      .select("#vertical-axis line")
+      .attr("y1", getDimensions().height - PADDING.bottom);
 
     d3.select(graphRef.current)
       .select("#main-graph-stroke")
@@ -348,7 +363,7 @@ const Timeline = () => {
 
   return (
     <div className="timeline-section">
-      <div>
+      <div className="h-1/5">
         {leftYear} - {rightYear}
       </div>
       <svg
@@ -357,8 +372,28 @@ const Timeline = () => {
         ref={graphRef}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className=" w-full h-full max-h-full aspect-22/9 rounded-60 origin-center"
+        className=" w-full h-4/5 max-h-full aspect-22/9 rounded-60 origin-center"
       >
+        <linearGradient id="fade-to-right">
+          <stop
+            offset="10%"
+            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
+          />
+          <stop
+            offset="100%"
+            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
+          />
+        </linearGradient>
+        <linearGradient id="fade-to-left">
+          <stop
+            offset="0%"
+            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
+          />
+          <stop
+            offset="90%"
+            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
+          />
+        </linearGradient>
         <defs>
           <g id="horizontal-axis">
             <line
@@ -382,13 +417,31 @@ const Timeline = () => {
           <g id="group-graph"></g>
         </g>
         <rect
+          x={0}
+          y={0}
+          width={100}
+          fill="url(#fade-to-right)"
+          className="h-full"
+        ></rect>
+        <rect
+          x={getDimensions().width - 100}
+          y={0}
+          width={100}
+          fill="url(#fade-to-left)"
+          className="h-full"
+        ></rect>
+        <rect className="h-full fill-WHITE"></rect>
+        <rect
           x={4}
           y={HEIGHT_TIMELINE + 4}
           className="pointer-events-none stroke-BLACK fill-none stroke-8"
           id="main-graph-stroke"
           rx="60"
         />
+
+        <use y={HEIGHT_TIMELINE / 2} href="#horizontal-axis" />
         <use
+          id="horizontal-axis-bottom"
           y={getDimensions().height - PADDING.bottom}
           href="#horizontal-axis"
         />
