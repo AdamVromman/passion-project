@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { timeline } from "../services/timelineService";
+import { timeline, TimelineYear } from "../services/timelineService";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { SelectableDataType } from "../services/types";
-import { get } from "http";
-
 const PADDING = { top: 30, left: 60, right: 60, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
 
@@ -19,7 +17,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
-  const [selectedData, setSelectedData] = useState<SelectableDataType[]>([]);
+  const [selectedData] = useState<SelectableDataType[]>([
+    SelectableDataType.ADULTS_KILLED,
+  ]);
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
     timeline[timeline.length - 1].year
@@ -188,14 +188,18 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
     if (zoom > 6) {
       animateRegular();
+      animateData(false, "regular");
     } else {
       reverseRegular();
+      reverseData("regular");
     }
 
     if (zoom > 2) {
       animateLustra();
+      animateData(false, "lustrum");
     } else {
       reverseLustra();
+      reverseData("lustrum");
     }
 
     d3.select(graphRef.current)
@@ -367,18 +371,16 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   const drawData = () => {
     const maxHeight = getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom;
-    const maxKilled = d3.max(timeline, (d) => d.adultsKilled?.number ?? 0);
+    const maxKilled = d3.max(timeline, (d) => d.adultsKilled?.number ?? 0) ?? 0;
 
     const groups = d3
       .select(graphRef.current)
       .select("#group-timeline")
-      .selectAll("svg.tick");
-
-    console.log(groups);
+      .selectAll<Element, TimelineYear>("svg.tick");
 
     groups
       .append("circle")
-      .attr("id", (d) => `data-${d.year}`)
+      .attr("id", (d: TimelineYear) => `data-${d.year}`)
       .attr("cx", 25)
       .attr(
         "cy",
@@ -388,9 +390,50 @@ const Timeline = ({ gsapTimeline }: Props) => {
           ((d?.adultsKilled?.number ?? Math.random() * maxKilled) / maxKilled) *
             maxHeight
       )
-      .attr("r", 5)
-      .attr("class", "tick-data unzoom")
+      .attr("r", 0)
+      .attr("class", "tick-data unzoom adults-killed")
       .attr("fill", "red");
+  };
+
+  const animateDataType = (timeline: boolean, parent: string, type: string) => {
+    if (timeline) {
+      gsapTimeline?.to(
+        `.tick.${parent} .tick-data.${type}`,
+        {
+          attr: { r: 5 },
+          duration: 0.2,
+          ease: "bounce.out",
+          stagger: 0.01,
+        },
+        "<"
+      );
+    } else {
+      gsap.to(`.tick.${parent} .tick-data.${type}`, {
+        attr: { r: 5 },
+        duration: 0.2,
+        ease: "bounce.out",
+        stagger: 0.01,
+      });
+    }
+  };
+
+  const reverseDataType = (parent: string, type: string) => {
+    gsap.to(`.tick.${parent} .tick-data.${type}`, {
+      attr: { r: 0 },
+      duration: 0.2,
+      ease: "bounce.in",
+    });
+  };
+
+  const reverseData = (parent: string) => {
+    selectedData.forEach((data) => {
+      reverseDataType(parent, data);
+    });
+  };
+  const animateData = (timeline: boolean, parent: string) => {
+    selectedData.forEach((data) => {
+      animateDataType(timeline, parent, data);
+    });
   };
 
   useEffect(() => {
@@ -522,6 +565,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
             },
             "<"
           );
+
+        animateData(true, "decade");
       }
     },
     { scope: timelineRef, dependencies: [gsapTimeline] }
