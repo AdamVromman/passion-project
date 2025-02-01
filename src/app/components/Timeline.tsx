@@ -130,20 +130,42 @@ const Timeline = () => {
   });
 
   const animateRegular = contextSafe(() => {
-    gsap.to(`.regular *`, {
+    gsap.to(`.regular .line`, {
       opacity: 1,
-      duration: 0.2,
+      attr: { y2: HEIGHT_TIMELINE - 8 },
+      duration: 0.4,
       ease: "power4.out",
-      overwrite: true,
+    });
+    gsap.to(`.regular .line-2`, {
+      opacity: 1,
+      attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+      duration: 0.4,
+      ease: "power4.out",
+    });
+    gsap.to(`.regular .text`, {
+      opacity: 1,
+      duration: 0.4,
+      ease: "power4.out",
     });
   });
 
   const reverseRegular = contextSafe(() => {
-    gsap.to(`.regular *`, {
+    gsap.to(`.regular .line`, {
       opacity: 0,
-      duration: 0.2,
+      attr: { y2: HEIGHT_TIMELINE / 2 - 16 },
+      duration: 0.3,
       ease: "power4.out",
-      overwrite: true,
+    });
+    gsap.to(`.regular .line-2`, {
+      opacity: 0,
+      attr: { y2: HEIGHT_TIMELINE + 16 },
+      duration: 0.3,
+      ease: "power4.out",
+    });
+    gsap.to(`.regular .text`, {
+      opacity: 0,
+      duration: 0.3,
+      ease: "power4.out",
     });
   });
 
@@ -243,7 +265,7 @@ const Timeline = () => {
     d3.select(graphRef.current)
       .select("#group-timeline")
       .selectAll("svg.tick")
-      .attr("x", (_, i) => PADDING.left + i * zoomLevel * tickWidth);
+      .attr("x", (_, i) => PADDING.left + i * tickWidth);
   };
 
   const drawTimeline = () => {
@@ -317,7 +339,7 @@ const Timeline = () => {
         if (tick) {
           const tickLeft = tick.getBoundingClientRect().left;
           if (tickLeft >= left) {
-            setLeftYear(timeline[i + (-1 + zoomLevel)].year);
+            setLeftYear(timeline[i].year);
             break;
           }
         }
@@ -328,7 +350,7 @@ const Timeline = () => {
         if (tick) {
           const tickRight = tick.getBoundingClientRect().right;
           if (tickRight <= right) {
-            setRightYear(timeline[i + (1 - zoomLevel)].year);
+            setRightYear(timeline[i].year);
             break;
           }
         }
