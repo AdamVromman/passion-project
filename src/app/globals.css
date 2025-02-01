@@ -83,3 +83,13 @@ html {
   height: calc(100vh - 60px);
   transform: translateY(calc(100vh - 90px));
 }
+
+.tick-data {
+  &.adultsKilled {
+    @apply fill-RED/10 stroke-RED stroke-[4px];
+  }
+
+  &.minorsKilled {
+    @apply fill-GREEN/10 stroke-GREEN stroke-[4px];
+  }
+}
