@@ -135,7 +135,6 @@ export default function Home() {
 
   useGSAP(
     () => {
-      console.log(mainRef.current);
       gsap.registerPlugin(ScrollTrigger);
 
       gsapTimeline.current = gsap.timeline({
