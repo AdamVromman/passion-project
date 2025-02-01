@@ -17,7 +17,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
-  const [selectedData] = useState<SelectableDataType[]>([
+  const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
     SelectableDataType.ADULTS_KILLED,
     SelectableDataType.MINORS_KILLED,
   ]);
@@ -378,6 +378,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .select("#group-timeline")
       .selectAll<Element, TimelineYear>("svg.tick");
 
+    groups.selectAll(".tick-data").remove();
+
     selectedData.forEach((data) => {
       console.log(data);
       groups
@@ -575,10 +577,36 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   return (
     <div ref={timelineRef} className="timeline-section">
-      <div></div>
+      <div>{selectedData}</div>
       <div className="timeline-main opacity-0 w-full h-full">
-        <div className="h-1/5 flex flex-row justify-end items-end pb-8 text-BLACK text-4xl font-bold">
-          {leftYear} - {rightYear}
+        <div className="h-1/5 flex flex-row justify-end items-end pb-8 ">
+          <div>
+            {Object.values(SelectableDataType).map((key) => {
+              return (
+                <button
+                  className="bg-BLACK text-WHITE rounded-full p-4"
+                  key={key}
+                  onMouseEnter={() => {
+                    reverseData("decade");
+                    if (zoomLevel > 2) reverseData("lustrum");
+                    if (zoomLevel > 6) reverseData("regular");
+                    setSelectedData([key as SelectableDataType]);
+                  }}
+                  onMouseLeave={() => {
+                    drawData();
+                    animateData(false, "decade");
+                    if (zoomLevel > 2) animateData(false, "lustrum");
+                    if (zoomLevel > 6) animateData(false, "regular");
+                  }}
+                >
+                  {key}
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-BLACK text-4xl font-bold">
+            {leftYear}—{rightYear}
+          </div>
         </div>
         <svg
           xmlns="http://www.w3.org/2000/svg"
