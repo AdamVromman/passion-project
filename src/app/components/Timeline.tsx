@@ -9,8 +9,13 @@ import { useGSAP } from "@gsap/react";
 const PADDING = { top: 30, left: 60, right: 60, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
 
-const Timeline = () => {
+interface Props {
+  gsapTimeline: gsap.core.Timeline | null;
+}
+
+const Timeline = ({ gsapTimeline }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
 
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
@@ -258,6 +263,7 @@ const Timeline = () => {
   };
 
   const updateTicks = () => {
+    console.log("updateTicks");
     //TODO: Correctly update ticks when zoomed in
     const tickWidth =
       (getDimensions().width - PADDING.left - PADDING.right) / timeline.length;
@@ -360,116 +366,243 @@ const Timeline = () => {
 
   useEffect(() => {
     drawTimeline();
-    resize();
+    // resize();
 
     window.addEventListener("resize", resize);
     return () => {
       window.removeEventListener("resize", resize);
     };
-  });
+  }, []);
+
+  useGSAP(
+    () => {
+      if (gsapTimeline) {
+        gsapTimeline
+          .to(
+            timelineRef.current,
+            {
+              y: 0,
+              ease: "power4.out",
+              duration: 1,
+            },
+            "0"
+          )
+          .to(
+            ".timeline-main",
+            {
+              opacity: 1,
+              ease: "power4.out",
+              duration: 0.5,
+            },
+            "<"
+          )
+          .to(
+            "#main-graph-stroke",
+            {
+              attr: {
+                height: getDimensions().height - HEIGHT_TIMELINE - 8,
+                rx: 60,
+              },
+              duration: 0.5,
+            },
+            "<"
+          )
+          .to(
+            `.decade .line`,
+            {
+              opacity: 1,
+              attr: { y2: HEIGHT_TIMELINE - 8 },
+              duration: 0.4,
+              ease: "power4.out",
+              stagger: 0.05,
+            },
+            "<"
+          )
+          .to(
+            `.decade .line-2`,
+            {
+              opacity: 1,
+              attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+              duration: 0.4,
+              ease: "power4.out",
+              stagger: 0.05,
+            },
+            "<"
+          )
+          .to(
+            `.decade .text`,
+            {
+              opacity: 1,
+              duration: 0.4,
+              ease: "power4.out",
+              stagger: 0.05,
+            },
+            "<"
+          )
+          .to(
+            "#horizontal-axis, #vertical-axis",
+            { opacity: 1, duration: 0.2 },
+            "<+=0.5"
+          )
+          .to(
+            "#horizontal-axis line",
+            {
+              duration: 1,
+              attr: { x2: getDimensions().width - PADDING.right },
+              ease: "power4.out",
+            },
+            "<"
+          )
+          .to(
+            "#horizontal-axis polyline",
+            {
+              duration: 1,
+              attr: {
+                points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
+                  getDimensions().width - PADDING.right
+                }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
+              },
+              ease: "power4.out",
+            },
+            "<"
+          )
+          .to(
+            "#vertical-axis line",
+            {
+              duration: 1,
+              attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
+              ease: "power4.out",
+            },
+            "<"
+          )
+          .to(
+            "#vertical-axis polyline",
+            {
+              duration: 1,
+              attr: {
+                points: `${PADDING.left - 15}, ${
+                  PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
+                } , ${PADDING.left}, ${
+                  PADDING.top + HEIGHT_TIMELINE + PADDING.top
+                }, ${PADDING.left + 15}, ${
+                  PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
+                }`,
+              },
+              ease: "power4.out",
+            },
+            "<"
+          );
+      }
+    },
+    { scope: timelineRef, dependencies: [gsapTimeline] }
+  );
 
   return (
-    <div className="timeline-section">
-      <div className="h-1/5 flex flex-row justify-end items-end pb-8 text-BLACK text-4xl font-bold">
-        {leftYear} - {rightYear}
-      </div>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        id="svg-graph"
-        ref={graphRef}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className=" w-full h-4/5 max-h-full aspect-22/9 rounded-60 origin-center"
-      >
-        <linearGradient id="fade-to-right">
-          <stop
-            offset="10%"
-            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
+    <div ref={timelineRef} className="timeline-section">
+      <div></div>
+      <div className="timeline-main opacity-0 w-full h-full">
+        <div className="h-1/5 flex flex-row justify-end items-end pb-8 text-BLACK text-4xl font-bold">
+          {leftYear} - {rightYear}
+        </div>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          id="svg-graph"
+          ref={graphRef}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className=" w-full h-4/5 max-h-full rounded-60 origin-center"
+        >
+          <linearGradient id="fade-to-right">
+            <stop
+              offset="10%"
+              style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
+            />
+            <stop
+              offset="100%"
+              style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
+            />
+          </linearGradient>
+          <linearGradient id="fade-to-left">
+            <stop
+              offset="0%"
+              style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
+            />
+            <stop
+              offset="90%"
+              style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
+            />
+          </linearGradient>
+          <defs>
+            <g id="horizontal-axis" className="opacity-0">
+              <line
+                x1={PADDING.left}
+                x2={PADDING.left}
+                y1={0}
+                y2={0}
+                className="stroke-8 stroke-BLACK"
+              />
+              <polyline
+                points={`${PADDING.left}, 0 , ${PADDING.left}, 0, ${PADDING.left}, 0`}
+                className="stroke-8 stroke-BLACK fill-none"
+              />
+            </g>
+          </defs>
+          <rect className="h-full w-full fill-WHITE"></rect>
+          <rect x={4} y={4} id="svg-wrapper" className="fill-WHITE"></rect>
+          <g id="zoomable">
+            <g id="group-timeline"></g>
+            <g id="group-graph"></g>
+          </g>
+          <rect
+            x={0}
+            y={0}
+            width={100}
+            fill="url(#fade-to-right)"
+            className="h-full"
+          ></rect>
+          <rect
+            x={getDimensions().width - 100}
+            y={0}
+            width={100}
+            fill="url(#fade-to-left)"
+            className="h-full"
+          ></rect>
+
+          <rect
+            x={4}
+            y={HEIGHT_TIMELINE + 4}
+            width={getDimensions().width - 8}
+            height={1}
+            className="pointer-events-none stroke-BLACK fill-none stroke-8"
+            id="main-graph-stroke"
+            rx="10"
           />
-          <stop
-            offset="100%"
-            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
+
+          <use y={HEIGHT_TIMELINE / 2} href="#horizontal-axis" />
+          <use
+            id="horizontal-axis-bottom"
+            y={getDimensions().height - PADDING.bottom}
+            href="#horizontal-axis"
           />
-        </linearGradient>
-        <linearGradient id="fade-to-left">
-          <stop
-            offset="0%"
-            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
-          />
-          <stop
-            offset="90%"
-            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
-          />
-        </linearGradient>
-        <defs>
-          <g id="horizontal-axis">
+          <g id="vertical-axis" className="opacity-0">
             <line
               x1={PADDING.left}
               x2={PADDING.left}
-              y1={0}
-              y2={0}
+              y1={getDimensions().height - PADDING.bottom}
+              y2={getDimensions().height - PADDING.bottom}
               className="stroke-8 stroke-BLACK"
             />
             <polyline
-              points={`${PADDING.left - 15}, -15 , ${PADDING.left}, 0, ${
-                PADDING.left - 15
-              }, 15`}
+              points={`${PADDING.left}, ${
+                getDimensions().height - PADDING.bottom
+              }, ${PADDING.left}, ${getDimensions().height - PADDING.bottom},${
+                PADDING.left
+              }, ${getDimensions().height - PADDING.bottom}`}
               className="stroke-8 stroke-BLACK fill-none"
             />
           </g>
-        </defs>
-        <rect x={4} y={4} id="svg-wrapper" className="fill-WHITE"></rect>
-        <g id="zoomable">
-          <g id="group-timeline"></g>
-          <g id="group-graph"></g>
-        </g>
-        <rect
-          x={0}
-          y={0}
-          width={100}
-          fill="url(#fade-to-right)"
-          className="h-full"
-        ></rect>
-        <rect
-          x={getDimensions().width - 100}
-          y={0}
-          width={100}
-          fill="url(#fade-to-left)"
-          className="h-full"
-        ></rect>
-        <rect className="h-full fill-WHITE"></rect>
-        <rect
-          x={4}
-          y={HEIGHT_TIMELINE + 4}
-          className="pointer-events-none stroke-BLACK fill-none stroke-8"
-          id="main-graph-stroke"
-          rx="60"
-        />
-
-        <use y={HEIGHT_TIMELINE / 2} href="#horizontal-axis" />
-        <use
-          id="horizontal-axis-bottom"
-          y={getDimensions().height - PADDING.bottom}
-          href="#horizontal-axis"
-        />
-        <g id="vertical-axis">
-          <line
-            x1={PADDING.left}
-            x2={PADDING.left}
-            y1={getDimensions().height - PADDING.bottom}
-            y2={getDimensions().height - PADDING.bottom}
-            className="stroke-8 stroke-BLACK"
-          />
-          <polyline
-            points={`${PADDING.left - 15}, ${
-              getDimensions().height - PADDING.bottom + 15
-            }, ${PADDING.left}, ${getDimensions().height - PADDING.bottom}, ${
-              PADDING.left + 15
-            }, ${getDimensions().height - PADDING.bottom + 15}`}
-            className="stroke-8 stroke-BLACK fill-none"
-          />
-        </g>
-      </svg>
+        </svg>
+      </div>
     </div>
   );
 };

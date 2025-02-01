@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BackgroundText from "./components/BackgroundText";
 import Eye from "./components/Eye";
 import { DailyData, GazaData, WestBankData } from "./services/types";
 import Timeline from "./components/Timeline";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import ScrollTrigger from "gsap/ScrollTrigger";
 
 export default function Home() {
   const [eyeOpen, setEyeOpen] = useState(false);
@@ -21,6 +24,9 @@ export default function Home() {
   const [dataWestBank, setDataWestBank] = useState<WestBankData | null>(null);
   const [dataWestBankPrevious, setDataWestBankPrevious] =
     useState<WestBankData | null>(null);
+
+  const mainRef = useRef<HTMLDivElement>(null);
+  const gsapTimeline = useRef<gsap.core.Timeline>(null);
 
   const getDataGaza = async (day: Date) => {
     await fetch(
@@ -127,8 +133,27 @@ export default function Home() {
     };
   }, [dailyData]);
 
+  useGSAP(
+    () => {
+      console.log(mainRef.current);
+      gsap.registerPlugin(ScrollTrigger);
+
+      gsapTimeline.current = gsap.timeline({
+        scrollTrigger: {
+          trigger: mainRef.current,
+          start: "top top",
+          end: "49",
+          onEnterBack: () => {
+            gsapTimeline?.current?.reverse();
+          },
+        },
+      });
+    },
+    { scope: mainRef, dependencies: [mainRef] }
+  );
+
   return (
-    <div className="bg-BLACK">
+    <div ref={mainRef} className="main">
       <button
         onClick={() => {
           setEyeOpen(false);
@@ -160,7 +185,7 @@ export default function Home() {
           </div>
         )}
       </div>
-      <Timeline />
+      <Timeline gsapTimeline={gsapTimeline.current} />
     </div>
   );
 }
