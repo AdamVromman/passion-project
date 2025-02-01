@@ -2,16 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { timeline } from "../services/timelineService";
+import { timeline, TimelineYear } from "../services/timelineService";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-
+import { SelectableDataType } from "../services/types";
 const PADDING = { top: 30, left: 60, right: 60, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
 
-const Timeline = () => {
-  const graphRef = useRef<SVGSVGElement | null>(null);
+interface Props {
+  gsapTimeline: gsap.core.Timeline | null;
+}
 
+const Timeline = ({ gsapTimeline }: Props) => {
+  const graphRef = useRef<SVGSVGElement | null>(null);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+
+  const [selectedData] = useState<SelectableDataType[]>([
+    SelectableDataType.ADULTS_KILLED,
+  ]);
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
     timeline[timeline.length - 1].year
@@ -130,20 +138,42 @@ const Timeline = () => {
   });
 
   const animateRegular = contextSafe(() => {
-    gsap.to(`.regular *`, {
+    gsap.to(`.regular .line`, {
       opacity: 1,
-      duration: 0.2,
+      attr: { y2: HEIGHT_TIMELINE - 8 },
+      duration: 0.4,
       ease: "power4.out",
-      overwrite: true,
+    });
+    gsap.to(`.regular .line-2`, {
+      opacity: 1,
+      attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+      duration: 0.4,
+      ease: "power4.out",
+    });
+    gsap.to(`.regular .text`, {
+      opacity: 1,
+      duration: 0.4,
+      ease: "power4.out",
     });
   });
 
   const reverseRegular = contextSafe(() => {
-    gsap.to(`.regular *`, {
+    gsap.to(`.regular .line`, {
       opacity: 0,
-      duration: 0.2,
+      attr: { y2: HEIGHT_TIMELINE / 2 - 16 },
+      duration: 0.3,
       ease: "power4.out",
-      overwrite: true,
+    });
+    gsap.to(`.regular .line-2`, {
+      opacity: 0,
+      attr: { y2: HEIGHT_TIMELINE + 16 },
+      duration: 0.3,
+      ease: "power4.out",
+    });
+    gsap.to(`.regular .text`, {
+      opacity: 0,
+      duration: 0.3,
+      ease: "power4.out",
     });
   });
 
@@ -158,14 +188,18 @@ const Timeline = () => {
 
     if (zoom > 6) {
       animateRegular();
+      animateData(false, "regular");
     } else {
       reverseRegular();
+      reverseData("regular");
     }
 
     if (zoom > 2) {
       animateLustra();
+      animateData(false, "lustrum");
     } else {
       reverseLustra();
+      reverseData("lustrum");
     }
 
     d3.select(graphRef.current)
@@ -243,7 +277,7 @@ const Timeline = () => {
     d3.select(graphRef.current)
       .select("#group-timeline")
       .selectAll("svg.tick")
-      .attr("x", (_, i) => PADDING.left + i * zoomLevel * tickWidth);
+      .attr("x", (_, i) => PADDING.left + i * tickWidth);
   };
 
   const drawTimeline = () => {
@@ -269,7 +303,6 @@ const Timeline = () => {
     updateTicks();
     animateMain();
     animateDecades();
-    console.log(zoomLevel);
     if (zoomLevel > 2) animateLustra();
     if (zoomLevel > 6) animateRegular();
 
@@ -317,7 +350,7 @@ const Timeline = () => {
         if (tick) {
           const tickLeft = tick.getBoundingClientRect().left;
           if (tickLeft >= left) {
-            setLeftYear(timeline[i + (-1 + zoomLevel)].year);
+            setLeftYear(timeline[i].year);
             break;
           }
         }
@@ -328,7 +361,7 @@ const Timeline = () => {
         if (tick) {
           const tickRight = tick.getBoundingClientRect().right;
           if (tickRight <= right) {
-            setRightYear(timeline[i + (1 - zoomLevel)].year);
+            setRightYear(timeline[i].year);
             break;
           }
         }
@@ -336,118 +369,315 @@ const Timeline = () => {
     }
   };
 
+  const drawData = () => {
+    const maxHeight = getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom;
+    const maxKilled = d3.max(timeline, (d) => d.adultsKilled?.number ?? 0) ?? 0;
+
+    const groups = d3
+      .select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll<Element, TimelineYear>("svg.tick");
+
+    groups
+      .append("circle")
+      .attr("id", (d: TimelineYear) => `data-${d.year}`)
+      .attr("cx", 25)
+      .attr(
+        "cy",
+        (d) =>
+          getDimensions().height -
+          PADDING.bottom -
+          ((d?.adultsKilled?.number ?? Math.random() * maxKilled) / maxKilled) *
+            maxHeight
+      )
+      .attr("r", 0)
+      .attr("class", "tick-data unzoom adults-killed")
+      .attr("fill", "red");
+  };
+
+  const animateDataType = (timeline: boolean, parent: string, type: string) => {
+    if (timeline) {
+      gsapTimeline?.to(
+        `.tick.${parent} .tick-data.${type}`,
+        {
+          attr: { r: 5 },
+          duration: 0.2,
+          ease: "bounce.out",
+          stagger: 0.01,
+        },
+        "<"
+      );
+    } else {
+      gsap.to(`.tick.${parent} .tick-data.${type}`, {
+        attr: { r: 5 },
+        duration: 0.2,
+        ease: "bounce.out",
+        stagger: 0.01,
+      });
+    }
+  };
+
+  const reverseDataType = (parent: string, type: string) => {
+    gsap.to(`.tick.${parent} .tick-data.${type}`, {
+      attr: { r: 0 },
+      duration: 0.2,
+      ease: "bounce.in",
+    });
+  };
+
+  const reverseData = (parent: string) => {
+    selectedData.forEach((data) => {
+      reverseDataType(parent, data);
+    });
+  };
+  const animateData = (timeline: boolean, parent: string) => {
+    selectedData.forEach((data) => {
+      animateDataType(timeline, parent, data);
+    });
+  };
+
   useEffect(() => {
     drawTimeline();
-    resize();
+    drawData();
+    // resize();
 
     window.addEventListener("resize", resize);
     return () => {
       window.removeEventListener("resize", resize);
     };
-  });
+  }, []);
+
+  useGSAP(
+    () => {
+      if (gsapTimeline) {
+        gsapTimeline
+          .to(
+            timelineRef.current,
+            {
+              y: 0,
+              ease: "power4.out",
+              duration: 1,
+            },
+            "0"
+          )
+          .to(
+            ".timeline-main",
+            {
+              opacity: 1,
+              ease: "power4.out",
+              duration: 0.5,
+            },
+            "<"
+          )
+          .to(
+            "#main-graph-stroke",
+            {
+              attr: {
+                height: getDimensions().height - HEIGHT_TIMELINE - 8,
+                rx: 60,
+              },
+              duration: 0.5,
+            },
+            "<"
+          )
+          .to(
+            `.decade .line`,
+            {
+              opacity: 1,
+              attr: { y2: HEIGHT_TIMELINE - 8 },
+              duration: 0.4,
+              ease: "power4.out",
+              stagger: 0.05,
+            },
+            "<"
+          )
+          .to(
+            `.decade .line-2`,
+            {
+              opacity: 1,
+              attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+              duration: 0.4,
+              ease: "power4.out",
+              stagger: 0.05,
+            },
+            "<"
+          )
+          .to(
+            `.decade .text`,
+            {
+              opacity: 1,
+              duration: 0.4,
+              ease: "power4.out",
+              stagger: 0.05,
+            },
+            "<"
+          )
+          .to(
+            "#horizontal-axis, #vertical-axis",
+            { opacity: 1, duration: 0.2 },
+            "<+=0.5"
+          )
+          .to(
+            "#horizontal-axis line",
+            {
+              duration: 1,
+              attr: { x2: getDimensions().width - PADDING.right },
+              ease: "power4.out",
+            },
+            "<"
+          )
+          .to(
+            "#horizontal-axis polyline",
+            {
+              duration: 1,
+              attr: {
+                points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
+                  getDimensions().width - PADDING.right
+                }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
+              },
+              ease: "power4.out",
+            },
+            "<"
+          )
+          .to(
+            "#vertical-axis line",
+            {
+              duration: 1,
+              attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
+              ease: "power4.out",
+            },
+            "<"
+          )
+          .to(
+            "#vertical-axis polyline",
+            {
+              duration: 1,
+              attr: {
+                points: `${PADDING.left - 15}, ${
+                  PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
+                } , ${PADDING.left}, ${
+                  PADDING.top + HEIGHT_TIMELINE + PADDING.top
+                }, ${PADDING.left + 15}, ${
+                  PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
+                }`,
+              },
+              ease: "power4.out",
+            },
+            "<"
+          );
+
+        animateData(true, "decade");
+      }
+    },
+    { scope: timelineRef, dependencies: [gsapTimeline] }
+  );
 
   return (
-    <div className="timeline-section">
-      <div className="h-1/5 flex flex-row justify-end items-end pb-8 text-BLACK text-4xl font-bold">
-        {leftYear} - {rightYear}
-      </div>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        id="svg-graph"
-        ref={graphRef}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className=" w-full h-4/5 max-h-full aspect-22/9 rounded-60 origin-center"
-      >
-        <linearGradient id="fade-to-right">
-          <stop
-            offset="10%"
-            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
+    <div ref={timelineRef} className="timeline-section">
+      <div></div>
+      <div className="timeline-main opacity-0 w-full h-full">
+        <div className="h-1/5 flex flex-row justify-end items-end pb-8 text-BLACK text-4xl font-bold">
+          {leftYear} - {rightYear}
+        </div>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          id="svg-graph"
+          ref={graphRef}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className=" w-full h-4/5 max-h-full rounded-60 origin-center"
+        >
+          <linearGradient id="fade-to-right">
+            <stop
+              offset="10%"
+              style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
+            />
+            <stop
+              offset="100%"
+              style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
+            />
+          </linearGradient>
+          <linearGradient id="fade-to-left">
+            <stop
+              offset="0%"
+              style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
+            />
+            <stop
+              offset="90%"
+              style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
+            />
+          </linearGradient>
+          <defs>
+            <g id="horizontal-axis" className="opacity-0">
+              <line
+                x1={PADDING.left}
+                x2={PADDING.left}
+                y1={0}
+                y2={0}
+                className="stroke-8 stroke-BLACK"
+              />
+              <polyline
+                points={`${PADDING.left}, 0 , ${PADDING.left}, 0, ${PADDING.left}, 0`}
+                className="stroke-8 stroke-BLACK fill-none"
+              />
+            </g>
+          </defs>
+          <rect className="h-full w-full fill-WHITE"></rect>
+          <rect x={4} y={4} id="svg-wrapper" className="fill-WHITE"></rect>
+          <g id="zoomable">
+            <g id="group-timeline"></g>
+            <g id="group-graph"></g>
+          </g>
+          <rect
+            x={0}
+            y={0}
+            width={100}
+            fill="url(#fade-to-right)"
+            className="h-full"
+          ></rect>
+          <rect
+            x={getDimensions().width - 100}
+            y={0}
+            width={100}
+            fill="url(#fade-to-left)"
+            className="h-full"
+          ></rect>
+
+          <rect
+            x={4}
+            y={HEIGHT_TIMELINE + 4}
+            width={getDimensions().width - 8}
+            height={1}
+            className="pointer-events-none stroke-BLACK fill-none stroke-8"
+            id="main-graph-stroke"
+            rx="10"
           />
-          <stop
-            offset="100%"
-            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
+
+          <use y={HEIGHT_TIMELINE / 2} href="#horizontal-axis" />
+          <use
+            id="horizontal-axis-bottom"
+            y={getDimensions().height - PADDING.bottom}
+            href="#horizontal-axis"
           />
-        </linearGradient>
-        <linearGradient id="fade-to-left">
-          <stop
-            offset="0%"
-            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 0 }}
-          />
-          <stop
-            offset="90%"
-            style={{ stopColor: "var(--color-WHITE)", stopOpacity: 1 }}
-          />
-        </linearGradient>
-        <defs>
-          <g id="horizontal-axis">
+          <g id="vertical-axis" className="opacity-0">
             <line
               x1={PADDING.left}
               x2={PADDING.left}
-              y1={0}
-              y2={0}
+              y1={getDimensions().height - PADDING.bottom}
+              y2={getDimensions().height - PADDING.bottom}
               className="stroke-8 stroke-BLACK"
             />
             <polyline
-              points={`${PADDING.left - 15}, -15 , ${PADDING.left}, 0, ${
-                PADDING.left - 15
-              }, 15`}
+              points={`${PADDING.left}, ${
+                getDimensions().height - PADDING.bottom
+              }, ${PADDING.left}, ${getDimensions().height - PADDING.bottom},${
+                PADDING.left
+              }, ${getDimensions().height - PADDING.bottom}`}
               className="stroke-8 stroke-BLACK fill-none"
             />
           </g>
-        </defs>
-        <rect x={4} y={4} id="svg-wrapper" className="fill-WHITE"></rect>
-        <g id="zoomable">
-          <g id="group-timeline"></g>
-          <g id="group-graph"></g>
-        </g>
-        <rect
-          x={0}
-          y={0}
-          width={100}
-          fill="url(#fade-to-right)"
-          className="h-full"
-        ></rect>
-        <rect
-          x={getDimensions().width - 100}
-          y={0}
-          width={100}
-          fill="url(#fade-to-left)"
-          className="h-full"
-        ></rect>
-        <rect className="h-full fill-WHITE"></rect>
-        <rect
-          x={4}
-          y={HEIGHT_TIMELINE + 4}
-          className="pointer-events-none stroke-BLACK fill-none stroke-8"
-          id="main-graph-stroke"
-          rx="60"
-        />
-
-        <use y={HEIGHT_TIMELINE / 2} href="#horizontal-axis" />
-        <use
-          id="horizontal-axis-bottom"
-          y={getDimensions().height - PADDING.bottom}
-          href="#horizontal-axis"
-        />
-        <g id="vertical-axis">
-          <line
-            x1={PADDING.left}
-            x2={PADDING.left}
-            y1={getDimensions().height - PADDING.bottom}
-            y2={getDimensions().height - PADDING.bottom}
-            className="stroke-8 stroke-BLACK"
-          />
-          <polyline
-            points={`${PADDING.left - 15}, ${
-              getDimensions().height - PADDING.bottom + 15
-            }, ${PADDING.left}, ${getDimensions().height - PADDING.bottom}, ${
-              PADDING.left + 15
-            }, ${getDimensions().height - PADDING.bottom + 15}`}
-            className="stroke-8 stroke-BLACK fill-none"
-          />
-        </g>
-      </svg>
+        </svg>
+      </div>
     </div>
   );
 };
