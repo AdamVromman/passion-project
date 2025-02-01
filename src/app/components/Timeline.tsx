@@ -17,8 +17,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
-  const [selectedData] = useState<SelectableDataType[]>([
+  const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
     SelectableDataType.ADULTS_KILLED,
+    SelectableDataType.MINORS_KILLED,
   ]);
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
@@ -371,28 +372,30 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   const drawData = () => {
     const maxHeight = getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom;
-    const maxKilled = d3.max(timeline, (d) => d.adultsKilled?.number ?? 0) ?? 0;
 
     const groups = d3
       .select(graphRef.current)
       .select("#group-timeline")
       .selectAll<Element, TimelineYear>("svg.tick");
 
-    groups
-      .append("circle")
-      .attr("id", (d: TimelineYear) => `data-${d.year}`)
-      .attr("cx", 25)
-      .attr(
-        "cy",
-        (d) =>
-          getDimensions().height -
-          PADDING.bottom -
-          ((d?.adultsKilled?.number ?? Math.random() * maxKilled) / maxKilled) *
-            maxHeight
-      )
-      .attr("r", 0)
-      .attr("class", "tick-data unzoom adults-killed")
-      .attr("fill", "red");
+    groups.selectAll(".tick-data").remove();
+
+    selectedData.forEach((data) => {
+      console.log(data);
+      groups
+        .append("circle")
+        .attr("id", (d: TimelineYear) => `data-${d.year}`)
+        .attr("cx", 25)
+        .attr(
+          "cy",
+          (d) =>
+            getDimensions().height -
+            PADDING.bottom -
+            ((d[data]?.number ?? Math.random() * 1000) / 1000) * maxHeight
+        )
+        .attr("r", 0)
+        .attr("class", `tick-data unzoom ${data}`);
+    });
   };
 
   const animateDataType = (timeline: boolean, parent: string, type: string) => {
@@ -400,7 +403,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       gsapTimeline?.to(
         `.tick.${parent} .tick-data.${type}`,
         {
-          attr: { r: 5 },
+          attr: { r: 7 },
           duration: 0.2,
           ease: "bounce.out",
           stagger: 0.01,
@@ -574,10 +577,36 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   return (
     <div ref={timelineRef} className="timeline-section">
-      <div></div>
+      <div>{selectedData}</div>
       <div className="timeline-main opacity-0 w-full h-full">
-        <div className="h-1/5 flex flex-row justify-end items-end pb-8 text-BLACK text-4xl font-bold">
-          {leftYear} - {rightYear}
+        <div className="h-1/5 flex flex-row justify-end items-end pb-8 ">
+          <div>
+            {Object.values(SelectableDataType).map((key) => {
+              return (
+                <button
+                  className="bg-BLACK text-WHITE rounded-full p-4"
+                  key={key}
+                  onMouseEnter={() => {
+                    reverseData("decade");
+                    if (zoomLevel > 2) reverseData("lustrum");
+                    if (zoomLevel > 6) reverseData("regular");
+                    setSelectedData([key as SelectableDataType]);
+                  }}
+                  onMouseLeave={() => {
+                    drawData();
+                    animateData(false, "decade");
+                    if (zoomLevel > 2) animateData(false, "lustrum");
+                    if (zoomLevel > 6) animateData(false, "regular");
+                  }}
+                >
+                  {key}
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-BLACK text-4xl font-bold">
+            {leftYear}—{rightYear}
+          </div>
         </div>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -623,7 +652,12 @@ const Timeline = ({ gsapTimeline }: Props) => {
             </g>
           </defs>
           <rect className="h-full w-full fill-WHITE"></rect>
-          <rect x={4} y={4} id="svg-wrapper" className="fill-WHITE"></rect>
+          <rect
+            x={4}
+            y={4}
+            id="svg-wrapper"
+            className="w-full fill-WHITE"
+          ></rect>
           <g id="zoomable">
             <g id="group-timeline"></g>
             <g id="group-graph"></g>
