@@ -25,6 +25,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
     SelectableDataType.MINORS_KILLED,
     SelectableDataType.MINORS_INJURED,
     SelectableDataType.PERCENTAGE_OF_PALESTINIAN_LAND_STOLEN,
+    SelectableDataType.ADULTS_IMPRISONED,
+    SelectableDataType.MINORS_IMPRISONED,
+    SelectableDataType.BUILDINGS_DEMOLISHED,
+    SelectableDataType.ILLEGAL_SETTLERS,
   ]);
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(

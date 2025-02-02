@@ -526,6 +526,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1986,
+    illegalSettlers: { number: 60766, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -533,6 +534,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1987,
+    illegalSettlers: { number: 67483, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -540,6 +542,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1988,
+    illegalSettlers: { number: 190953, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -547,6 +550,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1989,
+    illegalSettlers: { number: 202885, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -554,6 +558,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1990,
+    illegalSettlers: { number: 221348, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -561,6 +566,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1991,
+    illegalSettlers: { number: 238060, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -568,6 +574,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1992,
+    illegalSettlers: { number: 252545, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -575,6 +582,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1993,
+    illegalSettlers: { number: 268756, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -582,6 +590,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1994,
+    illegalSettlers: { number: 285791, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -589,6 +598,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1995,
+    illegalSettlers: { number: 296959, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -596,6 +606,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1996,
+    illegalSettlers: { number: 313658, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -603,6 +614,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1997,
+    illegalSettlers: { number: 326053, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -610,6 +622,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1998,
+    illegalSettlers: { number: 341929, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -617,6 +630,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1999,
+    illegalSettlers: { number: 361150, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -624,6 +638,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2000,
+    illegalSettlers: { number: 379099, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -631,6 +646,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2001,
+    illegalSettlers: { number: 391049, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -638,6 +654,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2002,
+    illegalSettlers: { number: 405149, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -645,6 +662,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2003,
+    illegalSettlers: { number: 421738, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -652,6 +670,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2004,
+    illegalSettlers: { number: 437681, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -659,6 +678,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2005,
+    illegalSettlers: { number: 452622, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -666,6 +686,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2006,
+    illegalSettlers: { number: 470013, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -673,6 +694,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2007,
+    illegalSettlers: { number: 487618, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -712,6 +734,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2010,
+    illegalSettlers: { number: 533022, source: [Source.CBS] },
     adultsKilled: { number: 78, source: [Source.OCHA] },
     minorsKilled: { number: 9, source: [Source.OCHA] },
     adultsInjured: { number: 1211, source: [Source.OCHA] },
@@ -723,6 +746,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2011,
+    illegalSettlers: { number: 552260, source: [Source.CBS] },
     adultsKilled: { number: 103, source: [Source.OCHA] },
     minorsKilled: { number: 14, source: [Source.OCHA] },
     adultsInjured: { number: 1701, source: [Source.OCHA] },
@@ -734,6 +758,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2012,
+    illegalSettlers: { number: 569727, source: [Source.CBS] },
     adultsKilled: { number: 214, source: [Source.OCHA] },
     minorsKilled: { number: 45, source: [Source.OCHA] },
     adultsInjured: { number: 3578, source: [Source.OCHA] },
@@ -745,6 +770,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2013,
+    illegalSettlers: { number: 588437, source: [Source.CBS] },
     adultsKilled: { number: 34, source: [Source.OCHA] },
     minorsKilled: { number: 5, source: [Source.OCHA] },
     adultsInjured: { number: 2741, source: [Source.OCHA] },
@@ -756,6 +782,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2014,
+    illegalSettlers: { number: 606851, source: [Source.CBS] },
     adultsKilled: { number: 1760, source: [Source.OCHA] },
     minorsKilled: { number: 567, source: [Source.OCHA] },
     adultsInjured: { number: 12824, source: [Source.OCHA] },
@@ -767,6 +794,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2015,
+    illegalSettlers: { number: 623835, source: [Source.CBS] },
     adultsKilled: { number: 144, source: [Source.OCHA] },
     minorsKilled: { number: 30, source: [Source.OCHA] },
     adultsInjured: { number: 11904, source: [Source.OCHA] },
@@ -778,6 +806,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2016,
+    illegalSettlers: { number: 640442, source: [Source.CBS] },
     adultsKilled: { number: 71, source: [Source.OCHA] },
     minorsKilled: { number: 37, source: [Source.OCHA] },
     adultsInjured: { number: 2416, source: [Source.OCHA] },
@@ -789,6 +818,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2017,
+    illegalSettlers: { number: 657993, source: [Source.CBS] },
     adultsKilled: { number: 63, source: [Source.OCHA] },
     minorsKilled: { number: 14, source: [Source.OCHA] },
     adultsInjured: { number: 4679, source: [Source.OCHA] },
@@ -800,6 +830,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2018,
+    illegalSettlers: { number: 675695, source: [Source.CBS] },
     adultsKilled: { number: 243, source: [Source.OCHA] },
     minorsKilled: { number: 57, source: [Source.OCHA] },
     adultsInjured: { number: 22189, source: [Source.OCHA] },
@@ -811,6 +842,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2019,
+    illegalSettlers: { number: 692402, source: [Source.CBS] },
     adultsKilled: { number: 111, source: [Source.OCHA] },
     minorsKilled: { number: 27, source: [Source.OCHA] },
     adultsInjured: { number: 8635, source: [Source.OCHA] },
@@ -822,6 +854,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2020,
+    illegalSettlers: { number: 703874, source: [Source.CBS] },
     adultsKilled: { number: 21, source: [Source.OCHA] },
     minorsKilled: { number: 9, source: [Source.OCHA] },
     adultsInjured: { number: 1792, source: [Source.OCHA] },
@@ -833,6 +866,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2021,
+    illegalSettlers: { number: 719452, source: [Source.CBS] },
     adultsKilled: { number: 250, source: [Source.OCHA] },
     minorsKilled: { number: 78, source: [Source.OCHA] },
     adultsInjured: { number: 6591, source: [Source.OCHA] },
