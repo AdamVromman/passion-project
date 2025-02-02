@@ -4,6 +4,7 @@ export enum Source {
   CBS = "Israel Central Bureau of Statistics",
   AL_JAZEERA = "Al Jazeera",
   UNHCR = "UNHCR",
+  MOHTEL = "Gaza's Ministry of Health Telegram channel",
 }
 
 export interface Event {
@@ -14,13 +15,13 @@ export interface Event {
   endDate?: Date;
   location: string;
   link: string;
-  source: Source;
+  source: Source[];
   image: string;
 }
 
 interface dataNumber {
   number: number;
-  source: Source;
+  source: Source[];
 }
 
 export interface TimelineYear {
@@ -59,7 +60,7 @@ export const timeline: TimelineYear[] = [
   { year: 1934 },
   { year: 1935 },
   { year: 1936 },
-  { year: 1937, adultsKilled: { number: 520, source: Source.OCHA } },
+  { year: 1937 },
   { year: 1938 },
   { year: 1939 },
   { year: 1940 },
@@ -74,19 +75,6 @@ export const timeline: TimelineYear[] = [
   { year: 1949 },
   {
     year: 1950,
-    adultsKilled: { number: 520, source: Source.OCHA },
-    minorsKilled: { number: 345, source: Source.OCHA },
-    adultsInjured: { number: 1536, source: Source.OCHA },
-    minorsInjured: { number: 556, source: Source.OCHA },
-    minorsImprisoned: { number: 379, source: Source.BTSELEM },
-    adultsImprisoned: { number: 7952, source: Source.BTSELEM },
-    illegalSettlers: { number: 496032, source: Source.CBS },
-    percentageOfPalestinianLandStolen: {
-      number: 90,
-      source: Source.AL_JAZEERA,
-    },
-    palestiniansDisplaced: { number: 342657, source: Source.UNHCR },
-    buildingsDemolished: { number: 84, source: Source.BTSELEM },
   },
   { year: 1951 },
   { year: 1952 },
@@ -147,82 +135,98 @@ export const timeline: TimelineYear[] = [
   { year: 2007 },
   {
     year: 2008,
-    adultsKilled: { number: 526, source: Source.OCHA },
-    minorsKilled: { number: 345, source: Source.OCHA },
-    adultsInjured: { number: 1536, source: Source.OCHA },
-    minorsInjured: { number: 556, source: Source.OCHA },
-    minorsImprisoned: { number: 379, source: Source.BTSELEM },
-    adultsImprisoned: { number: 7952, source: Source.BTSELEM },
-    illegalSettlers: { number: 496032, source: Source.CBS },
+    adultsKilled: { number: 526, source: [Source.OCHA] },
+    minorsKilled: { number: 345, source: [Source.OCHA] },
+    adultsInjured: { number: 1536, source: [Source.OCHA] },
+    minorsInjured: { number: 556, source: [Source.OCHA] },
+    minorsImprisoned: { number: 379, source: [Source.BTSELEM] },
+    adultsImprisoned: { number: 7952, source: [Source.BTSELEM] },
+    illegalSettlers: { number: 496032, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
-      source: Source.AL_JAZEERA,
+      source: [Source.AL_JAZEERA],
     },
-    palestiniansDisplaced: { number: 342657, source: Source.UNHCR },
-    buildingsDemolished: { number: 84, source: Source.BTSELEM },
+    palestiniansDisplaced: { number: 342657, source: [Source.UNHCR] },
+    buildingsDemolished: { number: 84, source: [Source.BTSELEM] },
   },
   {
     year: 2009,
-    adultsKilled: { number: 1482, source: Source.OCHA },
-    minorsKilled: { number: 433, source: Source.OCHA },
-    adultsInjured: { number: 5768, source: Source.OCHA },
-    minorsInjured: { number: 2629, source: Source.OCHA },
-    minorsImprisoned: { number: 299, source: Source.BTSELEM },
-    adultsImprisoned: { number: 6842, source: Source.BTSELEM },
-    illegalSettlers: { number: 514643, source: Source.CBS },
+    adultsKilled: { number: 956, source: [Source.OCHA] },
+    minorsKilled: { number: 433, source: [Source.OCHA] },
+    adultsInjured: { number: 5768, source: [Source.OCHA] },
+    minorsInjured: { number: 2629, source: [Source.OCHA] },
+    minorsImprisoned: { number: 299, source: [Source.BTSELEM] },
+    adultsImprisoned: { number: 6842, source: [Source.BTSELEM] },
+    illegalSettlers: { number: 514643, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
-      source: Source.AL_JAZEERA,
+      source: [Source.AL_JAZEERA],
     },
-    palestiniansDisplaced: { number: 342657, source: Source.UNHCR },
-    buildingsDemolished: { number: 31, source: Source.BTSELEM },
+    palestiniansDisplaced: { number: 342657, source: [Source.UNHCR] },
+    buildingsDemolished: { number: 31, source: [Source.BTSELEM] },
   },
   {
     year: 2010,
+    adultsKilled: { number: 78, source: [Source.OCHA] },
   },
   {
     year: 2011,
+    adultsKilled: { number: 103, source: [Source.OCHA] },
   },
   {
     year: 2012,
+    adultsKilled: { number: 214, source: [Source.OCHA] },
   },
   {
     year: 2013,
+    adultsKilled: { number: 34, source: [Source.OCHA] },
   },
   {
     year: 2014,
+    adultsKilled: { number: 1760, source: [Source.OCHA] },
   },
   {
     year: 2015,
+    adultsKilled: { number: 144, source: [Source.OCHA] },
   },
   {
     year: 2016,
+    adultsKilled: { number: 71, source: [Source.OCHA] },
   },
   {
     year: 2017,
+    adultsKilled: { number: 63, source: [Source.OCHA] },
   },
   {
     year: 2018,
+    adultsKilled: { number: 243, source: [Source.OCHA] },
   },
   {
     year: 2019,
+    adultsKilled: { number: 111, source: [Source.OCHA] },
   },
   {
     year: 2020,
+    adultsKilled: { number: 21, source: [Source.OCHA] },
   },
   {
     year: 2021,
+    adultsKilled: { number: 250, source: [Source.OCHA] },
   },
   {
     year: 2022,
+    adultsKilled: { number: 146, source: [Source.OCHA] },
   },
   {
     year: 2023,
+    adultsKilled: { number: 21822 + 411, source: [Source.OCHA, Source.MOHTEL] },
   },
   {
     year: 2024,
+    adultsKilled: { number: 23719 + 400, source: [Source.OCHA, Source.MOHTEL] },
   },
   {
     year: 2025,
+    adultsKilled: { number: 1919 + 22, source: [Source.MOHTEL, Source.OCHA] },
   },
 ];

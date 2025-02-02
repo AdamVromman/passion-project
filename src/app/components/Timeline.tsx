@@ -31,6 +31,22 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   const { contextSafe } = useGSAP({ scope: graphRef });
 
+  const getMaxValues = () => {
+    const values = new Map<SelectableDataType, number>();
+
+    selectedData.forEach((data) => {
+      const max = d3.max(timeline, (d) => d[data]?.number ?? 0) ?? 0;
+
+      const digits = Math.floor(Math.log10(max) + 1);
+      const powerNumber = Math.max(Math.pow(10, digits - 2), 1);
+      const ceiled = Math.ceil(max / powerNumber) * powerNumber;
+
+      values.set(data, ceiled);
+    });
+
+    return values;
+  };
+
   const getDimensions = () => {
     if (graphRef.current)
       return {
@@ -356,7 +372,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const drawData = (localSelectedData?: SelectableDataType[]) => {
-    const maxHeight = getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom;
+    const maxHeight =
+      getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
 
     const groups = d3
       .select(graphRef.current)
@@ -367,6 +384,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
     (localSelectedData ?? selectedData).forEach((data) => {
       groups
+        .filter((d) => typeof d[data]?.number !== "undefined")
         .append("circle")
         .attr("id", (d: TimelineYear) => `data-${d.year}`)
         .attr("cx", 25)
@@ -375,7 +393,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
           (d) =>
             getDimensions().height -
             PADDING.bottom -
-            ((d[data]?.number ?? Math.random() * 1000) / 1000) * maxHeight
+            16 -
+            (d[data]?.number / getMaxValues().get(data)) * maxHeight
         )
         .attr("r", 0)
         .attr("class", `tick-data unzoom ${data}`);
@@ -383,7 +402,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const animateDataType = (timeline: boolean, type: string) => {
-    console.log("here");
     if (timeline) {
       gsapTimeline?.to(
         `.tick.decade .tick-data.${type}`,
@@ -428,9 +446,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         stagger: 0.01,
       });
 
-      console.log(zoomLevelFloored, LUSTRUM_ZOOM);
       if (zoomLevelFloored >= LUSTRUM_ZOOM) {
-        console.log("lustrum animated");
         gsap.to(`.tick.lustrum .tick-data.${type}`, {
           attr: { r: 7 },
           duration: 0.2,
@@ -486,6 +502,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     drawTimeline();
     drawData();
     // resize();
+    getMaxValues();
 
     window.addEventListener("resize", resize);
     return () => {
@@ -494,7 +511,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
   }, []);
 
   useEffect(() => {
-    console.log(zoomLevelFloored);
     if (zoomLevelFloored >= LUSTRUM_ZOOM) {
       animateLustra();
       animateData(false);
