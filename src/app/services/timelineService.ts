@@ -23,6 +23,7 @@ export interface Event {
 interface dataNumber {
   number: number;
   source: Source[];
+  note?: string;
 }
 
 export interface TimelineYear {
@@ -264,6 +265,7 @@ export const timeline: TimelineYear[] = [
       number: 78,
       source: [Source.AL_JAZEERA],
     },
+    adultsKilled: { number: 15000, source: [Source.AL_JAZEERA] },
   },
   {
     year: 1949,
@@ -638,6 +640,8 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2000,
+    adultsKilled: { number: 277 + 6, source: [Source.BTSELEM] },
+    minorsKilled: { number: 86, source: [Source.BTSELEM] },
     illegalSettlers: { number: 379099, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
@@ -646,6 +650,8 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2001,
+    adultsKilled: { number: 463, source: [Source.BTSELEM] },
+    minorsKilled: { number: 80, source: [Source.BTSELEM] },
     illegalSettlers: { number: 391049, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
@@ -654,6 +660,8 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2002,
+    adultsKilled: { number: 1021 + 13, source: [Source.BTSELEM] },
+    minorsKilled: { number: 164 + 3, source: [Source.BTSELEM] },
     illegalSettlers: { number: 405149, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
@@ -662,6 +670,8 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2003,
+    adultsKilled: { number: 581 + 6, source: [Source.BTSELEM] },
+    minorsKilled: { number: 121, source: [Source.BTSELEM] },
     illegalSettlers: { number: 421738, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
@@ -670,35 +680,47 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2004,
+    adultsKilled: { number: 827 + 2, source: [Source.BTSELEM] },
+    minorsKilled: { number: 181 + 1, source: [Source.BTSELEM] },
     illegalSettlers: { number: 437681, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 177 + 1404, source: [Source.BTSELEM] },
   },
   {
     year: 2005,
+    adultsKilled: { number: 183 + 7, source: [Source.BTSELEM] },
+    minorsKilled: { number: 49 + 2, source: [Source.BTSELEM] },
     illegalSettlers: { number: 452622, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 17, source: [Source.BTSELEM] },
   },
   {
     year: 2006,
+    adultsKilled: { number: 665, source: [Source.BTSELEM] },
+    minorsKilled: { number: 140, source: [Source.BTSELEM] },
     illegalSettlers: { number: 470013, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 355 + 49, source: [Source.BTSELEM] },
   },
   {
     year: 2007,
+    adultsKilled: { number: 384 + 1, source: [Source.BTSELEM] },
+    minorsKilled: { number: 52, source: [Source.BTSELEM] },
     illegalSettlers: { number: 487618, source: [Source.CBS] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 43 + 41, source: [Source.BTSELEM] },
   },
   {
     year: 2008,
@@ -714,7 +736,7 @@ export const timeline: TimelineYear[] = [
       source: [Source.AL_JAZEERA],
     },
     palestiniansDisplaced: { number: 342657, source: [Source.UNHCR] },
-    buildingsDemolished: { number: 84, source: [Source.BTSELEM] },
+    buildingsDemolished: { number: 40 + 44, source: [Source.BTSELEM] },
   },
   {
     year: 2009,
@@ -730,7 +752,7 @@ export const timeline: TimelineYear[] = [
       source: [Source.AL_JAZEERA],
     },
     palestiniansDisplaced: { number: 342657, source: [Source.UNHCR] },
-    buildingsDemolished: { number: 31, source: [Source.BTSELEM] },
+    buildingsDemolished: { number: 3 + 28, source: [Source.BTSELEM] },
   },
   {
     year: 2010,
@@ -748,6 +770,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 13 + 85, source: [Source.BTSELEM] },
   },
   {
     year: 2011,
@@ -765,6 +788,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 2 + 157, source: [Source.BTSELEM] },
   },
   {
     year: 2012,
@@ -782,6 +806,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 270, source: [Source.BTSELEM] },
   },
   {
     year: 2013,
@@ -799,6 +824,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 420, source: [Source.BTSELEM] },
   },
   {
     year: 2014,
@@ -816,6 +842,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 5 + 3 + 341, source: [Source.BTSELEM] },
   },
   {
     year: 2015,
@@ -833,6 +860,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 12 + 332, source: [Source.BTSELEM] },
   },
   {
     year: 2016,
@@ -850,6 +878,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 28 + 5 + 654, source: [Source.BTSELEM] },
   },
   {
     year: 2017,
@@ -867,6 +896,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 7 + 1 + 208, source: [Source.BTSELEM] },
   },
   {
     year: 2018,
@@ -884,6 +914,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 9 + 7 + 195, source: [Source.BTSELEM] },
   },
   {
     year: 2019,
@@ -901,6 +932,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 14 + 261, source: [Source.BTSELEM] },
   },
   {
     year: 2020,
@@ -918,6 +950,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 6 + 569, source: [Source.BTSELEM] },
   },
   {
     year: 2021,
@@ -935,6 +968,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 3 + 1 + 683, source: [Source.BTSELEM] },
   },
   {
     year: 2022,
@@ -951,6 +985,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 17 + 784, source: [Source.BTSELEM] },
   },
   {
     year: 2023,
@@ -973,6 +1008,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 31 + 16 + 554, source: [Source.BTSELEM] },
   },
   {
     year: 2024,
@@ -992,6 +1028,7 @@ export const timeline: TimelineYear[] = [
       number: 90,
       source: [Source.AL_JAZEERA],
     },
+    buildingsDemolished: { number: 841 + 20, source: [Source.BTSELEM] },
   },
   {
     year: 2025,
