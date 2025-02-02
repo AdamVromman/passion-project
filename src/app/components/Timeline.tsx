@@ -8,6 +8,8 @@ import { useGSAP } from "@gsap/react";
 import { SelectableDataType } from "../services/types";
 const PADDING = { top: 30, left: 60, right: 60, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
+const LUSTRUM_ZOOM = 2;
+const REGULAR_ZOOM = 6;
 
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
@@ -19,13 +21,13 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
     SelectableDataType.ADULTS_KILLED,
-    SelectableDataType.MINORS_KILLED,
   ]);
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
     timeline[timeline.length - 1].year
   );
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomLevelFloored, setZoomLevelFloored] = useState(1);
 
   const { contextSafe } = useGSAP({ scope: graphRef });
 
@@ -183,25 +185,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
     const zoom = e.transform.k;
 
     updateYears();
-
-    //TODO: Correctly set the zoom level
     setZoomLevel(() => zoom);
-
-    if (zoom > 6) {
-      animateRegular();
-      animateData(false, "regular");
-    } else {
-      reverseRegular();
-      reverseData("regular");
-    }
-
-    if (zoom > 2) {
-      animateLustra();
-      animateData(false, "lustrum");
-    } else {
-      reverseLustra();
-      reverseData("lustrum");
-    }
+    setZoomLevelFloored(() => Math.floor(zoom));
 
     d3.select(graphRef.current)
       .select("#zoomable")
@@ -370,7 +355,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const drawData = () => {
+  const drawData = (localSelectedData?: SelectableDataType[]) => {
     const maxHeight = getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom;
 
     const groups = d3
@@ -380,8 +365,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
     groups.selectAll(".tick-data").remove();
 
-    selectedData.forEach((data) => {
-      console.log(data);
+    (localSelectedData ?? selectedData).forEach((data) => {
       groups
         .append("circle")
         .attr("id", (d: TimelineYear) => `data-${d.year}`)
@@ -398,10 +382,11 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   };
 
-  const animateDataType = (timeline: boolean, parent: string, type: string) => {
+  const animateDataType = (timeline: boolean, type: string) => {
+    console.log("here");
     if (timeline) {
       gsapTimeline?.to(
-        `.tick.${parent} .tick-data.${type}`,
+        `.tick.decade .tick-data.${type}`,
         {
           attr: { r: 7 },
           duration: 0.2,
@@ -410,32 +395,90 @@ const Timeline = ({ gsapTimeline }: Props) => {
         },
         "<"
       );
+
+      if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+        gsapTimeline?.to(
+          `.tick.lustrum .tick-data.${type}`,
+          {
+            attr: { r: 7 },
+            duration: 0.2,
+            ease: "bounce.out",
+            stagger: 0.01,
+          },
+          "<"
+        );
+      }
+
+      if (zoomLevelFloored >= REGULAR_ZOOM) {
+        gsapTimeline?.to(
+          `.tick.regular .tick-data.${type}`,
+          {
+            attr: { r: 7 },
+            duration: 0.4,
+            ease: "bounce.out",
+          },
+          "<"
+        );
+      }
     } else {
-      gsap.to(`.tick.${parent} .tick-data.${type}`, {
-        attr: { r: 5 },
+      gsap.to(`.tick.decade .tick-data.${type}`, {
+        attr: { r: 7 },
         duration: 0.2,
         ease: "bounce.out",
         stagger: 0.01,
       });
+
+      console.log(zoomLevelFloored, LUSTRUM_ZOOM);
+      if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+        console.log("lustrum animated");
+        gsap.to(`.tick.lustrum .tick-data.${type}`, {
+          attr: { r: 7 },
+          duration: 0.2,
+          ease: "bounce.out",
+          stagger: 0.01,
+        });
+      }
+
+      if (zoomLevelFloored >= REGULAR_ZOOM) {
+        gsap.to(`.tick.regular .tick-data.${type}`, {
+          attr: { r: 7 },
+          duration: 0.4,
+          ease: "bounce.out",
+        });
+      }
     }
   };
 
-  const reverseDataType = (parent: string, type: string) => {
-    gsap.to(`.tick.${parent} .tick-data.${type}`, {
-      attr: { r: 0 },
-      duration: 0.2,
-      ease: "bounce.in",
+  const reverseDataType = (type: string) => {
+    if (zoomLevelFloored < LUSTRUM_ZOOM) {
+      gsap.to(`.tick.lustrum .tick-data.${type}`, {
+        attr: { r: 0 },
+        duration: 0.4,
+        ease: "power4.out",
+      });
+    }
+
+    if (zoomLevelFloored < REGULAR_ZOOM) {
+      gsap.to(`.tick.regular .tick-data.${type}`, {
+        attr: { r: 0 },
+        duration: 0.4,
+        ease: "power4.out",
+      });
+    }
+  };
+
+  const reverseData = (localSelectedData?: SelectableDataType[]) => {
+    (localSelectedData ?? selectedData).forEach((data) => {
+      reverseDataType(data);
     });
   };
 
-  const reverseData = (parent: string) => {
-    selectedData.forEach((data) => {
-      reverseDataType(parent, data);
-    });
-  };
-  const animateData = (timeline: boolean, parent: string) => {
-    selectedData.forEach((data) => {
-      animateDataType(timeline, parent, data);
+  const animateData = (
+    timeline: boolean,
+    localSelectedData?: SelectableDataType[]
+  ) => {
+    (localSelectedData ?? selectedData).forEach((data) => {
+      animateDataType(timeline, data);
     });
   };
 
@@ -449,6 +492,25 @@ const Timeline = ({ gsapTimeline }: Props) => {
       window.removeEventListener("resize", resize);
     };
   }, []);
+
+  useEffect(() => {
+    console.log(zoomLevelFloored);
+    if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+      animateLustra();
+      animateData(false);
+    } else {
+      reverseLustra();
+      reverseData();
+    }
+
+    if (zoomLevelFloored >= REGULAR_ZOOM) {
+      animateRegular();
+      animateData(false);
+    } else {
+      reverseRegular();
+      reverseData();
+    }
+  }, [zoomLevelFloored]);
 
   useGSAP(
     () => {
@@ -569,7 +631,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "<"
           );
 
-        animateData(true, "decade");
+        animateData(true);
       }
     },
     { scope: timelineRef, dependencies: [gsapTimeline] }
@@ -577,29 +639,38 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   return (
     <div ref={timelineRef} className="timeline-section">
-      <div>{selectedData}</div>
       <div className="timeline-main opacity-0 w-full h-full">
-        <div className="h-1/5 flex flex-row justify-end items-end pb-8 ">
-          <div>
+        <div className="h-1/5 flex flex-row justify-between items-center pb-8 ">
+          <div className="flex flex-row gap-4">
             {Object.values(SelectableDataType).map((key) => {
               return (
                 <button
-                  className="bg-BLACK text-WHITE rounded-full p-4"
+                  className={`timeline-data-icon ${key}`}
                   key={key}
                   onMouseEnter={() => {
-                    reverseData("decade");
-                    if (zoomLevel > 2) reverseData("lustrum");
-                    if (zoomLevel > 6) reverseData("regular");
-                    setSelectedData([key as SelectableDataType]);
+                    if (!selectedData.includes(key as SelectableDataType)) {
+                      drawData([...selectedData, key as SelectableDataType]);
+                      animateData(false, [
+                        ...selectedData,
+                        key as SelectableDataType,
+                      ]);
+                    }
+                  }}
+                  onClick={() => {
+                    setSelectedData((prev) => {
+                      if (prev.includes(key as SelectableDataType)) {
+                        return prev.filter((data) => data !== key);
+                      } else {
+                        return [...prev, key as SelectableDataType];
+                      }
+                    });
                   }}
                   onMouseLeave={() => {
                     drawData();
-                    animateData(false, "decade");
-                    if (zoomLevel > 2) animateData(false, "lustrum");
-                    if (zoomLevel > 6) animateData(false, "regular");
+                    animateData(false);
                   }}
                 >
-                  {key}
+                  €
                 </button>
               );
             })}
