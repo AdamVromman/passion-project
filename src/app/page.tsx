@@ -153,24 +153,6 @@ export default function Home() {
 
   return (
     <div ref={mainRef} className="main">
-      <button
-        onClick={() => {
-          setEyeOpen(false);
-          setDay(new Date(day.getTime() - 24 * 60 * 60 * 1000));
-        }}
-        className="z-20 fixed top-15 left-15 bg-RED p-15 rounded-full"
-      >
-        Day --
-      </button>
-      <button
-        onClick={() => {
-          setEyeOpen(false);
-          setDay(new Date(day.getTime() + 24 * 60 * 60 * 1000));
-        }}
-        className="z-20 fixed top-15 left-120 bg-RED p-15 rounded-full"
-      >
-        Day ++
-      </button>
       <BackgroundText eyeOpen={eyeOpen} />
       <Eye eyeOpen={eyeOpen} dailyData={dailyData} />
       <div className="fixed top-0 left-0 w-screen h-screen bg-red flex flex-col p-20 items-center text-WHITE">
@@ -183,6 +165,24 @@ export default function Home() {
             <span className="">{dailyData.westBankInjured}</span>
           </div>
         )}
+        <button
+          onClick={() => {
+            setEyeOpen(false);
+            setDay(new Date(day.getTime() - 24 * 60 * 60 * 1000));
+          }}
+          className="bg-RED p-15 rounded-full"
+        >
+          Day --
+        </button>
+        <button
+          onClick={() => {
+            setEyeOpen(false);
+            setDay(new Date(day.getTime() + 24 * 60 * 60 * 1000));
+          }}
+          className="bg-RED p-15 rounded-full"
+        >
+          Day ++
+        </button>
       </div>
       <Timeline gsapTimeline={gsapTimeline.current} />
     </div>
