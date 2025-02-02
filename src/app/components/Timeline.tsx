@@ -21,6 +21,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
     SelectableDataType.ADULTS_KILLED,
+    SelectableDataType.ADULTS_INJURED,
+    SelectableDataType.MINORS_KILLED,
+    SelectableDataType.MINORS_INJURED,
+    SelectableDataType.PERCENTAGE_OF_PALESTINIAN_LAND_STOLEN,
   ]);
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
@@ -404,7 +408,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const animateDataType = (timeline: boolean, type: string) => {
     if (timeline) {
       gsapTimeline?.to(
-        `.tick.decade .tick-data.${type}`,
+        `.tick .tick-data.${type}`,
         {
           attr: { r: 7 },
           duration: 0.2,
@@ -414,80 +418,80 @@ const Timeline = ({ gsapTimeline }: Props) => {
         "<"
       );
 
-      if (zoomLevelFloored >= LUSTRUM_ZOOM) {
-        gsapTimeline?.to(
-          `.tick.lustrum .tick-data.${type}`,
-          {
-            attr: { r: 7 },
-            duration: 0.2,
-            ease: "bounce.out",
-            stagger: 0.01,
-          },
-          "<"
-        );
-      }
+      // if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+      //   gsapTimeline?.to(
+      //     `.tick.lustrum .tick-data.${type}`,
+      //     {
+      //       attr: { r: 7 },
+      //       duration: 0.2,
+      //       ease: "bounce.out",
+      //       stagger: 0.01,
+      //     },
+      //     "<"
+      //   );
+      // }
 
-      if (zoomLevelFloored >= REGULAR_ZOOM) {
-        gsapTimeline?.to(
-          `.tick.regular .tick-data.${type}`,
-          {
-            attr: { r: 7 },
-            duration: 0.4,
-            ease: "bounce.out",
-          },
-          "<"
-        );
-      }
+      // if (zoomLevelFloored >= REGULAR_ZOOM) {
+      //   gsapTimeline?.to(
+      //     `.tick.regular .tick-data.${type}`,
+      //     {
+      //       attr: { r: 7 },
+      //       duration: 0.4,
+      //       ease: "bounce.out",
+      //     },
+      //     "<"
+      //   );
+      // }
     } else {
-      gsap.to(`.tick.decade .tick-data.${type}`, {
+      gsap.to(`.tick .tick-data.${type}`, {
         attr: { r: 7 },
         duration: 0.2,
         ease: "bounce.out",
         stagger: 0.01,
       });
 
-      if (zoomLevelFloored >= LUSTRUM_ZOOM) {
-        gsap.to(`.tick.lustrum .tick-data.${type}`, {
-          attr: { r: 7 },
-          duration: 0.2,
-          ease: "bounce.out",
-          stagger: 0.01,
-        });
-      }
+      // if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+      //   gsap.to(`.tick.lustrum .tick-data.${type}`, {
+      //     attr: { r: 7 },
+      //     duration: 0.2,
+      //     ease: "bounce.out",
+      //     stagger: 0.01,
+      //   });
+      // }
 
-      if (zoomLevelFloored >= REGULAR_ZOOM) {
-        gsap.to(`.tick.regular .tick-data.${type}`, {
-          attr: { r: 7 },
-          duration: 0.4,
-          ease: "bounce.out",
-        });
-      }
+      // if (zoomLevelFloored >= REGULAR_ZOOM) {
+      //   gsap.to(`.tick.regular .tick-data.${type}`, {
+      //     attr: { r: 7 },
+      //     duration: 0.4,
+      //     ease: "bounce.out",
+      //   });
+      // }
     }
   };
 
-  const reverseDataType = (type: string) => {
-    if (zoomLevelFloored < LUSTRUM_ZOOM) {
-      gsap.to(`.tick.lustrum .tick-data.${type}`, {
-        attr: { r: 0 },
-        duration: 0.4,
-        ease: "power4.out",
-      });
-    }
+  // const reverseDataType = (type: string) => {
+  //   if (zoomLevelFloored < LUSTRUM_ZOOM) {
+  //     gsap.to(`.tick.lustrum .tick-data.${type}`, {
+  //       attr: { r: 0 },
+  //       duration: 0.4,
+  //       ease: "power4.out",
+  //     });
+  //   }
 
-    if (zoomLevelFloored < REGULAR_ZOOM) {
-      gsap.to(`.tick.regular .tick-data.${type}`, {
-        attr: { r: 0 },
-        duration: 0.4,
-        ease: "power4.out",
-      });
-    }
-  };
+  //   if (zoomLevelFloored < REGULAR_ZOOM) {
+  //     gsap.to(`.tick.regular .tick-data.${type}`, {
+  //       attr: { r: 0 },
+  //       duration: 0.4,
+  //       ease: "power4.out",
+  //     });
+  //   }
+  // };
 
-  const reverseData = (localSelectedData?: SelectableDataType[]) => {
-    (localSelectedData ?? selectedData).forEach((data) => {
-      reverseDataType(data);
-    });
-  };
+  // const reverseData = (localSelectedData?: SelectableDataType[]) => {
+  //   (localSelectedData ?? selectedData).forEach((data) => {
+  //     reverseDataType(data);
+  //   });
+  // };
 
   const animateData = (
     timeline: boolean,
@@ -516,7 +520,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       animateData(false);
     } else {
       reverseLustra();
-      reverseData();
+      // reverseData();
     }
 
     if (zoomLevelFloored >= REGULAR_ZOOM) {
@@ -524,7 +528,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       animateData(false);
     } else {
       reverseRegular();
-      reverseData();
+      // reverseData();
     }
   }, [zoomLevelFloored]);
 

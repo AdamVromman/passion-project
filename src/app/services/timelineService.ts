@@ -41,99 +41,643 @@ export interface TimelineYear {
 }
 
 export const timeline: TimelineYear[] = [
-  { year: 1917 },
-  { year: 1918 },
-  { year: 1919 },
-  { year: 1920 },
-  { year: 1921 },
-  { year: 1922 },
-  { year: 1923 },
-  { year: 1924 },
-  { year: 1925 },
-  { year: 1926 },
-  { year: 1927 },
-  { year: 1928 },
-  { year: 1929 },
-  { year: 1930 },
-  { year: 1931 },
-  { year: 1932 },
-  { year: 1933 },
-  { year: 1934 },
-  { year: 1935 },
-  { year: 1936 },
-  { year: 1937 },
-  { year: 1938 },
-  { year: 1939 },
-  { year: 1940 },
-  { year: 1941 },
-  { year: 1942 },
-  { year: 1943 },
-  { year: 1944 },
-  { year: 1945 },
-  { year: 1946 },
-  { year: 1947 },
-  { year: 1948 },
-  { year: 1949 },
+  {
+    year: 1917,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1918,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1919,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1920,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1921,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1922,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1923,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1924,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1925,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1926,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1927,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1928,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1929,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1930,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1931,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1932,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1933,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1934,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1935,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1936,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1937,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1938,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1939,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1940,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1941,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1942,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1943,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1944,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1945,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1946,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1947,
+    percentageOfPalestinianLandStolen: {
+      number: 0,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1948,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1949,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
   {
     year: 1950,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
   },
-  { year: 1951 },
-  { year: 1952 },
-  { year: 1953 },
-  { year: 1954 },
-  { year: 1955 },
-  { year: 1956 },
-  { year: 1957 },
-  { year: 1958 },
-  { year: 1959 },
-  { year: 1960 },
-  { year: 1961 },
-  { year: 1962 },
-  { year: 1963 },
-  { year: 1964 },
-  { year: 1965 },
-  { year: 1966 },
-  { year: 1967 },
-  { year: 1968 },
-  { year: 1969 },
-  { year: 1970 },
-  { year: 1971 },
-  { year: 1972 },
-  { year: 1973 },
-  { year: 1974 },
-  { year: 1975 },
-  { year: 1976 },
-  { year: 1977 },
-  { year: 1978 },
-  { year: 1979 },
-  { year: 1980 },
-  { year: 1981 },
-  { year: 1982 },
-  { year: 1983 },
-  { year: 1984 },
-  { year: 1985 },
-  { year: 1986 },
-  { year: 1987 },
-  { year: 1988 },
-  { year: 1989 },
-  { year: 1990 },
-  { year: 1991 },
-  { year: 1992 },
-  { year: 1993 },
-  { year: 1994 },
-  { year: 1995 },
-  { year: 1996 },
-  { year: 1997 },
-  { year: 1998 },
-  { year: 1999 },
-  { year: 2000 },
-  { year: 2001 },
-  { year: 2002 },
-  { year: 2003 },
-  { year: 2004 },
-  { year: 2005 },
-  { year: 2006 },
-  { year: 2007 },
+  {
+    year: 1951,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1952,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1953,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1954,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1955,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1956,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1957,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1958,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1959,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1960,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1961,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1962,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1963,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1964,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1965,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1966,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1967,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1968,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1969,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1970,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1971,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1972,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1973,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1974,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1975,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1976,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1977,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1978,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1979,
+    percentageOfPalestinianLandStolen: {
+      number: 78,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1980,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1981,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1982,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1983,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1984,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1985,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1986,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1987,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1988,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1989,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1990,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1991,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1992,
+    percentageOfPalestinianLandStolen: {
+      number: 78.5,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1993,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1994,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1995,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1996,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1997,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1998,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 1999,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 2000,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 2001,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 2002,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 2003,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 2004,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 2005,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 2006,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
+  {
+    year: 2007,
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
+  },
   {
     year: 2008,
     adultsKilled: { number: 526, source: [Source.OCHA] },
@@ -172,6 +716,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 9, source: [Source.OCHA] },
     adultsInjured: { number: 1211, source: [Source.OCHA] },
     minorsInjured: { number: 342, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2011,
@@ -179,6 +727,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 14, source: [Source.OCHA] },
     adultsInjured: { number: 1701, source: [Source.OCHA] },
     minorsInjured: { number: 442, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2012,
@@ -186,6 +738,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 45, source: [Source.OCHA] },
     adultsInjured: { number: 3578, source: [Source.OCHA] },
     minorsInjured: { number: 1082, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2013,
@@ -193,6 +749,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 5, source: [Source.OCHA] },
     adultsInjured: { number: 2741, source: [Source.OCHA] },
     minorsInjured: { number: 1251, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2014,
@@ -200,6 +760,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 567, source: [Source.OCHA] },
     adultsInjured: { number: 12824, source: [Source.OCHA] },
     minorsInjured: { number: 4710, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2015,
@@ -207,6 +771,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 30, source: [Source.OCHA] },
     adultsInjured: { number: 11904, source: [Source.OCHA] },
     minorsInjured: { number: 2732, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2016,
@@ -214,6 +782,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 37, source: [Source.OCHA] },
     adultsInjured: { number: 2416, source: [Source.OCHA] },
     minorsInjured: { number: 1048, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2017,
@@ -221,6 +793,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 14, source: [Source.OCHA] },
     adultsInjured: { number: 4679, source: [Source.OCHA] },
     minorsInjured: { number: 1209, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2018,
@@ -228,6 +804,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 57, source: [Source.OCHA] },
     adultsInjured: { number: 22189, source: [Source.OCHA] },
     minorsInjured: { number: 6428, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2019,
@@ -235,6 +815,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 27, source: [Source.OCHA] },
     adultsInjured: { number: 8635, source: [Source.OCHA] },
     minorsInjured: { number: 5557, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2020,
@@ -242,6 +826,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 9, source: [Source.OCHA] },
     adultsInjured: { number: 1792, source: [Source.OCHA] },
     minorsInjured: { number: 424, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2021,
@@ -249,6 +837,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 78, source: [Source.OCHA] },
     adultsInjured: { number: 6591, source: [Source.OCHA] },
     minorsInjured: { number: 2132, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2022,
@@ -256,6 +848,10 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 44, source: [Source.OCHA] },
     adultsInjured: { number: 4173, source: [Source.OCHA] },
     minorsInjured: { number: 1085, source: [Source.OCHA] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2023,
@@ -269,6 +865,10 @@ export const timeline: TimelineYear[] = [
       number: 2002 + 6720,
       source: [Source.OCHA, Source.UNICEF],
     },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2024,
@@ -279,6 +879,10 @@ export const timeline: TimelineYear[] = [
       source: [Source.OCHA, Source.MOHTEL],
     },
     minorsInjured: { number: 613 + 6720, source: [Source.OCHA, Source.UNICEF] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
   {
     year: 2025,
@@ -289,5 +893,9 @@ export const timeline: TimelineYear[] = [
       source: [Source.MOHTEL, Source.OCHA],
     },
     minorsInjured: { number: 40 + 560, source: [Source.OCHA, Source.UNICEF] },
+    percentageOfPalestinianLandStolen: {
+      number: 90,
+      source: [Source.AL_JAZEERA],
+    },
   },
 ];
