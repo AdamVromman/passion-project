@@ -737,6 +737,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 533022, source: [Source.CBS] },
     adultsKilled: { number: 78, source: [Source.OCHA] },
     minorsKilled: { number: 9, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 204 + 683 + 153 + 4662,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 180 + 30, source: [Source.BTSELEM] },
     adultsInjured: { number: 1211, source: [Source.OCHA] },
     minorsInjured: { number: 342, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -749,6 +754,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 552260, source: [Source.CBS] },
     adultsKilled: { number: 103, source: [Source.OCHA] },
     minorsKilled: { number: 14, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 307 + 625 + 152 + 3196,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 113 + 19, source: [Source.BTSELEM] },
     adultsInjured: { number: 1701, source: [Source.OCHA] },
     minorsInjured: { number: 442, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -761,6 +771,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 569727, source: [Source.CBS] },
     adultsKilled: { number: 214, source: [Source.OCHA] },
     minorsKilled: { number: 45, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 178 + 1031 + 219 + 3089,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 170 + 23, source: [Source.BTSELEM] },
     adultsInjured: { number: 3578, source: [Source.OCHA] },
     minorsInjured: { number: 1082, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -773,6 +788,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 588437, source: [Source.CBS] },
     adultsKilled: { number: 34, source: [Source.OCHA] },
     minorsKilled: { number: 5, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 150 + 1351 + 189 + 3078,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 140 + 14, source: [Source.BTSELEM] },
     adultsInjured: { number: 2741, source: [Source.OCHA] },
     minorsInjured: { number: 1251, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -785,6 +805,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 606851, source: [Source.CBS] },
     adultsKilled: { number: 1760, source: [Source.OCHA] },
     minorsKilled: { number: 567, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 463 + 1511 + 206 + 10 + 3347,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 157 + 15, source: [Source.BTSELEM] },
     adultsInjured: { number: 12824, source: [Source.OCHA] },
     minorsInjured: { number: 4710, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -797,6 +822,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 623835, source: [Source.CBS] },
     adultsKilled: { number: 144, source: [Source.OCHA] },
     minorsKilled: { number: 30, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 584 + 1740 + 297 + 3445,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 333 + 133 + 6, source: [Source.BTSELEM] },
     adultsInjured: { number: 11904, source: [Source.OCHA] },
     minorsInjured: { number: 2732, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -809,6 +839,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 640442, source: [Source.CBS] },
     adultsKilled: { number: 71, source: [Source.OCHA] },
     minorsKilled: { number: 37, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 535 + 1594 + 253 + 3561,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 225 + 70 + 1, source: [Source.BTSELEM] },
     adultsInjured: { number: 2416, source: [Source.OCHA] },
     minorsInjured: { number: 1048, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -821,6 +856,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 657993, source: [Source.CBS] },
     adultsKilled: { number: 63, source: [Source.OCHA] },
     minorsKilled: { number: 14, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 437 + 1763 + 318 + 3458,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 301 + 92 + 2, source: [Source.BTSELEM] },
     adultsInjured: { number: 4679, source: [Source.OCHA] },
     minorsInjured: { number: 1209, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -833,6 +873,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 675695, source: [Source.CBS] },
     adultsKilled: { number: 243, source: [Source.OCHA] },
     minorsKilled: { number: 57, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 494 + 1429 + 240 + 3207,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 170 + 60 + 2, source: [Source.BTSELEM] },
     adultsInjured: { number: 22189, source: [Source.OCHA] },
     minorsInjured: { number: 6428, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -845,6 +890,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 692402, source: [Source.CBS] },
     adultsKilled: { number: 111, source: [Source.OCHA] },
     minorsKilled: { number: 27, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 464 + 1027 + 197 + 2855,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 160 + 26 + 4, source: [Source.BTSELEM] },
     adultsInjured: { number: 8635, source: [Source.OCHA] },
     minorsInjured: { number: 5557, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -857,6 +907,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 703874, source: [Source.CBS] },
     adultsKilled: { number: 21, source: [Source.OCHA] },
     minorsKilled: { number: 9, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 355 + 1026 + 161 + 2643,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 144 + 25 + 2, source: [Source.BTSELEM] },
     adultsInjured: { number: 1792, source: [Source.OCHA] },
     minorsInjured: { number: 424, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -869,6 +924,11 @@ export const timeline: TimelineYear[] = [
     illegalSettlers: { number: 719452, source: [Source.CBS] },
     adultsKilled: { number: 250, source: [Source.OCHA] },
     minorsKilled: { number: 78, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 495 + 1007 + 103 + 2413,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 108 + 33 + 5, source: [Source.BTSELEM] },
     adultsInjured: { number: 6591, source: [Source.OCHA] },
     minorsInjured: { number: 2132, source: [Source.OCHA] },
     percentageOfPalestinianLandStolen: {
@@ -882,6 +942,11 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 44, source: [Source.OCHA] },
     adultsInjured: { number: 4173, source: [Source.OCHA] },
     minorsInjured: { number: 1085, source: [Source.OCHA] },
+    adultsImprisoned: {
+      number: 784 + 1090 + 105 + 2262,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 105 + 14 + 7, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -891,6 +956,11 @@ export const timeline: TimelineYear[] = [
     year: 2023,
     adultsKilled: { number: 21822 + 411, source: [Source.OCHA, Source.MOHTEL] },
     minorsKilled: { number: 126 + 9100, source: [Source.OCHA, Source.MOHTEL] },
+    adultsImprisoned: {
+      number: 3242 + 1629 + 626 + 432 + 1917,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 128 + 49, source: [Source.BTSELEM] },
     adultsInjured: {
       number: 4440 + 56451,
       source: [Source.OCHA, Source.MOHTEL],
@@ -908,6 +978,11 @@ export const timeline: TimelineYear[] = [
     year: 2024,
     adultsKilled: { number: 23719 + 400, source: [Source.OCHA, Source.MOHTEL] },
     minorsKilled: { number: 92 + 8718, source: [Source.OCHA, Source.MOHTEL] },
+    adultsImprisoned: {
+      number: 3340 + 2093 + 849 + 333 + 1829,
+      source: [Source.BTSELEM],
+    },
+    minorsImprisoned: { number: 183 + 61, source: [Source.BTSELEM] },
     adultsInjured: {
       number: 1190 + 51887,
       source: [Source.OCHA, Source.MOHTEL],
