@@ -8,6 +8,8 @@ import { useGSAP } from "@gsap/react";
 import { SelectableDataType } from "../services/types";
 const PADDING = { top: 30, left: 60, right: 60, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
+const LUSTRUM_ZOOM = 2;
+const REGULAR_ZOOM = 6;
 
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
@@ -18,16 +20,40 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
-    SelectableDataType.ADULTS_KILLED,
-    SelectableDataType.MINORS_KILLED,
+    //SelectableDataType.ADULTS_KILLED,
+    //SelectableDataType.ADULTS_INJURED,
+    //SelectableDataType.MINORS_KILLED,
+    //SelectableDataType.MINORS_INJURED,
+    //SelectableDataType.PERCENTAGE_OF_PALESTINIAN_LAND_STOLEN,
+    SelectableDataType.ADULTS_IMPRISONED,
+    SelectableDataType.MINORS_IMPRISONED,
+    SelectableDataType.BUILDINGS_DEMOLISHED,
+    //SelectableDataType.ILLEGAL_SETTLERS,
   ]);
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
     timeline[timeline.length - 1].year
   );
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomLevelFloored, setZoomLevelFloored] = useState(1);
 
   const { contextSafe } = useGSAP({ scope: graphRef });
+
+  const getMaxValues = () => {
+    const values = new Map<SelectableDataType, number>();
+
+    selectedData.forEach((data) => {
+      const max = d3.max(timeline, (d) => d[data]?.number ?? 0) ?? 0;
+
+      const digits = Math.floor(Math.log10(max) + 1);
+      const powerNumber = Math.max(Math.pow(10, digits - 2), 1);
+      const ceiled = Math.ceil(max / powerNumber) * powerNumber;
+
+      values.set(data, ceiled);
+    });
+
+    return values;
+  };
 
   const getDimensions = () => {
     if (graphRef.current)
@@ -183,25 +209,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
     const zoom = e.transform.k;
 
     updateYears();
-
-    //TODO: Correctly set the zoom level
     setZoomLevel(() => zoom);
-
-    if (zoom > 6) {
-      animateRegular();
-      animateData(false, "regular");
-    } else {
-      reverseRegular();
-      reverseData("regular");
-    }
-
-    if (zoom > 2) {
-      animateLustra();
-      animateData(false, "lustrum");
-    } else {
-      reverseLustra();
-      reverseData("lustrum");
-    }
+    setZoomLevelFloored(() => Math.floor(zoom));
 
     d3.select(graphRef.current)
       .select("#zoomable")
@@ -370,8 +379,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const drawData = () => {
-    const maxHeight = getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom;
+  const drawData = (localSelectedData?: SelectableDataType[]) => {
+    const maxHeight =
+      getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
 
     const groups = d3
       .select(graphRef.current)
@@ -380,9 +390,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
     groups.selectAll(".tick-data").remove();
 
-    selectedData.forEach((data) => {
-      console.log(data);
+    (localSelectedData ?? selectedData).forEach((data) => {
       groups
+        .filter((d) => typeof d[data]?.number !== "undefined")
         .append("circle")
         .attr("id", (d: TimelineYear) => `data-${d.year}`)
         .attr("cx", 25)
@@ -391,17 +401,18 @@ const Timeline = ({ gsapTimeline }: Props) => {
           (d) =>
             getDimensions().height -
             PADDING.bottom -
-            ((d[data]?.number ?? Math.random() * 1000) / 1000) * maxHeight
+            16 -
+            (d[data]?.number / getMaxValues().get(data)) * maxHeight
         )
         .attr("r", 0)
         .attr("class", `tick-data unzoom ${data}`);
     });
   };
 
-  const animateDataType = (timeline: boolean, parent: string, type: string) => {
+  const animateDataType = (timeline: boolean, type: string) => {
     if (timeline) {
       gsapTimeline?.to(
-        `.tick.${parent} .tick-data.${type}`,
+        `.tick .tick-data.${type}`,
         {
           attr: { r: 7 },
           duration: 0.2,
@@ -410,32 +421,88 @@ const Timeline = ({ gsapTimeline }: Props) => {
         },
         "<"
       );
+
+      // if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+      //   gsapTimeline?.to(
+      //     `.tick.lustrum .tick-data.${type}`,
+      //     {
+      //       attr: { r: 7 },
+      //       duration: 0.2,
+      //       ease: "bounce.out",
+      //       stagger: 0.01,
+      //     },
+      //     "<"
+      //   );
+      // }
+
+      // if (zoomLevelFloored >= REGULAR_ZOOM) {
+      //   gsapTimeline?.to(
+      //     `.tick.regular .tick-data.${type}`,
+      //     {
+      //       attr: { r: 7 },
+      //       duration: 0.4,
+      //       ease: "bounce.out",
+      //     },
+      //     "<"
+      //   );
+      // }
     } else {
-      gsap.to(`.tick.${parent} .tick-data.${type}`, {
-        attr: { r: 5 },
+      gsap.to(`.tick .tick-data.${type}`, {
+        attr: { r: 7 },
         duration: 0.2,
         ease: "bounce.out",
         stagger: 0.01,
       });
+
+      // if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+      //   gsap.to(`.tick.lustrum .tick-data.${type}`, {
+      //     attr: { r: 7 },
+      //     duration: 0.2,
+      //     ease: "bounce.out",
+      //     stagger: 0.01,
+      //   });
+      // }
+
+      // if (zoomLevelFloored >= REGULAR_ZOOM) {
+      //   gsap.to(`.tick.regular .tick-data.${type}`, {
+      //     attr: { r: 7 },
+      //     duration: 0.4,
+      //     ease: "bounce.out",
+      //   });
+      // }
     }
   };
 
-  const reverseDataType = (parent: string, type: string) => {
-    gsap.to(`.tick.${parent} .tick-data.${type}`, {
-      attr: { r: 0 },
-      duration: 0.2,
-      ease: "bounce.in",
-    });
-  };
+  // const reverseDataType = (type: string) => {
+  //   if (zoomLevelFloored < LUSTRUM_ZOOM) {
+  //     gsap.to(`.tick.lustrum .tick-data.${type}`, {
+  //       attr: { r: 0 },
+  //       duration: 0.4,
+  //       ease: "power4.out",
+  //     });
+  //   }
 
-  const reverseData = (parent: string) => {
-    selectedData.forEach((data) => {
-      reverseDataType(parent, data);
-    });
-  };
-  const animateData = (timeline: boolean, parent: string) => {
-    selectedData.forEach((data) => {
-      animateDataType(timeline, parent, data);
+  //   if (zoomLevelFloored < REGULAR_ZOOM) {
+  //     gsap.to(`.tick.regular .tick-data.${type}`, {
+  //       attr: { r: 0 },
+  //       duration: 0.4,
+  //       ease: "power4.out",
+  //     });
+  //   }
+  // };
+
+  // const reverseData = (localSelectedData?: SelectableDataType[]) => {
+  //   (localSelectedData ?? selectedData).forEach((data) => {
+  //     reverseDataType(data);
+  //   });
+  // };
+
+  const animateData = (
+    timeline: boolean,
+    localSelectedData?: SelectableDataType[]
+  ) => {
+    (localSelectedData ?? selectedData).forEach((data) => {
+      animateDataType(timeline, data);
     });
   };
 
@@ -443,12 +510,31 @@ const Timeline = ({ gsapTimeline }: Props) => {
     drawTimeline();
     drawData();
     // resize();
+    getMaxValues();
 
     window.addEventListener("resize", resize);
     return () => {
       window.removeEventListener("resize", resize);
     };
   }, []);
+
+  useEffect(() => {
+    if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+      animateLustra();
+      animateData(false);
+    } else {
+      reverseLustra();
+      // reverseData();
+    }
+
+    if (zoomLevelFloored >= REGULAR_ZOOM) {
+      animateRegular();
+      animateData(false);
+    } else {
+      reverseRegular();
+      // reverseData();
+    }
+  }, [zoomLevelFloored]);
 
   useGSAP(
     () => {
@@ -569,7 +655,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "<"
           );
 
-        animateData(true, "decade");
+        animateData(true);
       }
     },
     { scope: timelineRef, dependencies: [gsapTimeline] }
@@ -577,29 +663,38 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   return (
     <div ref={timelineRef} className="timeline-section">
-      <div>{selectedData}</div>
       <div className="timeline-main opacity-0 w-full h-full">
-        <div className="h-1/5 flex flex-row justify-end items-end pb-8 ">
-          <div>
+        <div className="h-1/5 flex flex-row justify-between items-center pb-8 ">
+          <div className="flex flex-row gap-4">
             {Object.values(SelectableDataType).map((key) => {
               return (
                 <button
-                  className="bg-BLACK text-WHITE rounded-full p-4"
+                  className={`timeline-data-icon ${key}`}
                   key={key}
                   onMouseEnter={() => {
-                    reverseData("decade");
-                    if (zoomLevel > 2) reverseData("lustrum");
-                    if (zoomLevel > 6) reverseData("regular");
-                    setSelectedData([key as SelectableDataType]);
+                    if (!selectedData.includes(key as SelectableDataType)) {
+                      drawData([...selectedData, key as SelectableDataType]);
+                      animateData(false, [
+                        ...selectedData,
+                        key as SelectableDataType,
+                      ]);
+                    }
+                  }}
+                  onClick={() => {
+                    setSelectedData((prev) => {
+                      if (prev.includes(key as SelectableDataType)) {
+                        return prev.filter((data) => data !== key);
+                      } else {
+                        return [...prev, key as SelectableDataType];
+                      }
+                    });
                   }}
                   onMouseLeave={() => {
                     drawData();
-                    animateData(false, "decade");
-                    if (zoomLevel > 2) animateData(false, "lustrum");
-                    if (zoomLevel > 6) animateData(false, "regular");
+                    animateData(false);
                   }}
                 >
-                  {key}
+                  €
                 </button>
               );
             })}
