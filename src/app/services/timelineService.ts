@@ -1218,4 +1218,24 @@ export const periods = new Map<SelectableDataType, DataPeriod[]>([
       },
     ],
   ],
+  [
+    SelectableDataType.ILLEGAL_SETTLERS,
+    [
+      {
+        startYear: 1948,
+        endYear: 1971,
+        amount: { number: 2810, source: [Source.WIKIPEDIA] },
+      },
+      {
+        startYear: 1972,
+        endYear: 1976,
+        amount: { number: 10531 + 77, source: [Source.WIKIPEDIA] },
+      },
+      {
+        startYear: 1977,
+        endYear: 1983,
+        amount: { number: 99795 + 6800, source: [Source.WIKIPEDIA] },
+      },
+    ],
+  ],
 ]);
