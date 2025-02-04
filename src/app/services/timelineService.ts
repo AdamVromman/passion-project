@@ -8,6 +8,7 @@ export enum Source {
   UNHCR = "UNHCR",
   MOHTEL = "Gaza's Ministry of Health Telegram channel",
   UNICEF = "UNICEF",
+  UNRWA = "UNRWA",
   WIKIPEDIA = "Wikipedia",
   INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION = "Interactive Encyclopedia Of the Palestine Question",
 }
@@ -52,6 +53,7 @@ export interface DataPeriod {
 
 export const events = [];
 
+//TODO: Displaced people
 export const timeline: TimelineYear[] = [
   {
     year: 1917,
@@ -409,6 +411,7 @@ export const timeline: TimelineYear[] = [
       number: 78,
       source: [Source.AL_JAZEERA],
     },
+    palestiniansDisplaced: { number: 325000, source: [Source.WIKIPEDIA] },
   },
   {
     year: 1968,
@@ -705,6 +708,7 @@ export const timeline: TimelineYear[] = [
     minorsKilled: { number: 86, source: [Source.BTSELEM] },
     illegalSettlers: { number: 379099, source: [Source.CBS] },
     buildingsDemolished: { number: 0, source: [Source.BTSELEM] },
+    palestiniansDisplaced: { number: 5248185, source: [Source.UNRWA] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -911,6 +915,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2015,
+    palestiniansDisplaced: { number: 5149742, source: [Source.UNRWA] },
     illegalSettlers: { number: 623835, source: [Source.CBS] },
     adultsKilled: { number: 144, source: [Source.OCHA] },
     minorsKilled: { number: 30, source: [Source.OCHA] },
@@ -1147,7 +1152,10 @@ export const periods = new Map<SelectableDataType, DataPeriod[]>([
       {
         startYear: 1949,
         endYear: 1966,
-        amount: { number: 5000, source: [Source.AL_JAZEERA] },
+        amount: {
+          number: 5000 + 5000,
+          source: [Source.AL_JAZEERA, Source.WIKIPEDIA],
+        },
       },
       {
         startYear: 1967,
@@ -1235,6 +1243,21 @@ export const periods = new Map<SelectableDataType, DataPeriod[]>([
         startYear: 1977,
         endYear: 1983,
         amount: { number: 99795 + 6800, source: [Source.WIKIPEDIA] },
+      },
+    ],
+  ],
+  [
+    SelectableDataType.PALESTINIANS_DISPLACED,
+    [
+      {
+        startYear: 1947,
+        endYear: 1948,
+        amount: { number: 700000, source: [Source.WIKIPEDIA] },
+      },
+      {
+        startYear: 1949,
+        endYear: 1956,
+        amount: { number: 40000, source: [Source.WIKIPEDIA] },
       },
     ],
   ],
