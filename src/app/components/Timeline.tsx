@@ -417,6 +417,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .selectAll<Element, TimelineYear>("svg.tick");
 
     groups.selectAll(".tick-data").remove();
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll("line.period-line")
+      .remove();
 
     (localSelectedData ?? selectedData).forEach((data) => {
       const localPeriods = periods.get(data);
@@ -491,7 +495,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             .select("#group-timeline")
             .select(`#tick-${period.startYear}`)
             .append("circle")
-            .attr("id", `test-data-${period.startYear}`)
+            .attr("id", `period-data-${period.startYear}`)
             .attr("cx", TICK_OFFSET)
             .attr("cy", periodHeight)
             .attr("r", 0)

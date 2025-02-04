@@ -9,6 +9,7 @@ export enum Source {
   MOHTEL = "Gaza's Ministry of Health Telegram channel",
   UNICEF = "UNICEF",
   WIKIPEDIA = "Wikipedia",
+  INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION = "Interactive Encyclopedia Of the Palestine Question",
 }
 
 export interface Event {
@@ -50,56 +51,6 @@ export interface DataPeriod {
 }
 
 export const events = [];
-
-export const periods = new Map<SelectableDataType, DataPeriod[]>([
-  [
-    SelectableDataType.ADULTS_KILLED,
-    [
-      {
-        startYear: 1917,
-        endYear: 1946,
-        amount: {
-          number:
-            5 +
-            4 +
-            48 +
-            116 +
-            5000 +
-            720 +
-            16 +
-            4 +
-            21 +
-            314 +
-            33 +
-            5 +
-            20 +
-            7 +
-            4 +
-            41,
-          source: [Source.WIKIPEDIA],
-        },
-      },
-      {
-        startYear: 1947,
-        endYear: 1948,
-        amount: { number: 15000, source: [Source.AL_JAZEERA] },
-      },
-      {
-        startYear: 1949,
-        endYear: 1966,
-        amount: { number: 5000, source: [Source.AL_JAZEERA] },
-      },
-      {
-        startYear: 1967,
-        endYear: 1982,
-        amount: {
-          number: 1000 + 156 + 3500 + 1000 + 2000,
-          source: [Source.AL_JAZEERA],
-        },
-      },
-    ],
-  ],
-]);
 
 export const timeline: TimelineYear[] = [
   {
@@ -1159,3 +1110,112 @@ export const timeline: TimelineYear[] = [
     },
   },
 ];
+
+export const periods = new Map<SelectableDataType, DataPeriod[]>([
+  [
+    SelectableDataType.ADULTS_KILLED,
+    [
+      {
+        startYear: 1917,
+        endYear: 1946,
+        amount: {
+          number:
+            5 +
+            4 +
+            48 +
+            116 +
+            5000 +
+            720 +
+            16 +
+            4 +
+            21 +
+            314 +
+            33 +
+            5 +
+            20 +
+            7 +
+            4 +
+            41,
+          source: [Source.WIKIPEDIA],
+        },
+      },
+      {
+        startYear: 1947,
+        endYear: 1948,
+        amount: { number: 15000, source: [Source.AL_JAZEERA] },
+      },
+      {
+        startYear: 1949,
+        endYear: 1966,
+        amount: { number: 5000, source: [Source.AL_JAZEERA] },
+      },
+      {
+        startYear: 1967,
+        endYear: 1982,
+        amount: {
+          number: 1000 + 156 + 3500 + 1000 + 2000,
+          source: [Source.AL_JAZEERA],
+        },
+      },
+    ],
+  ],
+  [
+    SelectableDataType.ADULTS_IMPRISONED,
+    [
+      {
+        startYear: 1947,
+        endYear: 1948,
+        amount: { number: 12000, source: [Source.AL_JAZEERA] },
+      },
+      {
+        startYear: 1967,
+        endYear: 1999,
+        amount: {
+          number:
+            1000000 -
+            timeline
+              .filter((d) => d.year >= 2008 && d.year <= 2019)
+              .map(
+                (d) =>
+                  (d.adultsImprisoned?.number ?? 0) +
+                  (d.minorsImprisoned?.number ?? 0)
+              )
+              .reduce((a, b) => a + b, 0) -
+            90000,
+          source: [Source.INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION],
+        },
+      },
+      {
+        startYear: 2000,
+        endYear: 2008,
+        amount: {
+          number:
+            80000 -
+            timeline
+              .filter((d) => d.year >= 2008 && d.year <= 2019)
+              .map((d) => d.adultsImprisoned?.number ?? 0)
+              .reduce((a, b) => a + b, 0),
+          source: [Source.INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION],
+        },
+      },
+    ],
+  ],
+  [
+    SelectableDataType.MINORS_IMPRISONED,
+    [
+      {
+        startYear: 2000,
+        endYear: 2008,
+        amount: {
+          number:
+            11000 -
+            timeline
+              .filter((d) => d.year >= 2008 && d.year <= 2019)
+              .map((d) => d.minorsImprisoned?.number ?? 0)
+              .reduce((a, b) => a + b, 0),
+          source: [Source.INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION],
+        },
+      },
+    ],
+  ],
+]);
