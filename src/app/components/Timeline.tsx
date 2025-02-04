@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { timeline, TimelineYear } from "../services/timelineService";
+import {
+  DataPeriod,
+  periods,
+  timeline,
+  TimelineYear,
+} from "../services/timelineService";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { SelectableDataType } from "../services/types";
@@ -20,14 +25,14 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
-    //SelectableDataType.ADULTS_KILLED,
+    SelectableDataType.ADULTS_KILLED,
     //SelectableDataType.ADULTS_INJURED,
     //SelectableDataType.MINORS_KILLED,
     //SelectableDataType.MINORS_INJURED,
     //SelectableDataType.PERCENTAGE_OF_PALESTINIAN_LAND_STOLEN,
-    SelectableDataType.ADULTS_IMPRISONED,
-    SelectableDataType.MINORS_IMPRISONED,
-    SelectableDataType.BUILDINGS_DEMOLISHED,
+    // SelectableDataType.ADULTS_IMPRISONED,
+    // SelectableDataType.MINORS_IMPRISONED,
+    // SelectableDataType.BUILDINGS_DEMOLISHED,
     //SelectableDataType.ILLEGAL_SETTLERS,
   ]);
   const [leftYear, setLeftYear] = useState(timeline[0].year);
@@ -39,10 +44,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   const { contextSafe } = useGSAP({ scope: graphRef });
 
-  const getMaxValues = () => {
+  const getMaxValues = (localSelectedData?: SelectableDataType[]) => {
     const values = new Map<SelectableDataType, number>();
 
-    selectedData.forEach((data) => {
+    (localSelectedData ?? selectedData).forEach((data) => {
       const max = d3.max(timeline, (d) => d[data]?.number ?? 0) ?? 0;
 
       const digits = Math.floor(Math.log10(max) + 1);
@@ -391,6 +396,56 @@ const Timeline = ({ gsapTimeline }: Props) => {
     groups.selectAll(".tick-data").remove();
 
     (localSelectedData ?? selectedData).forEach((data) => {
+      const localPeriods = periods.get(data);
+
+      if (localPeriods) {
+        localPeriods.forEach((period: DataPeriod) => {
+          const periodHeight =
+            getDimensions().height -
+            PADDING.bottom -
+            16 -
+            (period.amount.number /
+              (period.endYear - period.startYear) /
+              getMaxValues(localSelectedData).get(data)) *
+              maxHeight;
+
+          d3.select(graphRef.current)
+            .select("#group-timeline")
+            .select(`#tick-${period.startYear}`)
+            .append("circle")
+            .attr("id", `test-data-${period.startYear}`)
+            .attr("cx", 25)
+            .attr("cy", periodHeight)
+            .attr("r", 0)
+            .attr("class", `tick-data unzoom ${data}`);
+
+          d3.select(graphRef.current)
+            .select("#group-timeline")
+            .select(`#tick-${period.startYear}`)
+            .append("line")
+            .attr("id", `test-data-${period.startYear}-line`)
+            .attr("x1", 25 + 16)
+            .attr(
+              "x2",
+              d3.select(`#tick-${period.endYear}`).attr("x") -
+                d3.select(`#tick-${period.startYear}`).attr("x")
+            )
+            .attr("y1", periodHeight)
+            .attr("y2", periodHeight)
+            .attr("class", `tick-data period unzoom ${data}`);
+
+          d3.select(graphRef.current)
+            .select("#group-timeline")
+            .select(`#tick-${period.endYear}`)
+            .append("circle")
+            .attr("id", `test-data-${period.endYear}`)
+            .attr("cx", 25)
+            .attr("cy", periodHeight)
+            .attr("r", 0)
+            .attr("class", `tick-data unzoom ${data}`);
+        });
+      }
+
       groups
         .filter((d) => typeof d[data]?.number !== "undefined")
         .append("circle")
@@ -402,7 +457,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
             getDimensions().height -
             PADDING.bottom -
             16 -
-            (d[data]?.number / getMaxValues().get(data)) * maxHeight
+            (d[data]?.number / getMaxValues(localSelectedData).get(data)) *
+              maxHeight
         )
         .attr("r", 0)
         .attr("class", `tick-data unzoom ${data}`);
@@ -421,31 +477,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
         },
         "<"
       );
-
-      // if (zoomLevelFloored >= LUSTRUM_ZOOM) {
-      //   gsapTimeline?.to(
-      //     `.tick.lustrum .tick-data.${type}`,
-      //     {
-      //       attr: { r: 7 },
-      //       duration: 0.2,
-      //       ease: "bounce.out",
-      //       stagger: 0.01,
-      //     },
-      //     "<"
-      //   );
-      // }
-
-      // if (zoomLevelFloored >= REGULAR_ZOOM) {
-      //   gsapTimeline?.to(
-      //     `.tick.regular .tick-data.${type}`,
-      //     {
-      //       attr: { r: 7 },
-      //       duration: 0.4,
-      //       ease: "bounce.out",
-      //     },
-      //     "<"
-      //   );
-      // }
     } else {
       gsap.to(`.tick .tick-data.${type}`, {
         attr: { r: 7 },
@@ -453,49 +484,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
         ease: "bounce.out",
         stagger: 0.01,
       });
-
-      // if (zoomLevelFloored >= LUSTRUM_ZOOM) {
-      //   gsap.to(`.tick.lustrum .tick-data.${type}`, {
-      //     attr: { r: 7 },
-      //     duration: 0.2,
-      //     ease: "bounce.out",
-      //     stagger: 0.01,
-      //   });
-      // }
-
-      // if (zoomLevelFloored >= REGULAR_ZOOM) {
-      //   gsap.to(`.tick.regular .tick-data.${type}`, {
-      //     attr: { r: 7 },
-      //     duration: 0.4,
-      //     ease: "bounce.out",
-      //   });
-      // }
     }
   };
-
-  // const reverseDataType = (type: string) => {
-  //   if (zoomLevelFloored < LUSTRUM_ZOOM) {
-  //     gsap.to(`.tick.lustrum .tick-data.${type}`, {
-  //       attr: { r: 0 },
-  //       duration: 0.4,
-  //       ease: "power4.out",
-  //     });
-  //   }
-
-  //   if (zoomLevelFloored < REGULAR_ZOOM) {
-  //     gsap.to(`.tick.regular .tick-data.${type}`, {
-  //       attr: { r: 0 },
-  //       duration: 0.4,
-  //       ease: "power4.out",
-  //     });
-  //   }
-  // };
-
-  // const reverseData = (localSelectedData?: SelectableDataType[]) => {
-  //   (localSelectedData ?? selectedData).forEach((data) => {
-  //     reverseDataType(data);
-  //   });
-  // };
 
   const animateData = (
     timeline: boolean,
@@ -690,11 +680,13 @@ const Timeline = ({ gsapTimeline }: Props) => {
                     });
                   }}
                   onMouseLeave={() => {
-                    drawData();
-                    animateData(false);
+                    if (!selectedData.includes(key as SelectableDataType)) {
+                      drawData(selectedData);
+                      animateData(false);
+                    }
                   }}
                 >
-                  €
+                  {key}
                 </button>
               );
             })}
