@@ -12,10 +12,10 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 export default function Home() {
   const [eyeOpen, setEyeOpen] = useState(false);
 
-  const date = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const date = new Date(Date.now() - 24 * 60 * 60 * 1000 * 10);
 
   const [day, setDay] = useState(
-    new Date(date.getFullYear(), date.getMonth() - 1, date.getDate(), 1, 0)
+    new Date(date.getFullYear(), date.getMonth(), date.getDate(), 1, 0)
   );
 
   const [dailyData, setDailyData] = useState<DailyData | null>(null);

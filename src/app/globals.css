@@ -84,7 +84,12 @@ html {
   transform: translateY(calc(100vh - 90px));
 }
 
-.tick-data {
+.tick-data,
+.period-line {
+  &.short {
+    @apply opacity-0;
+  }
+
   @apply stroke-[4px] stroke-BLACK fill-BLACK/10;
 
   &.adultsKilled {
