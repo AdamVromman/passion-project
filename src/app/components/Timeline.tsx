@@ -23,6 +23,7 @@ const PATH_PADDING = 16;
 const TICK_OFFSET = 25;
 const DATA_POINT_SIZE = 7;
 const DATA_POINT_SIZE_PERIOD = 4;
+const SNAP_DISTANCE = 100;
 
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
@@ -47,9 +48,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
     palestiniansDisplaced: false,
     percentageOfPalestinianLandStolen: false,
   });
-
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragStartY, setDragStartY] = useState(0);
 
   const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
     SelectableDataType.ADULTS_KILLED,
@@ -673,6 +671,11 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   }, [zoomLevelFloored]);
 
+  useEffect(() => {
+    console.log("leftData", leftData);
+    console.log("rightData", rightData);
+  }, [leftData, rightData]);
+
   useGSAP(
     () => {
       gsap.registerPlugin(Draggable);
@@ -693,36 +696,29 @@ const Timeline = ({ gsapTimeline }: Props) => {
             type: "x,y",
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
-            onDragStart: (event: PointerEvent) => {
-              setDragStartX(event.x);
-              setDragStartY(event.y);
+            onDragStart: () => {
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
             },
-            onDragEnd: (event: PointerEvent) => {
-              const dx = event.x - iconX;
-              const dy = event.y - iconY;
-
+            onDragEnd: () => {
               gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
-              if (dx < 100 && dy < 100) {
-                setLeftData((prev) => {
-                  const newData = { ...prev };
-                  newData[key as keyof LeftData] = false;
-                  return newData;
-                });
-              } else {
+            },
+            snap: {
+              points: (point) => {
+                if (point.x < SNAP_DISTANCE && point.y < SNAP_DISTANCE) {
+                  setLeftData((prev) => {
+                    const newData = { ...prev };
+                    newData[key as keyof LeftData] = false;
+                    return newData;
+                  });
+
+                  return { x: 0, y: 0 };
+                }
+
                 setLeftData((prev) => {
                   const newData = { ...prev };
                   newData[key as keyof LeftData] = true;
                   return newData;
                 });
-              }
-            },
-            snap: {
-              points: (point) => {
-                if (point.x < 100 && point.y < 100) {
-                  return { x: 0, y: 0 };
-                }
-
                 return { x: spotX - iconX, y: spotY - iconY };
               },
             },
@@ -745,36 +741,28 @@ const Timeline = ({ gsapTimeline }: Props) => {
             inertia: true,
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
-            onDragStart: (event: PointerEvent) => {
-              setDragStartX(event.x);
-              setDragStartY(event.y);
+            onDragStart: () => {
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
             },
-            onDragEnd: (event: PointerEvent) => {
-              const dx = event.x - iconX;
-              const dy = event.y - iconY;
-
+            onDragEnd: () => {
               gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
-              if (dx < 100 && dy < 100) {
-                setRightData((prev) => {
-                  const newData = { ...prev };
-                  newData[key as keyof RightData] = false;
-                  return newData;
-                });
-              } else {
+            },
+            snap: {
+              points: (point) => {
+                if (point.x < SNAP_DISTANCE && point.y < SNAP_DISTANCE) {
+                  setRightData((prev) => {
+                    const newData = { ...prev };
+                    newData[key as keyof RightData] = false;
+                    return newData;
+                  });
+                  return { x: 0, y: 0 };
+                }
+
                 setRightData((prev) => {
                   const newData = { ...prev };
                   newData[key as keyof RightData] = true;
                   return newData;
                 });
-              }
-            },
-            snap: {
-              points: (point) => {
-                if (point.x < 0 && point.y < 0) {
-                  return { x: 0, y: 0 };
-                }
-
                 return { x: spotX - iconX, y: spotY - iconY };
               },
             },
