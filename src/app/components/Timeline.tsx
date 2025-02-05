@@ -18,7 +18,6 @@ import {
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
-import { get } from "http";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
@@ -76,26 +75,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
       });
   };
 
-  const getMaxValue = (side: Side) => {
-    let maxValue = 0;
-
-    getActiveData(side).forEach((entry) => {
-      const max =
-        d3.max(timeline, (d) => {
-          const value = d[entry as keyof TimelineYear];
-          return typeof value === "object" && value !== null ? value.number : 0;
-        }) ?? 0;
-
-      maxValue = Math.max(maxValue, max);
-    });
-
-    const digits = Math.floor(Math.log10(maxValue) + 1);
-    const powerNumber = Math.max(Math.pow(10, digits - 2), 1);
-    const ceiled = Math.ceil(maxValue / powerNumber) * powerNumber;
-
-    return ceiled;
-  };
-
   const getMaxValueOnScreen = (side: Side): number => {
     let maxValue = 0;
     const container = document?.getElementById("svg-wrapper");
@@ -113,12 +92,30 @@ const Timeline = ({ gsapTimeline }: Props) => {
       });
 
       getActiveData(side).forEach((entry) => {
+        periods
+          .get(entry)
+          ?.filter(
+            (period) =>
+              (period.startYear >= leftYear && period.startYear <= rightYear) ||
+              (period.endYear <= rightYear && period.endYear >= leftYear) ||
+              (period.startYear <= leftYear && period.endYear >= rightYear)
+          )
+          .forEach((period) => {
+            const max =
+              period.amount.number / (period.endYear - period.startYear + 1);
+            maxValue = Math.max(maxValue, max);
+          });
+
+        console.log(maxValue);
+
         const max =
           d3.max(visibleTicks, (d) => {
-            const value = d[entry as keyof TimelineYear];
-            return typeof value === "object" && value !== null
-              ? value.number
-              : 0;
+            let value = 0;
+            const yearData = d[entry as keyof TimelineYear];
+            if (typeof yearData === "object") {
+              value = yearData.number;
+            }
+            return value;
           }) ?? 0;
 
         maxValue = Math.max(maxValue, max);
@@ -462,7 +459,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
           .attr(
             "class",
             (d) =>
-              `period-line unzoom ${data} ${side} ${
+              `period-line unzoom ${data} ${side} line-${d.startYear} ${
                 d.endYear - d.startYear <= 2 ? "short" : ""
               }`
           )
@@ -492,7 +489,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
               PATH_PADDING -
               (d.amount.number /
                 (d.endYear - d.startYear) /
-                getMaxValue(side)) *
+                getMaxValueOnScreen(side)) *
                 maxHeight
             );
           })
@@ -503,7 +500,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
               PATH_PADDING -
               (d.amount.number /
                 (d.endYear - d.startYear) /
-                getMaxValue(side)) *
+                getMaxValueOnScreen(side)) *
                 maxHeight
             );
           });
@@ -515,7 +512,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             PATH_PADDING -
             (period.amount.number /
               (period.endYear - period.startYear) /
-              getMaxValue(side)) *
+              getMaxValueOnScreen(side)) *
               maxHeight;
 
           d3.select(graphRef.current)
@@ -693,6 +690,34 @@ const Timeline = ({ gsapTimeline }: Props) => {
             duration: 0.6,
           });
         });
+
+      periods.get(data)?.forEach((period) => {
+        const value =
+          getDimensions().height -
+          PADDING.bottom -
+          PATH_PADDING -
+          (period.amount.number /
+            (period.endYear - period.startYear + 1) /
+            getMaxValueOnScreen(side)) *
+            maxHeight;
+        gsap.to(
+          `#tick-${period.startYear} .tick-data.${data}.${side}, #tick-${period.endYear} .tick-data.${data}.${side}`,
+          {
+            attr: {
+              cy: value,
+            },
+            duration: 0.6,
+          }
+        );
+
+        gsap.to(`.period-line.line-${period.startYear}.${data}.${side}`, {
+          attr: {
+            y1: value,
+            y2: value,
+          },
+          duration: 0.6,
+        });
+      });
     });
   };
 
