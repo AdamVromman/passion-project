@@ -40,3 +40,19 @@ export enum SelectableDataType {
   PALESTINIANS_DISPLACED = "palestiniansDisplaced",
   PERCENTAGE_OF_PALESTINIAN_LAND_STOLEN = "percentageOfPalestinianLandStolen",
 }
+
+export interface LeftData {
+  adultsKilled: boolean;
+  adultsImprisoned: boolean;
+  minorsKilled: boolean;
+  minorsImprisoned: boolean;
+  adultsInjured: boolean;
+  minorsInjured: boolean;
+}
+
+export interface RightData {
+  illegalSettlers: boolean;
+  buildingsDemolished: boolean;
+  palestiniansDisplaced: boolean;
+  percentageOfPalestinianLandStolen: boolean;
+}

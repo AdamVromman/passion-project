@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import {
   DataPeriod,
@@ -11,6 +11,9 @@ import {
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { SelectableDataType } from "../services/types";
+import { Draggable } from "gsap/Draggable";
+import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
+
 const PADDING = { top: 30, left: 60, right: 60, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
 const LUSTRUM_ZOOM = 2;
@@ -28,6 +31,28 @@ interface Props {
 const Timeline = ({ gsapTimeline }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
+
+  // const [leftData, setLeftData] = useState<LeftData>({
+  //   adultsKilled: false,
+  //   adultsImprisoned: false,
+  //   minorsKilled: false,
+  //   minorsImprisoned: false,
+  //   adultsInjured: false,
+  //   minorsInjured: false,
+  // });
+
+  // const [rightData, setRightData] = useState({
+  //   illegalSettlers: false,
+  //   buildingsDemolished: false,
+  //   palestiniansDisplaced: false,
+  //   percentageOfPalestinianLandStolen: false,
+  // });
+
+  const [leftData, setLeftData] = useState<SelectableDataType[]>([]);
+  const [leftLength, setLeftLength] = useState(0);
+
+  const [rightData, setRightData] = useState<SelectableDataType[]>([]);
+  const [rightLength, setRightLength] = useState(0);
 
   const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
     SelectableDataType.ADULTS_KILLED,
@@ -296,7 +321,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .attr("y2", HEIGHT_TIMELINE / 2 - PATH_PADDING)
       .attr("opacity", 0)
       .attr("stroke-linecap", "round")
-      .attr("class", "stroke-4 stroke-[#C4C0B6] unzoom line");
+      .attr("class", "stroke-4 stroke-BROWN unzoom line");
 
     groups
       .append("line")
@@ -306,7 +331,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .attr("y2", HEIGHT_TIMELINE + PATH_PADDING)
       .attr("opacity", 0)
       .attr("stroke-linecap", "round")
-      .attr("class", "stroke-4 stroke-[#C4C0B6] unzoom line-2");
+      .attr("class", "stroke-4 stroke-BROWN unzoom line-2");
   };
 
   const updateTicks = () => {
@@ -651,8 +676,83 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   }, [zoomLevelFloored]);
 
+  useEffect(() => {
+    console.log("leftData", leftData);
+    console.log(leftData.length);
+    setLeftLength(leftData.length);
+    console.log("rightData", rightData);
+    console.log(rightData.length);
+    setRightLength(rightData.length);
+  }, [leftData, rightData]);
+
   useGSAP(
     () => {
+      gsap.registerPlugin(Draggable);
+      gsap.registerPlugin(InertiaPlugin);
+
+      const leftSpots = gsap.utils.toArray<HTMLDivElement>(
+        ".active-row.left .active-row-placeholder"
+      );
+
+      const rightSpots = gsap.utils.toArray<HTMLDivElement>(
+        ".active-row.right .active-row-placeholder"
+      );
+
+      gsap.utils.toArray<HTMLButtonElement>(".data-icon").map((icon) => {
+        const left = icon.classList.contains("left");
+
+        const { x: iconX, y: iconY } = icon.getBoundingClientRect();
+
+        Draggable.create(icon, {
+          type: "x,y",
+          inertia: true,
+          edgeResistance: 0.5,
+          bounds: "#data-icon-bounds",
+          snap: {
+            points: (point) => {
+              if (point.x < 100 && point.y < 100) {
+                if (left) {
+                  setLeftData((prev) => {
+                    const newData = [...prev].filter(
+                      (d) => d !== icon.classList[1]
+                    );
+                    return newData;
+                  });
+                } else {
+                  setRightData((prev) => {
+                    const newData = [...prev].filter(
+                      (d) => d !== icon.classList[1]
+                    );
+                    return newData;
+                  });
+                }
+                return { x: 0, y: 0 };
+              }
+
+              if (left) {
+                setLeftData((prev) => {
+                  const newData = [...prev];
+                  newData.push(icon.classList[1] as SelectableDataType);
+                  return newData;
+                });
+              } else {
+                setRightData((prev) => {
+                  const newData = [...prev];
+                  newData.push(icon.classList[1] as SelectableDataType);
+                  return newData;
+                });
+              }
+
+              console.log("leftLocal", leftLength, "rightLocal", rightLength);
+              const { x: spotX, y: spotY } = (left ? leftSpots : rightSpots)[
+                left ? leftLength : rightLength
+              ].getBoundingClientRect();
+              return { x: spotX - iconX, y: spotY - iconY };
+            },
+          },
+        });
+      });
+
       if (gsapTimeline) {
         gsapTimeline
           .to(
@@ -781,45 +881,75 @@ const Timeline = ({ gsapTimeline }: Props) => {
   return (
     <div ref={timelineRef} className="timeline-section">
       <div className="timeline-main opacity-0 w-full h-full">
-        <div className="h-1/5 flex flex-row justify-between items-center pb-8 ">
-          <div className="flex flex-row gap-4">
-            {Object.values(SelectableDataType).map((key) => {
-              return (
-                <button
-                  className={`timeline-data-icon ${key}`}
-                  key={key}
-                  onMouseEnter={() => {
-                    if (!selectedData.includes(key as SelectableDataType)) {
-                      drawData([...selectedData, key as SelectableDataType]);
-                      animateData(false, [
-                        ...selectedData,
-                        key as SelectableDataType,
-                      ]);
-                    }
-                  }}
-                  onClick={() => {
-                    setSelectedData((prev) => {
-                      if (prev.includes(key as SelectableDataType)) {
-                        return prev.filter((data) => data !== key);
-                      } else {
-                        return [...prev, key as SelectableDataType];
-                      }
-                    });
-                  }}
-                  onMouseLeave={() => {
-                    if (!selectedData.includes(key as SelectableDataType)) {
-                      drawData(selectedData);
-                      animateData(false);
-                    }
-                  }}
-                >
-                  {key}
-                </button>
-              );
-            })}
+        <div className="h-1/5 flex flex-row justify-between gap-8 items-center pb-4">
+          <div id="data-icon-bounds">
+            <div className="inactive">
+              {Object.values(SelectableDataType).map((key) => {
+                const left =
+                  key === SelectableDataType.ADULTS_KILLED ||
+                  key === SelectableDataType.ADULTS_IMPRISONED ||
+                  key === SelectableDataType.MINORS_KILLED ||
+                  key === SelectableDataType.MINORS_IMPRISONED ||
+                  key === SelectableDataType.ADULTS_INJURED ||
+                  key === SelectableDataType.MINORS_INJURED;
+
+                return (
+                  <button
+                    id={`timeline-data-icon-${key}`}
+                    className={`data-icon ${key} ${left ? "left" : "right"}`}
+                    key={key}
+                    // onMouseEnter={() => {
+                    //   if (!selectedData.includes(key as SelectableDataType)) {
+                    //     drawData([...selectedData, key as SelectableDataType]);
+                    //     animateData(false, [
+                    //       ...selectedData,
+                    //       key as SelectableDataType,
+                    //     ]);
+                    //   }
+                    // }}
+                    // onClick={() => {
+                    //   setSelectedData((prev) => {
+                    //     if (prev.includes(key as SelectableDataType)) {
+                    //       return prev.filter((data) => data !== key);
+                    //     } else {
+                    //       return [...prev, key as SelectableDataType];
+                    //     }
+                    //   });
+                    // }}
+                    // onMouseLeave={() => {
+                    //   if (!selectedData.includes(key as SelectableDataType)) {
+                    //     drawData(selectedData);
+                    //     animateData(false);
+                    //   }
+                    // }}
+                  >
+                    {key[0]}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="active">
+              <div className="active-row left">
+                <div className="active-row-placeholder"></div>
+                <div className="active-row-placeholder"></div>
+                <div className="active-row-placeholder"></div>
+                <div className="active-row-placeholder"></div>
+                <div className="active-row-placeholder"></div>
+                <div className="active-row-placeholder"></div>
+              </div>
+              <hr />
+              <div className="active-row right">
+                <div className="active-row-placeholder"></div>
+                <div className="active-row-placeholder"></div>
+                <div className="active-row-placeholder"></div>
+                <div className="active-row-placeholder"></div>
+              </div>
+            </div>
           </div>
-          <div className="text-BLACK text-4xl font-bold">
-            {leftYear}—{rightYear}
+
+          <div className="text-BLACK text-4xl font-bold flex flex-col items-end">
+            <span>{leftYear}</span>
+            <span>{rightYear}</span>
           </div>
         </div>
         <svg
