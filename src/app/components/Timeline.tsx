@@ -452,6 +452,35 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
+  const drawYAxis = (side: Side) => {
+    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
+    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+    const nrOfTicks = Math.floor(graphEnd / 50);
+    const maxValue = side === Side.LEFT ? leftMaxValue : rightMaxValue;
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, maxValue])
+      .range([graphEnd, graphStart]);
+
+    const yArray = [];
+
+    for (let i = 0; i < nrOfTicks; i++) {
+      yArray.push((maxValue / nrOfTicks) * i);
+    }
+
+    d3.select(graphRef.current)
+      .append("g")
+      .attr("class", `y-axis ${side}`)
+      .selectAll("text.y-axis")
+      .data(yArray)
+      .enter()
+      .append("text")
+      .text((d) => d)
+      .attr("x", PADDING.left / 2)
+      .attr("y", (d) => y(d));
+  };
+
   const drawData = (side: Side) => {
     const maxHeight =
       getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
@@ -691,23 +720,51 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   };
 
-  const updateMaxValues = () => {
-    getMaxValueOnScreen(Side.LEFT);
-    getMaxValueOnScreen(Side.RIGHT);
-  };
-
   const updateHeights = () => {
     //TODO: Update heights of the data points
+  };
+
+  const updateYAxis = (side: Side) => {
+    console.log("updateYAxis", side);
+    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
+    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+    const nrOfTicks = Math.floor(graphEnd / 50);
+    const maxValue = side === Side.LEFT ? leftMaxValue : rightMaxValue;
+    console.log("maxValue", maxValue);
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, maxValue])
+      .range([graphEnd, graphStart]);
+
+    const yArray = [];
+
+    for (let i = 0; i < nrOfTicks; i++) {
+      yArray.push((maxValue / nrOfTicks) * i);
+    }
+
+    d3.select(graphRef.current)
+      .select(`g.y-axis.${side}`)
+      .selectAll<Element, number>("text.y-axis")
+      .text((d) => d)
+      .attr("y", (d) => y(d));
   };
 
   //--------------------------------USE EFFECTS--------------------------------
 
   useEffect(() => {
-    updateMaxValues();
+    if (!Object.values(leftData).every((value) => !value)) {
+      getMaxValueOnScreen(Side.LEFT);
+    }
+
+    if (!Object.values(rightData).every((value) => !value)) {
+      getMaxValueOnScreen(Side.RIGHT);
+    }
   }, [zoomLevel]);
 
   useEffect(() => {
     drawTimeline();
+    drawYAxis();
     drawData(Side.LEFT);
     drawData(Side.RIGHT);
 
@@ -744,16 +801,16 @@ const Timeline = ({ gsapTimeline }: Props) => {
   }, [zoomLevelFloored]);
 
   useEffect(() => {
-    console.log("leftData", leftData);
-
+    getMaxValueOnScreen(Side.LEFT);
     drawData(Side.LEFT);
+    updateYAxis(Side.LEFT);
     animateData(false, Side.LEFT);
   }, [leftData]);
 
   useEffect(() => {
-    console.log("rightData", rightData);
-
+    getMaxValueOnScreen(Side.RIGHT);
     drawData(Side.RIGHT);
+    updateYAxis(Side.RIGHT);
     animateData(false, Side.RIGHT);
   }, [rightData]);
 
