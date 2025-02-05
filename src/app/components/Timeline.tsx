@@ -63,6 +63,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const [rightMaxValue, setRightMaxValue] = useState(0);
 
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [panLevel, setPanLevel] = useState(0);
   const [zoomLevelFloored, setZoomLevelFloored] = useState(1);
 
   const { contextSafe } = useGSAP({ scope: graphRef });
@@ -639,7 +640,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const updatePeriods = (zoom: number, side: Side) => {
+  const updatePeriods = (side: Side) => {
     getActiveData(side).forEach((data) => {
       const localPeriods = periods.get(data);
 
@@ -653,7 +654,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
               (timeline.findIndex((i) => i.year === d.startYear) *
                 getTickWidth() +
                 PADDING.left) *
-                zoom +
+                zoomLevel +
               PATH_PADDING +
               TICK_OFFSET -
               DATA_POINT_SIZE_PERIOD
@@ -664,7 +665,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
               (timeline.findIndex((i) => i.year === d.endYear) *
                 getTickWidth() +
                 PADDING.left) *
-                zoom +
+                zoomLevel +
               TICK_OFFSET -
               PATH_PADDING +
               DATA_POINT_SIZE_PERIOD
@@ -676,20 +677,20 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const updateHeights = (side: Side) => {
     const maxHeight =
       getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
-    //TODO: Update heights of the data points
 
     getActiveData(side).forEach((data) => {
-      d3.select(graphRef.current)
-        .select("#group-timeline")
-        .selectAll<Element, TimelineYear>(`circle.${data}.${side}`)
-        .attr(
-          "cy",
-          (d) =>
-            getDimensions().height -
-            PADDING.bottom -
-            PATH_PADDING -
-            ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) * maxHeight
-        );
+      timeline.forEach((d) => {
+        gsap.to(`#tick-${d.year} .tick-data.${data}.${side}`, {
+          attr: {
+            cy:
+              getDimensions().height -
+              PADDING.bottom -
+              PATH_PADDING -
+              ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) * maxHeight,
+          },
+          duration: 0.6,
+        });
+      });
     });
   };
 
@@ -732,21 +733,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
       updateYears();
       setZoomLevel(() => zoom);
+      setPanLevel(() => e.transform.x);
       setZoomLevelFloored(() => Math.floor(zoom));
-
-      console.log(leftData, rightData);
-
-      if (!Object.values(leftData).every((value) => !value)) {
-        getMaxValueOnScreen(Side.LEFT);
-        updateHeights(Side.LEFT);
-        updatePeriods(zoom, Side.LEFT);
-      }
-
-      if (!Object.values(rightData).every((value) => !value)) {
-        getMaxValueOnScreen(Side.RIGHT);
-        updateHeights(Side.RIGHT);
-        updatePeriods(zoom, Side.RIGHT);
-      }
 
       d3.select(graphRef.current)
         .select("#zoomable")
@@ -761,17 +749,19 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   //--------------------------------USE EFFECTS--------------------------------
 
-  // useEffect(() => {
-  //   if (!Object.values(leftData).every((value) => !value)) {
-  //     getMaxValueOnScreen(Side.LEFT);
-  //     updateHeights(Side.LEFT);
-  //   }
+  useEffect(() => {
+    console.log("zoom or pan changed");
+    if (!Object.values(leftData).every((value) => !value)) {
+      getMaxValueOnScreen(Side.LEFT);
+      updateHeights(Side.LEFT);
+      updatePeriods(Side.LEFT);
+    }
 
-  //   if (!Object.values(rightData).every((value) => !value)) {
-  //     getMaxValueOnScreen(Side.RIGHT);
-  //     updateHeights(Side.RIGHT);
-  //   }
-  // }, [zoomLevel]);
+    if (!Object.values(rightData).every((value) => !value)) {
+      getMaxValueOnScreen(Side.RIGHT);
+      updateHeights(Side.RIGHT);
+    }
+  }, [zoomLevel, panLevel]);
 
   useEffect(() => {
     drawTimeline();
