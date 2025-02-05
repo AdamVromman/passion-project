@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import {
   DataPeriod,
@@ -18,6 +18,7 @@ import {
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
+import { get } from "http";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
@@ -58,9 +59,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const [rightYear, setRightYear] = useState(
     timeline[timeline.length - 1].year
   );
-
-  const [leftMaxValue, setLeftMaxValue] = useState(0);
-  const [rightMaxValue, setRightMaxValue] = useState(0);
 
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panLevel, setPanLevel] = useState(0);
@@ -130,11 +128,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
       const powerNumber = Math.max(Math.pow(10, digits - 2), 1);
       const ceiled = Math.ceil(maxValue / powerNumber) * powerNumber;
 
-      if (side === Side.LEFT) {
-        setLeftMaxValue(ceiled);
-      } else {
-        setRightMaxValue(ceiled);
-      }
       return ceiled;
     }
     return 0;
@@ -153,6 +146,12 @@ const Timeline = ({ gsapTimeline }: Props) => {
         height: graphRef.current.clientHeight,
       };
     return { width: -1, height: -1 };
+  };
+
+  const getVisibleYears = () => {
+    return timeline.filter(
+      (tick) => tick.year >= leftYear && tick.year <= rightYear
+    );
   };
 
   //--------------------------------ANIMATIONS--------------------------------
@@ -679,88 +678,101 @@ const Timeline = ({ gsapTimeline }: Props) => {
       getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
 
     getActiveData(side).forEach((data) => {
-      timeline.forEach((d) => {
-        gsap.to(`#tick-${d.year} .tick-data.${data}.${side}`, {
-          attr: {
-            cy:
-              getDimensions().height -
-              PADDING.bottom -
-              PATH_PADDING -
-              ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) * maxHeight,
-          },
-          duration: 0.6,
+      getVisibleYears()
+        .filter((d) => typeof d[data]?.number !== "undefined")
+        .forEach((d) => {
+          gsap.to(`#tick-${d.year} .tick-data.${data}.${side}`, {
+            attr: {
+              cy:
+                getDimensions().height -
+                PADDING.bottom -
+                PATH_PADDING -
+                ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) *
+                  maxHeight,
+            },
+            duration: 0.6,
+          });
         });
-      });
     });
   };
 
   const updateYAxis = (side: Side) => {
-    const graphStart = PADDING.top + HEIGHT_TIMELINE;
-    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
-    const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
-    const maxValue = getMaxValueOnScreen(side);
+    console.log("updating y axis");
+    console.log(getActiveData(side));
+    if (
+      (side === Side.LEFT && getActiveData(side).length > 0) ||
+      (side === Side.RIGHT && getActiveData(side).length > 0)
+    ) {
+      const graphStart = PADDING.top + HEIGHT_TIMELINE;
+      const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+      const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
+      const maxValue = getMaxValueOnScreen(side);
 
-    d3.select(graphRef.current).select(`.y-axis.${side}`).remove();
+      d3.select(graphRef.current).selectAll(`.y-axis.${side}`).remove();
 
-    const y = d3
-      .scaleLinear()
-      .domain([0, maxValue])
-      .range([graphEnd, graphStart]);
+      const y = d3
+        .scaleLinear()
+        .domain([0, maxValue])
+        .range([graphEnd, graphStart]);
 
-    const yArray = [];
+      const yArray = [];
 
-    for (let i = 0; i <= nrOfTicks; i++) {
-      yArray.push((maxValue / nrOfTicks) * i);
+      for (let i = 0; i <= nrOfTicks; i++) {
+        yArray.push((maxValue / nrOfTicks) * i);
+      }
+
+      d3.select(graphRef.current)
+        .append("g")
+        .attr("class", `y-axis ${side}`)
+        .selectAll<Element, number>("text.y-axis")
+        .data(yArray)
+        .enter()
+        .append("text")
+        .attr("class", "y-axis")
+        .text((d) => d)
+        .attr("text-anchor", side === Side.LEFT ? "end" : "start")
+        .attr(
+          "x",
+          side === Side.LEFT
+            ? PADDING.left - PATH_PADDING
+            : getDimensions().width - PADDING.right + PATH_PADDING
+        )
+        .attr("y", (d) => y(d));
     }
-
-    d3.select(graphRef.current)
-      .append("g")
-      .attr("class", `y-axis.${side}`)
-      .selectAll<Element, number>("text.y-axis")
-      .data(yArray)
-      .enter()
-      .append("text")
-      .attr("class", "y-axis")
-      .text((d) => d)
-      .attr("text-anchor", "end")
-      .attr("x", PADDING.left - PATH_PADDING)
-      .attr("y", (d) => y(d));
   };
 
-  const handleZoom = useCallback(
-    (e: any) => {
-      const zoom = e.transform.k;
-
-      updateYears();
-      setZoomLevel(() => zoom);
-      setPanLevel(() => e.transform.x);
-      setZoomLevelFloored(() => Math.floor(zoom));
-
-      d3.select(graphRef.current)
-        .select("#zoomable")
-        .attr("transform", `translate(${e.transform.x}, 0) scale(${zoom}, 1)`);
-
-      d3.select(graphRef.current)
-        .selectAll(".unzoom")
-        .attr("transform", `scale(${1 / zoom}, 1)`);
-    },
-    [leftData, rightData]
-  );
+  const handleZoom = (e: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
+    setZoomLevel(() => e.transform.k);
+    setPanLevel(() => e.transform.x);
+  };
 
   //--------------------------------USE EFFECTS--------------------------------
 
   useEffect(() => {
     console.log("zoom or pan changed");
+    updateYears();
+    setZoomLevelFloored(() => Math.floor(zoomLevel));
     if (!Object.values(leftData).every((value) => !value)) {
       getMaxValueOnScreen(Side.LEFT);
       updateHeights(Side.LEFT);
       updatePeriods(Side.LEFT);
+      updateYAxis(Side.LEFT);
     }
 
     if (!Object.values(rightData).every((value) => !value)) {
       getMaxValueOnScreen(Side.RIGHT);
       updateHeights(Side.RIGHT);
+      updateYAxis(Side.RIGHT);
+      updatePeriods(Side.RIGHT);
     }
+
+    d3.select(graphRef.current)
+      .select("#zoomable")
+      .attr("transform", `translate(${panLevel}, 0) scale(${zoomLevel}, 1)`);
+
+    d3.select(graphRef.current)
+      .selectAll(".unzoom")
+      .attr("transform", `scale(${1 / zoomLevel}, 1)`);
   }, [zoomLevel, panLevel]);
 
   useEffect(() => {
@@ -781,7 +793,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
       animateData(false, Side.RIGHT);
     } else {
       reverseLustra();
-      // reverseData();
     }
 
     if (zoomLevelFloored >= REGULAR_ZOOM) {
@@ -790,7 +801,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
       animateData(false, Side.RIGHT);
     } else {
       reverseRegular();
-      // reverseData();
     }
 
     if (zoomLevelFloored >= SHORT_ZOOM) {
