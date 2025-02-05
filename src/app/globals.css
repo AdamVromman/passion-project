@@ -154,7 +154,10 @@ html {
       @apply flex flex-row gap-4 items-center justify-end;
 
       .active-row-placeholder {
-        @apply h-full aspect-square bg-WHITE rounded-7_5;
+        @apply h-full aspect-square;
+        @apply rounded-7_5;
+        @apply bg-WHITE text-BROWN;
+        @apply flex justify-center items-center;
       }
     }
   }

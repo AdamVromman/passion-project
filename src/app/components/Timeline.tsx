@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import {
   DataPeriod,
@@ -10,7 +10,7 @@ import {
 } from "../services/timelineService";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { SelectableDataType } from "../services/types";
+import { LeftData, RightData, SelectableDataType } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
 
@@ -32,27 +32,21 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
-  // const [leftData, setLeftData] = useState<LeftData>({
-  //   adultsKilled: false,
-  //   adultsImprisoned: false,
-  //   minorsKilled: false,
-  //   minorsImprisoned: false,
-  //   adultsInjured: false,
-  //   minorsInjured: false,
-  // });
+  const [leftData, setLeftData] = useState<LeftData>({
+    adultsKilled: false,
+    adultsImprisoned: false,
+    minorsKilled: false,
+    minorsImprisoned: false,
+    adultsInjured: false,
+    minorsInjured: false,
+  });
 
-  // const [rightData, setRightData] = useState({
-  //   illegalSettlers: false,
-  //   buildingsDemolished: false,
-  //   palestiniansDisplaced: false,
-  //   percentageOfPalestinianLandStolen: false,
-  // });
-
-  const [leftData, setLeftData] = useState<SelectableDataType[]>([]);
-  const [leftLength, setLeftLength] = useState(0);
-
-  const [rightData, setRightData] = useState<SelectableDataType[]>([]);
-  const [rightLength, setRightLength] = useState(0);
+  const [rightData, setRightData] = useState<RightData>({
+    illegalSettlers: false,
+    buildingsDemolished: false,
+    palestiniansDisplaced: false,
+    percentageOfPalestinianLandStolen: false,
+  });
 
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartY, setDragStartY] = useState(0);
@@ -679,97 +673,113 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   }, [zoomLevelFloored]);
 
-  useEffect(() => {
-    console.log("triggered");
-    setLeftLength(leftData.length);
-  }, [leftData]);
-
   useGSAP(
     () => {
       gsap.registerPlugin(Draggable);
       gsap.registerPlugin(InertiaPlugin);
 
-      const leftSpots = gsap.utils.toArray<HTMLDivElement>(
-        ".active-row.left .active-row-placeholder"
-      );
+      Object.keys(leftData).forEach((key) => {
+        const icon = document.getElementById(`timeline-data-icon-${key}`);
+        const placeholder = document.getElementById(
+          `active-row-placeholder-${key}`
+        );
 
-      const rightSpots = gsap.utils.toArray<HTMLDivElement>(
-        ".active-row.right .active-row-placeholder"
-      );
+        if (icon && placeholder) {
+          const { x: iconX, y: iconY } = icon.getBoundingClientRect();
+          const { x: spotX, y: spotY } = placeholder.getBoundingClientRect();
 
-      gsap.utils.toArray<HTMLButtonElement>(".data-icon").map((icon) => {
-        const left = icon.classList.contains("left");
-
-        const { x: iconX, y: iconY } = icon.getBoundingClientRect();
-
-        Draggable.create(icon, {
-          type: "x,y",
-          inertia: true,
-          edgeResistance: 0.5,
-          bounds: "#data-icon-bounds",
-          onDrag: (event: PointerEvent) => {
-            console.log(dragStartX);
-            const dx = event.x - dragStartX;
-            const dy = event.y - dragStartY;
-            console.log(dx, dy);
-          },
-          onDragStart: (event: PointerEvent) => {
-            setDragStartX(event.x);
-            setDragStartY(event.y);
-            gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
-          },
-          onDragEnd: (event: PointerEvent) => {
-            const dx = event.x - iconX;
-            const dy = event.y - iconY;
-
-            gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
-            if (dx < 100 && dy < 100) {
-              if (left) {
-                setLeftLength(leftLength - 1);
-                setLeftData((prev) => {
-                  const newData = [...prev].filter(
-                    (d) => d !== icon.classList[1]
-                  );
-                  return newData;
-                });
-              } else {
-                setRightLength(rightLength - 1);
-                setRightData((prev) => {
-                  const newData = [...prev].filter(
-                    (d) => d !== icon.classList[1]
-                  );
-                  return newData;
-                });
-              }
-            } else {
-              if (left) {
-                setLeftLength(leftLength + 1);
-                setLeftData((prev) => {
-                  const newData = [...prev];
-                  newData.push(icon.classList[1] as SelectableDataType);
-                  return newData;
-                });
-              } else {
-                setRightLength(rightLength + 1);
-                setRightData((prev) => {
-                  const newData = [...prev];
-                  newData.push(icon.classList[1] as SelectableDataType);
-                  return newData;
-                });
-              }
-            }
-          },
-          snap: {
-            points: () => {
-              console.log(leftLength);
-
-              const { x: spotX, y: spotY } = (left ? leftSpots : rightSpots)[
-                left ? leftLength : rightLength
-              ].getBoundingClientRect();
-              return { x: spotX - iconX, y: spotY - iconY };
+          Draggable.create(icon, {
+            type: "x,y",
+            inertia: true,
+            edgeResistance: 0.5,
+            bounds: "#data-icon-bounds",
+            onDragStart: (event: PointerEvent) => {
+              setDragStartX(event.x);
+              setDragStartY(event.y);
+              gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
             },
-          },
-        });
+            onDragEnd: (event: PointerEvent) => {
+              const dx = event.x - iconX;
+              const dy = event.y - iconY;
+
+              gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+              if (dx < 100 && dy < 100) {
+                setLeftData((prev) => {
+                  const newData = { ...prev };
+                  newData[key as keyof LeftData] = false;
+                  return newData;
+                });
+              } else {
+                setLeftData((prev) => {
+                  const newData = { ...prev };
+                  newData[key as keyof LeftData] = true;
+                  return newData;
+                });
+              }
+            },
+            snap: {
+              points: (point) => {
+                if (point.x < 0 && point.y < 0) {
+                  return { x: 0, y: 0 };
+                }
+
+                return { x: spotX - iconX, y: spotY - iconY };
+              },
+            },
+          });
+        }
+      });
+
+      Object.keys(rightData).forEach((key) => {
+        const icon = document.getElementById(`timeline-data-icon-${key}`);
+        const placeholder = document.getElementById(
+          `active-row-placeholder-${key}`
+        );
+
+        if (icon && placeholder) {
+          const { x: iconX, y: iconY } = icon.getBoundingClientRect();
+          const { x: spotX, y: spotY } = placeholder.getBoundingClientRect();
+
+          Draggable.create(icon, {
+            type: "x,y",
+            inertia: true,
+            edgeResistance: 0.5,
+            bounds: "#data-icon-bounds",
+            onDragStart: (event: PointerEvent) => {
+              setDragStartX(event.x);
+              setDragStartY(event.y);
+              gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
+            },
+            onDragEnd: (event: PointerEvent) => {
+              const dx = event.x - iconX;
+              const dy = event.y - iconY;
+
+              gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+              if (dx < 100 && dy < 100) {
+                setRightData((prev) => {
+                  const newData = { ...prev };
+                  newData[key as keyof RightData] = false;
+                  return newData;
+                });
+              } else {
+                setRightData((prev) => {
+                  const newData = { ...prev };
+                  newData[key as keyof RightData] = true;
+                  return newData;
+                });
+              }
+            },
+            snap: {
+              points: (point) => {
+                if (point.x < 0 && point.y < 0) {
+                  return { x: 0, y: 0 };
+                }
+
+                return { x: spotX - iconX, y: spotY - iconY };
+              },
+            },
+          });
+        }
       });
 
       if (gsapTimeline) {
@@ -949,19 +959,27 @@ const Timeline = ({ gsapTimeline }: Props) => {
             </div>
             <div className="active">
               <div className="active-row left">
-                <div className="active-row-placeholder"></div>
-                <div className="active-row-placeholder"></div>
-                <div className="active-row-placeholder"></div>
-                <div className="active-row-placeholder"></div>
-                <div className="active-row-placeholder"></div>
-                <div className="active-row-placeholder"></div>
+                {Object.keys(leftData).map((key) => (
+                  <div
+                    key={key}
+                    id={`active-row-placeholder-${key}`}
+                    className="active-row-placeholder"
+                  >
+                    {key[0]}
+                  </div>
+                ))}
               </div>
               <hr />
               <div className="active-row right">
-                <div className="active-row-placeholder"></div>
-                <div className="active-row-placeholder"></div>
-                <div className="active-row-placeholder"></div>
-                <div className="active-row-placeholder"></div>
+                {Object.keys(rightData).map((key) => (
+                  <div
+                    key={key}
+                    id={`active-row-placeholder-${key}`}
+                    className="active-row-placeholder"
+                  >
+                    {key[0]}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
