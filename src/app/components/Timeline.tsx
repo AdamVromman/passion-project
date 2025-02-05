@@ -708,6 +708,12 @@ const Timeline = ({ gsapTimeline }: Props) => {
           inertia: true,
           edgeResistance: 0.5,
           bounds: "#data-icon-bounds",
+          onDragStart: () => {
+            gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
+          },
+          onDragEnd: () => {
+            gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+          },
           snap: {
             points: (point) => {
               if (point.x < 100 && point.y < 100) {
