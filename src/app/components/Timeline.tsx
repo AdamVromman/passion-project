@@ -10,7 +10,12 @@ import {
 } from "../services/timelineService";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { LeftData, RightData, SelectableDataType } from "../services/types";
+import {
+  LeftData,
+  RightData,
+  SelectableDataType,
+  Side,
+} from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
 
@@ -49,17 +54,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
     percentageOfPalestinianLandStolen: false,
   });
 
-  const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
-    SelectableDataType.ADULTS_KILLED,
-    //SelectableDataType.ADULTS_INJURED,
-    //SelectableDataType.MINORS_KILLED,
-    //SelectableDataType.MINORS_INJURED,
-    //SelectableDataType.PERCENTAGE_OF_PALESTINIAN_LAND_STOLEN,
-    // SelectableDataType.ADULTS_IMPRISONED,
-    // SelectableDataType.MINORS_IMPRISONED,
-    // SelectableDataType.BUILDINGS_DEMOLISHED,
-    //SelectableDataType.ILLEGAL_SETTLERS,
-  ]);
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
     timeline[timeline.length - 1].year
@@ -69,20 +63,32 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   const { contextSafe } = useGSAP({ scope: graphRef });
 
-  const getMaxValues = (localSelectedData?: SelectableDataType[]) => {
-    const values = new Map<SelectableDataType, number>();
+  const getActiveData = (side: Side): SelectableDataType[] => {
+    return Object.entries(side === Side.LEFT ? leftData : rightData)
+      .filter((entry) => entry[1])
+      .map((entry) => {
+        return entry[0] as SelectableDataType;
+      });
+  };
 
-    (localSelectedData ?? selectedData).forEach((data) => {
-      const max = d3.max(timeline, (d) => d[data]?.number ?? 0) ?? 0;
+  const getMaxValue = (side: Side) => {
+    let maxValue = 0;
 
-      const digits = Math.floor(Math.log10(max) + 1);
-      const powerNumber = Math.max(Math.pow(10, digits - 2), 1);
-      const ceiled = Math.ceil(max / powerNumber) * powerNumber;
+    getActiveData(side).forEach((entry) => {
+      const max =
+        d3.max(timeline, (d) => {
+          const value = d[entry as keyof TimelineYear];
+          return typeof value === "object" && value !== null ? value.number : 0;
+        }) ?? 0;
 
-      values.set(data, ceiled);
+      maxValue = Math.max(maxValue, max);
     });
 
-    return values;
+    const digits = Math.floor(Math.log10(maxValue) + 1);
+    const powerNumber = Math.max(Math.pow(10, digits - 2), 1);
+    const ceiled = Math.ceil(maxValue / powerNumber) * powerNumber;
+
+    return ceiled;
   };
 
   const getTickWidth = () => {
@@ -263,7 +269,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
     updateYears();
     setZoomLevel(() => zoom);
     setZoomLevelFloored(() => Math.floor(zoom));
-    updatePeriods(zoom);
+    updatePeriods(zoom, Side.LEFT);
+    updatePeriods(zoom, Side.RIGHT);
 
     d3.select(graphRef.current)
       .select("#zoomable")
@@ -427,7 +434,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const drawData = (localSelectedData?: SelectableDataType[]) => {
+  const drawData = (side: Side) => {
     const maxHeight =
       getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
 
@@ -442,7 +449,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .selectAll("line.period-line")
       .remove();
 
-    (localSelectedData ?? selectedData).forEach((data) => {
+    getActiveData(side).forEach((data) => {
       const localPeriods = periods.get(data);
 
       if (localPeriods) {
@@ -485,7 +492,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
               PATH_PADDING -
               (d.amount.number /
                 (d.endYear - d.startYear) /
-                getMaxValues(localSelectedData).get(data)) *
+                getMaxValue(side)) *
                 maxHeight
             );
           })
@@ -496,7 +503,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
               PATH_PADDING -
               (d.amount.number /
                 (d.endYear - d.startYear) /
-                getMaxValues(localSelectedData).get(data)) *
+                getMaxValue(side)) *
                 maxHeight
             );
           });
@@ -508,7 +515,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             PATH_PADDING -
             (period.amount.number /
               (period.endYear - period.startYear) /
-              getMaxValues(localSelectedData).get(data)) *
+              getMaxValue(side)) *
               maxHeight;
 
           d3.select(graphRef.current)
@@ -544,8 +551,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             getDimensions().height -
             PADDING.bottom -
             PATH_PADDING -
-            (d[data]?.number / getMaxValues(localSelectedData).get(data)) *
-              maxHeight
+            ((d[data]?.number ?? 0) / getMaxValue(side)) * maxHeight
         )
         .attr("r", 0)
         .attr("class", `tick-data unzoom ${data}`);
@@ -592,8 +598,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const updatePeriods = (zoom: number) => {
-    selectedData.forEach((data) => {
+  const updatePeriods = (zoom: number, side: Side) => {
+    getActiveData(side).forEach((data) => {
       const localPeriods = periods.get(data);
 
       if (localPeriods) {
@@ -626,20 +632,16 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   };
 
-  const animateData = (
-    timeline: boolean,
-    localSelectedData?: SelectableDataType[]
-  ) => {
-    (localSelectedData ?? selectedData).forEach((data) => {
+  const animateData = (timeline: boolean, side: Side) => {
+    getActiveData(side).forEach((data) => {
       animateDataType(timeline, data);
     });
   };
 
   useEffect(() => {
     drawTimeline();
-    drawData();
-    // resize();
-    getMaxValues();
+    drawData(Side.LEFT);
+    drawData(Side.RIGHT);
 
     window.addEventListener("resize", resize);
     return () => {
@@ -650,7 +652,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
   useEffect(() => {
     if (zoomLevelFloored >= LUSTRUM_ZOOM) {
       animateLustra();
-      animateData(false);
+      animateData(false, Side.LEFT);
+      animateData(false, Side.RIGHT);
     } else {
       reverseLustra();
       // reverseData();
@@ -658,7 +661,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
     if (zoomLevelFloored >= REGULAR_ZOOM) {
       animateRegular();
-      animateData(false);
+      animateData(false, Side.LEFT);
+      animateData(false, Side.RIGHT);
     } else {
       reverseRegular();
       // reverseData();
@@ -673,8 +677,17 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   useEffect(() => {
     console.log("leftData", leftData);
+
+    drawData(Side.LEFT);
+    animateData(false, Side.LEFT);
+  }, [animateData, drawData, leftData]);
+
+  useEffect(() => {
     console.log("rightData", rightData);
-  }, [leftData, rightData]);
+
+    drawData(Side.RIGHT);
+    animateData(false, Side.RIGHT);
+  }, [animateData, drawData, rightData]);
 
   useGSAP(
     () => {
@@ -889,7 +902,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "<"
           );
 
-        animateData(true);
+        animateData(true, Side.LEFT);
+        animateData(true, Side.RIGHT);
       }
     },
     { scope: timelineRef, dependencies: [gsapTimeline] }
@@ -901,19 +915,46 @@ const Timeline = ({ gsapTimeline }: Props) => {
         <div className="h-1/5 flex flex-row justify-between gap-8 items-center pb-4">
           <div id="data-icon-bounds">
             <div className="inactive">
-              {Object.values(SelectableDataType).map((key) => {
-                const left =
-                  key === SelectableDataType.ADULTS_KILLED ||
-                  key === SelectableDataType.ADULTS_IMPRISONED ||
-                  key === SelectableDataType.MINORS_KILLED ||
-                  key === SelectableDataType.MINORS_IMPRISONED ||
-                  key === SelectableDataType.ADULTS_INJURED ||
-                  key === SelectableDataType.MINORS_INJURED;
-
+              {Object.keys(leftData).map((key) => {
                 return (
                   <button
                     id={`timeline-data-icon-${key}`}
-                    className={`data-icon ${key} ${left ? "left" : "right"}`}
+                    className={`data-icon ${key} left`}
+                    key={key}
+                    // onMouseEnter={() => {
+                    //   if (!selectedData.includes(key as SelectableDataType)) {
+                    //     drawData([...selectedData, key as SelectableDataType]);
+                    //     animateData(false, [
+                    //       ...selectedData,
+                    //       key as SelectableDataType,
+                    //     ]);
+                    //   }
+                    // }}
+                    // onClick={() => {
+                    //   setSelectedData((prev) => {
+                    //     if (prev.includes(key as SelectableDataType)) {
+                    //       return prev.filter((data) => data !== key);
+                    //     } else {
+                    //       return [...prev, key as SelectableDataType];
+                    //     }
+                    //   });
+                    // }}
+                    // onMouseLeave={() => {
+                    //   if (!selectedData.includes(key as SelectableDataType)) {
+                    //     drawData(selectedData);
+                    //     animateData(false);
+                    //   }
+                    // }}
+                  >
+                    {key[0]}
+                  </button>
+                );
+              })}
+              {Object.keys(rightData).map((key) => {
+                return (
+                  <button
+                    id={`timeline-data-icon-${key}`}
+                    className={`data-icon ${key} right`}
                     key={key}
                     // onMouseEnter={() => {
                     //   if (!selectedData.includes(key as SelectableDataType)) {

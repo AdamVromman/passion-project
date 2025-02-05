@@ -56,3 +56,8 @@ export interface RightData {
   palestiniansDisplaced: boolean;
   percentageOfPalestinianLandStolen: boolean;
 }
+
+export enum Side {
+  LEFT = "left",
+  RIGHT = "right",
+}
