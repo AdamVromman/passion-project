@@ -54,6 +54,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const [rightData, setRightData] = useState<SelectableDataType[]>([]);
   const [rightLength, setRightLength] = useState(0);
 
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartY, setDragStartY] = useState(0);
+
   const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
     SelectableDataType.ADULTS_KILLED,
     //SelectableDataType.ADULTS_INJURED,
@@ -677,13 +680,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
   }, [zoomLevelFloored]);
 
   useEffect(() => {
-    console.log("leftData", leftData);
-    console.log(leftData.length);
+    console.log("triggered");
     setLeftLength(leftData.length);
-    console.log("rightData", rightData);
-    console.log(rightData.length);
-    setRightLength(rightData.length);
-  }, [leftData, rightData]);
+  }, [leftData]);
 
   useGSAP(
     () => {
@@ -708,48 +707,62 @@ const Timeline = ({ gsapTimeline }: Props) => {
           inertia: true,
           edgeResistance: 0.5,
           bounds: "#data-icon-bounds",
-          onDragStart: () => {
+          onDrag: (event: PointerEvent) => {
+            console.log(dragStartX);
+            const dx = event.x - dragStartX;
+            const dy = event.y - dragStartY;
+            console.log(dx, dy);
+          },
+          onDragStart: (event: PointerEvent) => {
+            setDragStartX(event.x);
+            setDragStartY(event.y);
             gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
           },
-          onDragEnd: () => {
-            gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
-          },
-          snap: {
-            points: (point) => {
-              if (point.x < 100 && point.y < 100) {
-                if (left) {
-                  setLeftData((prev) => {
-                    const newData = [...prev].filter(
-                      (d) => d !== icon.classList[1]
-                    );
-                    return newData;
-                  });
-                } else {
-                  setRightData((prev) => {
-                    const newData = [...prev].filter(
-                      (d) => d !== icon.classList[1]
-                    );
-                    return newData;
-                  });
-                }
-                return { x: 0, y: 0 };
-              }
+          onDragEnd: (event: PointerEvent) => {
+            const dx = event.x - iconX;
+            const dy = event.y - iconY;
 
+            gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+            if (dx < 100 && dy < 100) {
               if (left) {
+                setLeftLength(leftLength - 1);
+                setLeftData((prev) => {
+                  const newData = [...prev].filter(
+                    (d) => d !== icon.classList[1]
+                  );
+                  return newData;
+                });
+              } else {
+                setRightLength(rightLength - 1);
+                setRightData((prev) => {
+                  const newData = [...prev].filter(
+                    (d) => d !== icon.classList[1]
+                  );
+                  return newData;
+                });
+              }
+            } else {
+              if (left) {
+                setLeftLength(leftLength + 1);
                 setLeftData((prev) => {
                   const newData = [...prev];
                   newData.push(icon.classList[1] as SelectableDataType);
                   return newData;
                 });
               } else {
+                setRightLength(rightLength + 1);
                 setRightData((prev) => {
                   const newData = [...prev];
                   newData.push(icon.classList[1] as SelectableDataType);
                   return newData;
                 });
               }
+            }
+          },
+          snap: {
+            points: () => {
+              console.log(leftLength);
 
-              console.log("leftLocal", leftLength, "rightLocal", rightLength);
               const { x: spotX, y: spotY } = (left ? leftSpots : rightSpots)[
                 left ? leftLength : rightLength
               ].getBoundingClientRect();
