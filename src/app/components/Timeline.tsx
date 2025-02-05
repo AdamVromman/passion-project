@@ -2,14 +2,33 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { timeline, TimelineYear } from "../services/timelineService";
+import {
+  DataPeriod,
+  periods,
+  timeline,
+  TimelineYear,
+} from "../services/timelineService";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { SelectableDataType } from "../services/types";
-const PADDING = { top: 30, left: 60, right: 60, bottom: 60 };
+import {
+  LeftData,
+  RightData,
+  SelectableDataType,
+  Side,
+} from "../services/types";
+import { Draggable } from "gsap/Draggable";
+import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
+
+const PADDING = { top: 30, left: 120, right: 120, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
 const LUSTRUM_ZOOM = 2;
 const REGULAR_ZOOM = 6;
+const SHORT_ZOOM = 2;
+const PATH_PADDING = 16;
+const TICK_OFFSET = 25;
+const DATA_POINT_SIZE = 7;
+const DATA_POINT_SIZE_PERIOD = 4;
+const SNAP_DISTANCE = 100;
 
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
@@ -19,40 +38,102 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
-  const [selectedData, setSelectedData] = useState<SelectableDataType[]>([
-    //SelectableDataType.ADULTS_KILLED,
-    //SelectableDataType.ADULTS_INJURED,
-    //SelectableDataType.MINORS_KILLED,
-    //SelectableDataType.MINORS_INJURED,
-    //SelectableDataType.PERCENTAGE_OF_PALESTINIAN_LAND_STOLEN,
-    SelectableDataType.ADULTS_IMPRISONED,
-    SelectableDataType.MINORS_IMPRISONED,
-    SelectableDataType.BUILDINGS_DEMOLISHED,
-    //SelectableDataType.ILLEGAL_SETTLERS,
-  ]);
+  const [leftData, setLeftData] = useState<LeftData>({
+    adultsKilled: false,
+    adultsImprisoned: false,
+    minorsKilled: false,
+    minorsImprisoned: false,
+    adultsInjured: false,
+    minorsInjured: false,
+  });
+
+  const [rightData, setRightData] = useState<RightData>({
+    illegalSettlers: false,
+    buildingsDemolished: false,
+    palestiniansDisplaced: false,
+    percentageOfPalestinianLandStolen: false,
+  });
+
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
     timeline[timeline.length - 1].year
   );
+
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [panLevel, setPanLevel] = useState(0);
   const [zoomLevelFloored, setZoomLevelFloored] = useState(1);
 
   const { contextSafe } = useGSAP({ scope: graphRef });
 
-  const getMaxValues = () => {
-    const values = new Map<SelectableDataType, number>();
+  //--------------------------------UTILS--------------------------------
 
-    selectedData.forEach((data) => {
-      const max = d3.max(timeline, (d) => d[data]?.number ?? 0) ?? 0;
+  const getActiveData = (side: Side): SelectableDataType[] => {
+    return Object.entries(side === Side.LEFT ? leftData : rightData)
+      .filter((entry) => entry[1])
+      .map((entry) => {
+        return entry[0] as SelectableDataType;
+      });
+  };
 
-      const digits = Math.floor(Math.log10(max) + 1);
+  const getMaxValueOnScreen = (side: Side): number => {
+    let maxValue = 0;
+    const container = document?.getElementById("svg-wrapper");
+
+    if (container) {
+      const { left, right } = container.getBoundingClientRect();
+
+      const visibleTicks = timeline.filter((tick) => {
+        const element = document?.getElementById(`tick-${tick.year}`);
+        if (element) {
+          const { left: tickLeft, right: tickRight } =
+            element.getBoundingClientRect();
+          return tickLeft >= left && tickRight <= right;
+        }
+      });
+
+      getActiveData(side).forEach((entry) => {
+        periods
+          .get(entry)
+          ?.filter(
+            (period) =>
+              (period.startYear >= leftYear && period.startYear <= rightYear) ||
+              (period.endYear <= rightYear && period.endYear >= leftYear) ||
+              (period.startYear <= leftYear && period.endYear >= rightYear)
+          )
+          .forEach((period) => {
+            const max =
+              period.amount.number / (period.endYear - period.startYear + 1);
+            maxValue = Math.max(maxValue, max);
+          });
+
+        console.log(maxValue);
+
+        const max =
+          d3.max(visibleTicks, (d) => {
+            let value = 0;
+            const yearData = d[entry as keyof TimelineYear];
+            if (typeof yearData === "object") {
+              value = yearData.number;
+            }
+            return value;
+          }) ?? 0;
+
+        maxValue = Math.max(maxValue, max);
+      });
+
+      const digits = Math.floor(Math.log10(maxValue) + 1);
       const powerNumber = Math.max(Math.pow(10, digits - 2), 1);
-      const ceiled = Math.ceil(max / powerNumber) * powerNumber;
+      const ceiled = Math.ceil(maxValue / powerNumber) * powerNumber;
 
-      values.set(data, ceiled);
-    });
+      return ceiled;
+    }
+    return 0;
+  };
 
-    return values;
+  const getTickWidth = () => {
+    return (
+      (getDimensions().width - PADDING.left - PADDING.right) / timeline.length
+    );
   };
 
   const getDimensions = () => {
@@ -63,6 +144,14 @@ const Timeline = ({ gsapTimeline }: Props) => {
       };
     return { width: -1, height: -1 };
   };
+
+  const getVisibleYears = () => {
+    return timeline.filter(
+      (tick) => tick.year >= leftYear && tick.year <= rightYear
+    );
+  };
+
+  //--------------------------------ANIMATIONS--------------------------------
 
   const animateMain = contextSafe(() => {
     gsap.to("#horizontal-axis line", {
@@ -108,7 +197,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
     gsap.to(`.decade .line-2`, {
       opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+      attr: { y2: getDimensions().height - PADDING.bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.05,
@@ -131,7 +220,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
     gsap.to(`.lustrum .line-2`, {
       opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+      attr: { y2: getDimensions().height - PADDING.bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.01,
@@ -147,13 +236,13 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const reverseLustra = contextSafe(() => {
     gsap.to(`.lustrum .line`, {
       opacity: 0,
-      attr: { y2: HEIGHT_TIMELINE / 2 - 16 },
+      attr: { y2: HEIGHT_TIMELINE / 2 - PATH_PADDING },
       duration: 0.6,
       ease: "power4.out",
     });
     gsap.to(`.lustrum .line-2`, {
       opacity: 0,
-      attr: { y2: HEIGHT_TIMELINE + 16 },
+      attr: { y2: HEIGHT_TIMELINE + PATH_PADDING },
       duration: 0.6,
       ease: "power4.out",
     });
@@ -173,7 +262,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
     gsap.to(`.regular .line-2`, {
       opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+      attr: { y2: getDimensions().height - PADDING.bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
     });
@@ -187,13 +276,13 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const reverseRegular = contextSafe(() => {
     gsap.to(`.regular .line`, {
       opacity: 0,
-      attr: { y2: HEIGHT_TIMELINE / 2 - 16 },
+      attr: { y2: HEIGHT_TIMELINE / 2 - PATH_PADDING },
       duration: 0.3,
       ease: "power4.out",
     });
     gsap.to(`.regular .line-2`, {
       opacity: 0,
-      attr: { y2: HEIGHT_TIMELINE + 16 },
+      attr: { y2: HEIGHT_TIMELINE + PATH_PADDING },
       duration: 0.3,
       ease: "power4.out",
     });
@@ -204,27 +293,71 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleZoom = (e: any) => {
-    const zoom = e.transform.k;
+  const animateShort = contextSafe(() => {
+    gsap.to(`.period-line.short`, {
+      opacity: 1,
+      duration: 0.4,
+      ease: "power4.out",
+    });
+  });
 
-    updateYears();
-    setZoomLevel(() => zoom);
-    setZoomLevelFloored(() => Math.floor(zoom));
+  const reverseShort = contextSafe(() => {
+    gsap.to(`.period-line.short`, {
+      opacity: 0,
+      duration: 0.4,
+      ease: "power4.out",
+    });
+  });
 
-    d3.select(graphRef.current)
-      .select("#zoomable")
-      .attr("transform", `translate(${e.transform.x}, 0) scale(${zoom}, 1)`);
+  const animateDataType = contextSafe((timeline: boolean, type: string) => {
+    if (timeline) {
+      gsapTimeline?.to(
+        `.tick .tick-data.${type}:not(.period)`,
+        {
+          attr: { r: DATA_POINT_SIZE },
+          duration: 0.2,
+          ease: "bounce.out",
+          stagger: 0.01,
+        },
+        "<"
+      );
 
-    d3.select(graphRef.current)
-      .selectAll(".unzoom")
-      .attr("transform", `scale(${1 / zoom}, 1)`);
-  };
+      gsapTimeline?.to(
+        `.tick .tick-data.${type}.period`,
+        {
+          attr: { r: DATA_POINT_SIZE_PERIOD },
+          duration: 0.2,
+          ease: "bounce.out",
+          stagger: 0.01,
+        },
+        "<"
+      );
+    } else {
+      gsap.to(`.tick .tick-data.${type}:not(.period)`, {
+        attr: { r: DATA_POINT_SIZE },
+        duration: 0.2,
+        ease: "bounce.out",
+        stagger: 0.01,
+      });
+
+      gsap.to(`.tick .tick-data.${type}.period`, {
+        attr: { r: DATA_POINT_SIZE_PERIOD },
+        duration: 0.2,
+        ease: "bounce.out",
+        stagger: 0.01,
+      });
+    }
+  });
+
+  const animateData = contextSafe((timeline: boolean, side: Side) => {
+    getActiveData(side).forEach((data) => {
+      animateDataType(timeline, data);
+    });
+  });
+
+  //--------------------------------DRAWING DATA--------------------------------
 
   const drawTicks = () => {
-    const tickWidth =
-      (getDimensions().width - PADDING.left - PADDING.right) / timeline.length;
-
     const groups = d3
       .select(graphRef.current)
       .select("#group-timeline")
@@ -233,7 +366,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .enter()
       .append("svg")
       .attr("id", (d) => `tick-${d.year}`)
-      .attr("x", (_, i) => PADDING.left + i * tickWidth)
+      .attr("x", (_, i) => PADDING.left + i * getTickWidth())
       .attr("y", 0)
       .attr(
         "class",
@@ -253,41 +386,30 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .text((d) => d.year)
       .attr("width", 100)
       .attr("y", HEIGHT_TIMELINE / 4)
-      .attr("x", 25)
+      .attr("x", TICK_OFFSET)
       .attr("opacity", 0)
 
       .attr("text-anchor", "middle");
 
     groups
       .append("line")
-      .attr("x1", 25)
-      .attr("x2", 25)
-      .attr("y1", HEIGHT_TIMELINE / 2 - 16)
-      .attr("y2", HEIGHT_TIMELINE / 2 - 16)
+      .attr("x1", TICK_OFFSET)
+      .attr("x2", TICK_OFFSET)
+      .attr("y1", HEIGHT_TIMELINE / 2 - PATH_PADDING)
+      .attr("y2", HEIGHT_TIMELINE / 2 - PATH_PADDING)
       .attr("opacity", 0)
       .attr("stroke-linecap", "round")
-      .attr("class", "stroke-4 stroke-[#C4C0B6] unzoom line");
+      .attr("class", "stroke-4 stroke-BROWN unzoom line");
 
     groups
       .append("line")
-      .attr("x1", 25)
-      .attr("x2", 25)
-      .attr("y1", HEIGHT_TIMELINE + 16)
-      .attr("y2", HEIGHT_TIMELINE + 16)
+      .attr("x1", TICK_OFFSET)
+      .attr("x2", TICK_OFFSET)
+      .attr("y1", HEIGHT_TIMELINE + PATH_PADDING)
+      .attr("y2", HEIGHT_TIMELINE + PATH_PADDING)
       .attr("opacity", 0)
       .attr("stroke-linecap", "round")
-      .attr("class", "stroke-4 stroke-[#C4C0B6] unzoom line-2");
-  };
-
-  const updateTicks = () => {
-    //TODO: Correctly update ticks when zoomed in
-    const tickWidth =
-      (getDimensions().width - PADDING.left - PADDING.right) / timeline.length;
-
-    d3.select(graphRef.current)
-      .select("#group-timeline")
-      .selectAll("svg.tick")
-      .attr("x", (_, i) => PADDING.left + i * tickWidth);
+      .attr("class", "stroke-4 stroke-BROWN unzoom line-2");
   };
 
   const drawTimeline = () => {
@@ -307,6 +429,141 @@ const Timeline = ({ gsapTimeline }: Props) => {
     if (graphRef.current) {
       d3.select(graphRef.current).call(zoomFunction);
     }
+  };
+
+  const drawData = (side: Side) => {
+    const maxHeight =
+      getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
+
+    const groups = d3
+      .select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll<Element, TimelineYear>("svg.tick");
+
+    groups.selectAll(`.tick-data.${side}`).remove();
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll(`line.period-line.${side}`)
+      .remove();
+
+    getActiveData(side).forEach((data) => {
+      const localPeriods = periods.get(data);
+
+      if (localPeriods) {
+        d3.select(graphRef.current)
+          .select("#group-timeline")
+          .selectAll<Element, DataPeriod>("line.period-line")
+          .data(localPeriods)
+          .enter()
+          .append("line")
+          .attr(
+            "class",
+            (d) =>
+              `period-line unzoom ${data} ${side} line-${d.startYear} ${
+                d.endYear - d.startYear <= 2 ? "short" : ""
+              }`
+          )
+          .attr(
+            "x1",
+            (d) =>
+              timeline.findIndex((i) => i.year === d.startYear) *
+                getTickWidth() +
+              PADDING.left +
+              TICK_OFFSET +
+              PATH_PADDING -
+              DATA_POINT_SIZE_PERIOD
+          )
+          .attr(
+            "x2",
+            (d) =>
+              timeline.findIndex((i) => i.year === d.endYear) * getTickWidth() +
+              PADDING.left +
+              TICK_OFFSET -
+              PATH_PADDING +
+              DATA_POINT_SIZE_PERIOD
+          )
+          .attr("y1", (d) => {
+            return (
+              getDimensions().height -
+              PADDING.bottom -
+              PATH_PADDING -
+              (d.amount.number /
+                (d.endYear - d.startYear) /
+                getMaxValueOnScreen(side)) *
+                maxHeight
+            );
+          })
+          .attr("y2", (d) => {
+            return (
+              getDimensions().height -
+              PADDING.bottom -
+              PATH_PADDING -
+              (d.amount.number /
+                (d.endYear - d.startYear) /
+                getMaxValueOnScreen(side)) *
+                maxHeight
+            );
+          });
+
+        localPeriods.forEach((period: DataPeriod) => {
+          const periodHeight =
+            getDimensions().height -
+            PADDING.bottom -
+            PATH_PADDING -
+            (period.amount.number /
+              (period.endYear - period.startYear) /
+              getMaxValueOnScreen(side)) *
+              maxHeight;
+
+          d3.select(graphRef.current)
+            .select("#group-timeline")
+            .select(`#tick-${period.startYear}`)
+            .append("circle")
+            .attr("id", `period-data-${period.startYear}`)
+            .attr("cx", TICK_OFFSET)
+            .attr("cy", periodHeight)
+            .attr("r", 0)
+            .attr("class", `tick-data unzoom ${data} ${side} period`);
+
+          d3.select(graphRef.current)
+            .select("#group-timeline")
+            .select(`#tick-${period.endYear}`)
+            .append("circle")
+            .attr("id", `test-data-${period.endYear}`)
+            .attr("cx", TICK_OFFSET)
+            .attr("cy", periodHeight)
+            .attr("r", 0)
+            .attr("class", `tick-data unzoom ${data} ${side} period`);
+        });
+      }
+
+      groups
+        .filter((d) => typeof d[data]?.number !== "undefined")
+        .append("circle")
+        .attr("id", (d: TimelineYear) => `data-${d.year}`)
+        .attr("cx", TICK_OFFSET)
+        .attr(
+          "cy",
+          (d) =>
+            getDimensions().height -
+            PADDING.bottom -
+            PATH_PADDING -
+            ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) * maxHeight
+        )
+        .attr("r", 0)
+        .attr("class", `tick-data unzoom ${data} ${side} `);
+    });
+  };
+
+  //--------------------------------UPDATING DATA--------------------------------
+
+  const updateTicks = () => {
+    //TODO: Correctly update ticks when zoomed in
+
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll("svg.tick")
+      .attr("x", (_, i) => PADDING.left + i * getTickWidth());
   };
 
   const resize = () => {
@@ -359,7 +616,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickLeft = tick.getBoundingClientRect().left;
-          if (tickLeft >= left) {
+          if (tickLeft >= left + PADDING.left) {
             setLeftYear(timeline[i].year);
             break;
           }
@@ -370,7 +627,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickRight = tick.getBoundingClientRect().right;
-          if (tickRight <= right) {
+          if (tickRight <= right - PADDING.right) {
             setRightYear(timeline[i].year);
             break;
           }
@@ -379,138 +636,174 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const drawData = (localSelectedData?: SelectableDataType[]) => {
+  const updatePeriods = (side: Side) => {
+    getActiveData(side).forEach((data) => {
+      const localPeriods = periods.get(data);
+
+      if (localPeriods) {
+        d3.select(graphRef.current)
+          .select("#group-timeline")
+          .selectAll<Element, DataPeriod>("line.period-line")
+          .attr(
+            "x1",
+            (d) =>
+              (timeline.findIndex((i) => i.year === d.startYear) *
+                getTickWidth() +
+                PADDING.left) *
+                zoomLevel +
+              PATH_PADDING +
+              TICK_OFFSET -
+              DATA_POINT_SIZE_PERIOD
+          )
+          .attr(
+            "x2",
+            (d) =>
+              (timeline.findIndex((i) => i.year === d.endYear) *
+                getTickWidth() +
+                PADDING.left) *
+                zoomLevel +
+              TICK_OFFSET -
+              PATH_PADDING +
+              DATA_POINT_SIZE_PERIOD
+          );
+      }
+    });
+  };
+
+  const updateHeights = (side: Side) => {
     const maxHeight =
       getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
 
-    const groups = d3
-      .select(graphRef.current)
-      .select("#group-timeline")
-      .selectAll<Element, TimelineYear>("svg.tick");
-
-    groups.selectAll(".tick-data").remove();
-
-    (localSelectedData ?? selectedData).forEach((data) => {
-      groups
+    getActiveData(side).forEach((data) => {
+      getVisibleYears()
         .filter((d) => typeof d[data]?.number !== "undefined")
-        .append("circle")
-        .attr("id", (d: TimelineYear) => `data-${d.year}`)
-        .attr("cx", 25)
-        .attr(
-          "cy",
-          (d) =>
-            getDimensions().height -
-            PADDING.bottom -
-            16 -
-            (d[data]?.number / getMaxValues().get(data)) * maxHeight
-        )
-        .attr("r", 0)
-        .attr("class", `tick-data unzoom ${data}`);
+        .forEach((d) => {
+          gsap.to(`#tick-${d.year} .tick-data.${data}.${side}`, {
+            attr: {
+              cy:
+                getDimensions().height -
+                PADDING.bottom -
+                PATH_PADDING -
+                ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) *
+                  maxHeight,
+            },
+            duration: 0.6,
+          });
+        });
+
+      periods.get(data)?.forEach((period) => {
+        const value =
+          getDimensions().height -
+          PADDING.bottom -
+          PATH_PADDING -
+          (period.amount.number /
+            (period.endYear - period.startYear + 1) /
+            getMaxValueOnScreen(side)) *
+            maxHeight;
+        gsap.to(
+          `#tick-${period.startYear} .tick-data.${data}.${side}, #tick-${period.endYear} .tick-data.${data}.${side}`,
+          {
+            attr: {
+              cy: value,
+            },
+            duration: 0.6,
+          }
+        );
+
+        gsap.to(`.period-line.line-${period.startYear}.${data}.${side}`, {
+          attr: {
+            y1: value,
+            y2: value,
+          },
+          duration: 0.6,
+        });
+      });
     });
   };
 
-  const animateDataType = (timeline: boolean, type: string) => {
-    if (timeline) {
-      gsapTimeline?.to(
-        `.tick .tick-data.${type}`,
-        {
-          attr: { r: 7 },
-          duration: 0.2,
-          ease: "bounce.out",
-          stagger: 0.01,
-        },
-        "<"
-      );
+  const updateYAxis = (side: Side) => {
+    console.log("updating y axis");
+    console.log(getActiveData(side));
+    if (
+      (side === Side.LEFT && getActiveData(side).length > 0) ||
+      (side === Side.RIGHT && getActiveData(side).length > 0)
+    ) {
+      const graphStart = PADDING.top + HEIGHT_TIMELINE;
+      const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+      const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
+      const maxValue = getMaxValueOnScreen(side);
 
-      // if (zoomLevelFloored >= LUSTRUM_ZOOM) {
-      //   gsapTimeline?.to(
-      //     `.tick.lustrum .tick-data.${type}`,
-      //     {
-      //       attr: { r: 7 },
-      //       duration: 0.2,
-      //       ease: "bounce.out",
-      //       stagger: 0.01,
-      //     },
-      //     "<"
-      //   );
-      // }
+      d3.select(graphRef.current).selectAll(`.y-axis.${side}`).remove();
 
-      // if (zoomLevelFloored >= REGULAR_ZOOM) {
-      //   gsapTimeline?.to(
-      //     `.tick.regular .tick-data.${type}`,
-      //     {
-      //       attr: { r: 7 },
-      //       duration: 0.4,
-      //       ease: "bounce.out",
-      //     },
-      //     "<"
-      //   );
-      // }
-    } else {
-      gsap.to(`.tick .tick-data.${type}`, {
-        attr: { r: 7 },
-        duration: 0.2,
-        ease: "bounce.out",
-        stagger: 0.01,
-      });
+      const y = d3
+        .scaleLinear()
+        .domain([0, maxValue])
+        .range([graphEnd, graphStart]);
 
-      // if (zoomLevelFloored >= LUSTRUM_ZOOM) {
-      //   gsap.to(`.tick.lustrum .tick-data.${type}`, {
-      //     attr: { r: 7 },
-      //     duration: 0.2,
-      //     ease: "bounce.out",
-      //     stagger: 0.01,
-      //   });
-      // }
+      const yArray = [];
 
-      // if (zoomLevelFloored >= REGULAR_ZOOM) {
-      //   gsap.to(`.tick.regular .tick-data.${type}`, {
-      //     attr: { r: 7 },
-      //     duration: 0.4,
-      //     ease: "bounce.out",
-      //   });
-      // }
+      for (let i = 0; i <= nrOfTicks; i++) {
+        yArray.push((maxValue / nrOfTicks) * i);
+      }
+
+      d3.select(graphRef.current)
+        .append("g")
+        .attr("class", `y-axis ${side}`)
+        .selectAll<Element, number>("text.y-axis")
+        .data(yArray)
+        .enter()
+        .append("text")
+        .attr("class", "y-axis")
+        .text((d) => d)
+        .attr("text-anchor", side === Side.LEFT ? "end" : "start")
+        .attr(
+          "x",
+          side === Side.LEFT
+            ? PADDING.left - PATH_PADDING
+            : getDimensions().width - PADDING.right + PATH_PADDING
+        )
+        .attr("y", (d) => y(d));
     }
   };
 
-  // const reverseDataType = (type: string) => {
-  //   if (zoomLevelFloored < LUSTRUM_ZOOM) {
-  //     gsap.to(`.tick.lustrum .tick-data.${type}`, {
-  //       attr: { r: 0 },
-  //       duration: 0.4,
-  //       ease: "power4.out",
-  //     });
-  //   }
-
-  //   if (zoomLevelFloored < REGULAR_ZOOM) {
-  //     gsap.to(`.tick.regular .tick-data.${type}`, {
-  //       attr: { r: 0 },
-  //       duration: 0.4,
-  //       ease: "power4.out",
-  //     });
-  //   }
-  // };
-
-  // const reverseData = (localSelectedData?: SelectableDataType[]) => {
-  //   (localSelectedData ?? selectedData).forEach((data) => {
-  //     reverseDataType(data);
-  //   });
-  // };
-
-  const animateData = (
-    timeline: boolean,
-    localSelectedData?: SelectableDataType[]
-  ) => {
-    (localSelectedData ?? selectedData).forEach((data) => {
-      animateDataType(timeline, data);
-    });
+  const handleZoom = (e: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
+    setZoomLevel(() => e.transform.k);
+    setPanLevel(() => e.transform.x);
   };
+
+  //--------------------------------USE EFFECTS--------------------------------
+
+  useEffect(() => {
+    console.log("zoom or pan changed");
+    updateYears();
+    setZoomLevelFloored(() => Math.floor(zoomLevel));
+    if (!Object.values(leftData).every((value) => !value)) {
+      getMaxValueOnScreen(Side.LEFT);
+      updateHeights(Side.LEFT);
+      updatePeriods(Side.LEFT);
+      updateYAxis(Side.LEFT);
+    }
+
+    if (!Object.values(rightData).every((value) => !value)) {
+      getMaxValueOnScreen(Side.RIGHT);
+      updateHeights(Side.RIGHT);
+      updateYAxis(Side.RIGHT);
+      updatePeriods(Side.RIGHT);
+    }
+
+    d3.select(graphRef.current)
+      .select("#zoomable")
+      .attr("transform", `translate(${panLevel}, 0) scale(${zoomLevel}, 1)`);
+
+    d3.select(graphRef.current)
+      .selectAll(".unzoom")
+      .attr("transform", `scale(${1 / zoomLevel}, 1)`);
+  }, [zoomLevel, panLevel]);
 
   useEffect(() => {
     drawTimeline();
-    drawData();
-    // resize();
-    getMaxValues();
+    drawData(Side.LEFT);
+    drawData(Side.RIGHT);
 
     window.addEventListener("resize", resize);
     return () => {
@@ -521,23 +814,136 @@ const Timeline = ({ gsapTimeline }: Props) => {
   useEffect(() => {
     if (zoomLevelFloored >= LUSTRUM_ZOOM) {
       animateLustra();
-      animateData(false);
+      animateData(false, Side.LEFT);
+      animateData(false, Side.RIGHT);
     } else {
       reverseLustra();
-      // reverseData();
     }
 
     if (zoomLevelFloored >= REGULAR_ZOOM) {
       animateRegular();
-      animateData(false);
+      animateData(false, Side.LEFT);
+      animateData(false, Side.RIGHT);
     } else {
       reverseRegular();
-      // reverseData();
+    }
+
+    if (zoomLevelFloored >= SHORT_ZOOM) {
+      animateShort();
+    } else {
+      reverseShort();
     }
   }, [zoomLevelFloored]);
 
+  useEffect(() => {
+    getMaxValueOnScreen(Side.LEFT);
+    drawData(Side.LEFT);
+    updateYAxis(Side.LEFT);
+    animateData(false, Side.LEFT);
+  }, [leftData]);
+
+  useEffect(() => {
+    getMaxValueOnScreen(Side.RIGHT);
+    drawData(Side.RIGHT);
+    updateYAxis(Side.RIGHT);
+    animateData(false, Side.RIGHT);
+  }, [rightData]);
+
   useGSAP(
     () => {
+      gsap.registerPlugin(Draggable);
+      gsap.registerPlugin(InertiaPlugin);
+
+      Object.keys(leftData).forEach((key) => {
+        const icon = document.getElementById(`timeline-data-icon-${key}`);
+        const placeholder = document.getElementById(
+          `active-row-placeholder-${key}`
+        );
+
+        if (icon && placeholder) {
+          const { x: iconX, y: iconY } = icon.getBoundingClientRect();
+          const { x: spotX, y: spotY } = placeholder.getBoundingClientRect();
+
+          Draggable.create(icon, {
+            inertia: true,
+            type: "x,y",
+            resistance: 0.5,
+            edgeResistance: 0.5,
+            bounds: "#data-icon-bounds",
+            onDragStart: () => {
+              gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
+            },
+            onDragEnd: () => {
+              gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+            },
+            snap: {
+              points: (point) => {
+                if (point.x < SNAP_DISTANCE && point.y < SNAP_DISTANCE) {
+                  setLeftData((prev) => {
+                    const newData = { ...prev };
+                    newData[key as keyof LeftData] = false;
+                    return newData;
+                  });
+
+                  return { x: 0, y: 0 };
+                }
+
+                setLeftData((prev) => {
+                  const newData = { ...prev };
+                  newData[key as keyof LeftData] = true;
+                  return newData;
+                });
+                return { x: spotX - iconX, y: spotY - iconY };
+              },
+            },
+          });
+        }
+      });
+
+      Object.keys(rightData).forEach((key) => {
+        const icon = document.getElementById(`timeline-data-icon-${key}`);
+        const placeholder = document.getElementById(
+          `active-row-placeholder-${key}`
+        );
+
+        if (icon && placeholder) {
+          const { x: iconX, y: iconY } = icon.getBoundingClientRect();
+          const { x: spotX, y: spotY } = placeholder.getBoundingClientRect();
+
+          Draggable.create(icon, {
+            type: "x,y",
+            inertia: true,
+            edgeResistance: 0.5,
+            bounds: "#data-icon-bounds",
+            onDragStart: () => {
+              gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
+            },
+            onDragEnd: () => {
+              gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+            },
+            snap: {
+              points: (point) => {
+                if (point.x < SNAP_DISTANCE && point.y < SNAP_DISTANCE) {
+                  setRightData((prev) => {
+                    const newData = { ...prev };
+                    newData[key as keyof RightData] = false;
+                    return newData;
+                  });
+                  return { x: 0, y: 0 };
+                }
+
+                setRightData((prev) => {
+                  const newData = { ...prev };
+                  newData[key as keyof RightData] = true;
+                  return newData;
+                });
+                return { x: spotX - iconX, y: spotY - iconY };
+              },
+            },
+          });
+        }
+      });
+
       if (gsapTimeline) {
         gsapTimeline
           .to(
@@ -584,7 +990,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
             `.decade .line-2`,
             {
               opacity: 1,
-              attr: { y2: getDimensions().height - PADDING.bottom - 16 },
+              attr: {
+                y2: getDimensions().height - PADDING.bottom - PATH_PADDING,
+              },
               duration: 0.4,
               ease: "power4.out",
               stagger: 0.05,
@@ -655,7 +1063,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "<"
           );
 
-        animateData(true);
+        animateData(true, Side.LEFT);
+        animateData(true, Side.RIGHT);
       }
     },
     { scope: timelineRef, dependencies: [gsapTimeline] }
@@ -664,43 +1073,62 @@ const Timeline = ({ gsapTimeline }: Props) => {
   return (
     <div ref={timelineRef} className="timeline-section">
       <div className="timeline-main opacity-0 w-full h-full">
-        <div className="h-1/5 flex flex-row justify-between items-center pb-8 ">
-          <div className="flex flex-row gap-4">
-            {Object.values(SelectableDataType).map((key) => {
-              return (
-                <button
-                  className={`timeline-data-icon ${key}`}
-                  key={key}
-                  onMouseEnter={() => {
-                    if (!selectedData.includes(key as SelectableDataType)) {
-                      drawData([...selectedData, key as SelectableDataType]);
-                      animateData(false, [
-                        ...selectedData,
-                        key as SelectableDataType,
-                      ]);
-                    }
-                  }}
-                  onClick={() => {
-                    setSelectedData((prev) => {
-                      if (prev.includes(key as SelectableDataType)) {
-                        return prev.filter((data) => data !== key);
-                      } else {
-                        return [...prev, key as SelectableDataType];
-                      }
-                    });
-                  }}
-                  onMouseLeave={() => {
-                    drawData();
-                    animateData(false);
-                  }}
-                >
-                  €
-                </button>
-              );
-            })}
+        <div className="h-1/5 flex flex-row justify-between gap-8 items-center pb-4">
+          <div id="data-icon-bounds">
+            <div className="inactive">
+              {Object.keys(leftData).map((key) => {
+                return (
+                  <button
+                    id={`timeline-data-icon-${key}`}
+                    className={`data-icon ${key} left`}
+                    key={key}
+                  >
+                    {key[0]}
+                  </button>
+                );
+              })}
+              {Object.keys(rightData).map((key) => {
+                return (
+                  <button
+                    id={`timeline-data-icon-${key}`}
+                    className={`data-icon ${key} right`}
+                    key={key}
+                  >
+                    {key[0]}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="active">
+              <div className="active-row left">
+                {Object.keys(leftData).map((key) => (
+                  <div
+                    key={key}
+                    id={`active-row-placeholder-${key}`}
+                    className="active-row-placeholder"
+                  >
+                    {key[0]}
+                  </div>
+                ))}
+              </div>
+              <hr />
+              <div className="active-row right">
+                {Object.keys(rightData).map((key) => (
+                  <div
+                    key={key}
+                    id={`active-row-placeholder-${key}`}
+                    className="active-row-placeholder"
+                  >
+                    {key[0]}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="text-BLACK text-4xl font-bold">
-            {leftYear}—{rightYear}
+
+          <div className="text-BLACK text-4xl font-bold flex flex-col items-end">
+            <span>{leftYear}</span>
+            <span>{rightYear}</span>
           </div>
         </div>
         <svg
@@ -760,14 +1188,14 @@ const Timeline = ({ gsapTimeline }: Props) => {
           <rect
             x={0}
             y={0}
-            width={100}
+            width={PADDING.left + 50}
             fill="url(#fade-to-right)"
             className="h-full"
           ></rect>
           <rect
-            x={getDimensions().width - 100}
+            x={getDimensions().width - PADDING.right - 50}
             y={0}
-            width={100}
+            width={PADDING.right + 50}
             fill="url(#fade-to-left)"
             className="h-full"
           ></rect>

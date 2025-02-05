@@ -1,3 +1,5 @@
+import { SelectableDataType } from "./types";
+
 export enum Source {
   OCHA = "OCHA",
   BTSELEM = "B'Tselem",
@@ -6,6 +8,9 @@ export enum Source {
   UNHCR = "UNHCR",
   MOHTEL = "Gaza's Ministry of Health Telegram channel",
   UNICEF = "UNICEF",
+  UNRWA = "UNRWA",
+  WIKIPEDIA = "Wikipedia",
+  INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION = "Interactive Encyclopedia Of the Palestine Question",
 }
 
 export interface Event {
@@ -28,7 +33,6 @@ interface dataNumber {
 
 export interface TimelineYear {
   year: number;
-  events?: Event[];
   adultsKilled?: dataNumber;
   adultsImprisoned?: dataNumber;
   minorsKilled?: dataNumber;
@@ -41,6 +45,15 @@ export interface TimelineYear {
   percentageOfPalestinianLandStolen?: dataNumber;
 }
 
+export interface DataPeriod {
+  startYear: number;
+  endYear: number;
+  amount: dataNumber;
+}
+
+export const events = [];
+
+//TODO: Displaced people
 export const timeline: TimelineYear[] = [
   {
     year: 1917,
@@ -265,7 +278,6 @@ export const timeline: TimelineYear[] = [
       number: 78,
       source: [Source.AL_JAZEERA],
     },
-    adultsKilled: { number: 15000, source: [Source.AL_JAZEERA] },
   },
   {
     year: 1949,
@@ -399,6 +411,7 @@ export const timeline: TimelineYear[] = [
       number: 78,
       source: [Source.AL_JAZEERA],
     },
+    palestiniansDisplaced: { number: 325000, source: [Source.WIKIPEDIA] },
   },
   {
     year: 1968,
@@ -544,7 +557,13 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1988,
+    adultsKilled: {
+      number: 289 - 48 + 15 - 2 + 1 + 5,
+      source: [Source.BTSELEM],
+    },
+    minorsKilled: { number: 50, source: [Source.BTSELEM] },
     illegalSettlers: { number: 190953, source: [Source.CBS] },
+    buildingsDemolished: { number: 125, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -552,7 +571,13 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1989,
+    adultsKilled: {
+      number: 285 - 78 + 17 - 5 + 1 + 2,
+      source: [Source.BTSELEM],
+    },
+    minorsKilled: { number: 78 + 5, source: [Source.BTSELEM] },
     illegalSettlers: { number: 202885, source: [Source.CBS] },
+    buildingsDemolished: { number: 144, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -560,7 +585,13 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1990,
+    adultsKilled: {
+      number: 125 - 23 + 9 - 2 + 1 + 10,
+      source: [Source.BTSELEM],
+    },
+    minorsKilled: { number: 23 + 2, source: [Source.BTSELEM] },
     illegalSettlers: { number: 221348, source: [Source.CBS] },
+    buildingsDemolished: { number: 107, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -568,7 +599,10 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1991,
+    adultsKilled: { number: 91 - 24 + 6 - 3 + 5 + 2, source: [Source.BTSELEM] },
+    minorsKilled: { number: 24 + 3, source: [Source.BTSELEM] },
     illegalSettlers: { number: 238060, source: [Source.CBS] },
+    buildingsDemolished: { number: 46, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -576,7 +610,10 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1992,
+    adultsKilled: { number: 134 - 23 + 2 + 2, source: [Source.BTSELEM] },
+    minorsKilled: { number: 23, source: [Source.BTSELEM] },
     illegalSettlers: { number: 252545, source: [Source.CBS] },
+    buildingsDemolished: { number: 8, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 78.5,
       source: [Source.AL_JAZEERA],
@@ -584,7 +621,13 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1993,
+    adultsKilled: {
+      number: 124 + 30 - 36 - 4 + 5 + 8 - 1 + 7 + 2 + 4,
+      source: [Source.BTSELEM],
+    },
+    minorsKilled: { number: 36 + 4 + 1, source: [Source.BTSELEM] },
     illegalSettlers: { number: 268756, source: [Source.CBS] },
+    buildingsDemolished: { number: 1, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -592,7 +635,13 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1994,
+    adultsKilled: {
+      number: 106 - 16 + 38 - 8 + 7 + 1,
+      source: [Source.BTSELEM],
+    },
+    minorsKilled: { number: 16 + 8, source: [Source.BTSELEM] },
     illegalSettlers: { number: 285791, source: [Source.CBS] },
+    buildingsDemolished: { number: 0, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -600,7 +649,10 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1995,
+    adultsKilled: { number: 52 - 4 + 2 - 1 + 1, source: [Source.BTSELEM] },
+    minorsKilled: { number: 4 + 1, source: [Source.BTSELEM] },
     illegalSettlers: { number: 296959, source: [Source.CBS] },
+    buildingsDemolished: { number: 0, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -608,7 +660,10 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1996,
+    adultsKilled: { number: 69 - 10 + 3 - 1 + 2, source: [Source.BTSELEM] },
+    minorsKilled: { number: 10 + 1, source: [Source.BTSELEM] },
     illegalSettlers: { number: 313658, source: [Source.CBS] },
+    buildingsDemolished: { number: 11, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -616,7 +671,10 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1997,
+    adultsKilled: { number: 18 - 5 + 4 + 1, source: [Source.BTSELEM] },
+    minorsKilled: { number: 5, source: [Source.BTSELEM] },
     illegalSettlers: { number: 326053, source: [Source.CBS] },
+    buildingsDemolished: { number: 6, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -624,7 +682,10 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1998,
+    adultsKilled: { number: 21 - 3 + 6 + 1, source: [Source.BTSELEM] },
+    minorsKilled: { number: 3, source: [Source.BTSELEM] },
     illegalSettlers: { number: 341929, source: [Source.CBS] },
+    buildingsDemolished: { number: 0, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -632,7 +693,10 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 1999,
+    adultsKilled: { number: 8 + 1, source: [Source.BTSELEM] },
+    minorsKilled: { number: 0, source: [Source.BTSELEM] },
     illegalSettlers: { number: 361150, source: [Source.CBS] },
+    buildingsDemolished: { number: 0, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -643,6 +707,8 @@ export const timeline: TimelineYear[] = [
     adultsKilled: { number: 277 + 6, source: [Source.BTSELEM] },
     minorsKilled: { number: 86, source: [Source.BTSELEM] },
     illegalSettlers: { number: 379099, source: [Source.CBS] },
+    buildingsDemolished: { number: 0, source: [Source.BTSELEM] },
+    palestiniansDisplaced: { number: 5248185, source: [Source.UNRWA] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -653,6 +719,7 @@ export const timeline: TimelineYear[] = [
     adultsKilled: { number: 463, source: [Source.BTSELEM] },
     minorsKilled: { number: 80, source: [Source.BTSELEM] },
     illegalSettlers: { number: 391049, source: [Source.CBS] },
+    buildingsDemolished: { number: 10, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -663,6 +730,7 @@ export const timeline: TimelineYear[] = [
     adultsKilled: { number: 1021 + 13, source: [Source.BTSELEM] },
     minorsKilled: { number: 164 + 3, source: [Source.BTSELEM] },
     illegalSettlers: { number: 405149, source: [Source.CBS] },
+    buildingsDemolished: { number: 251, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -673,6 +741,7 @@ export const timeline: TimelineYear[] = [
     adultsKilled: { number: 581 + 6, source: [Source.BTSELEM] },
     minorsKilled: { number: 121, source: [Source.BTSELEM] },
     illegalSettlers: { number: 421738, source: [Source.CBS] },
+    buildingsDemolished: { number: 224, source: [Source.BTSELEM] },
     percentageOfPalestinianLandStolen: {
       number: 90,
       source: [Source.AL_JAZEERA],
@@ -846,6 +915,7 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2015,
+    palestiniansDisplaced: { number: 5149742, source: [Source.UNRWA] },
     illegalSettlers: { number: 623835, source: [Source.CBS] },
     adultsKilled: { number: 144, source: [Source.OCHA] },
     minorsKilled: { number: 30, source: [Source.OCHA] },
@@ -1045,3 +1115,150 @@ export const timeline: TimelineYear[] = [
     },
   },
 ];
+
+export const periods = new Map<SelectableDataType, DataPeriod[]>([
+  [
+    SelectableDataType.ADULTS_KILLED,
+    [
+      {
+        startYear: 1917,
+        endYear: 1946,
+        amount: {
+          number:
+            5 +
+            4 +
+            48 +
+            116 +
+            5000 +
+            720 +
+            16 +
+            4 +
+            21 +
+            314 +
+            33 +
+            5 +
+            20 +
+            7 +
+            4 +
+            41,
+          source: [Source.WIKIPEDIA],
+        },
+      },
+      {
+        startYear: 1947,
+        endYear: 1948,
+        amount: { number: 15000, source: [Source.AL_JAZEERA] },
+      },
+      {
+        startYear: 1949,
+        endYear: 1966,
+        amount: {
+          number: 5000 + 5000,
+          source: [Source.AL_JAZEERA, Source.WIKIPEDIA],
+        },
+      },
+      {
+        startYear: 1967,
+        endYear: 1982,
+        amount: {
+          number: 1000 + 156 + 3500 + 1000 + 2000,
+          source: [Source.AL_JAZEERA],
+        },
+      },
+    ],
+  ],
+  [
+    SelectableDataType.ADULTS_IMPRISONED,
+    [
+      {
+        startYear: 1947,
+        endYear: 1948,
+        amount: { number: 12000, source: [Source.AL_JAZEERA] },
+      },
+      {
+        startYear: 1967,
+        endYear: 1999,
+        amount: {
+          number:
+            1000000 -
+            timeline
+              .filter((d) => d.year >= 2008 && d.year <= 2019)
+              .map(
+                (d) =>
+                  (d.adultsImprisoned?.number ?? 0) +
+                  (d.minorsImprisoned?.number ?? 0)
+              )
+              .reduce((a, b) => a + b, 0) -
+            90000,
+          source: [Source.INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION],
+        },
+      },
+      {
+        startYear: 2000,
+        endYear: 2008,
+        amount: {
+          number:
+            80000 -
+            timeline
+              .filter((d) => d.year >= 2008 && d.year <= 2019)
+              .map((d) => d.adultsImprisoned?.number ?? 0)
+              .reduce((a, b) => a + b, 0),
+          source: [Source.INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION],
+        },
+      },
+    ],
+  ],
+  [
+    SelectableDataType.MINORS_IMPRISONED,
+    [
+      {
+        startYear: 2000,
+        endYear: 2008,
+        amount: {
+          number:
+            11000 -
+            timeline
+              .filter((d) => d.year >= 2008 && d.year <= 2019)
+              .map((d) => d.minorsImprisoned?.number ?? 0)
+              .reduce((a, b) => a + b, 0),
+          source: [Source.INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION],
+        },
+      },
+    ],
+  ],
+  [
+    SelectableDataType.ILLEGAL_SETTLERS,
+    [
+      {
+        startYear: 1948,
+        endYear: 1971,
+        amount: { number: 2810, source: [Source.WIKIPEDIA] },
+      },
+      {
+        startYear: 1972,
+        endYear: 1976,
+        amount: { number: 10531 + 77, source: [Source.WIKIPEDIA] },
+      },
+      {
+        startYear: 1977,
+        endYear: 1983,
+        amount: { number: 99795 + 6800, source: [Source.WIKIPEDIA] },
+      },
+    ],
+  ],
+  [
+    SelectableDataType.PALESTINIANS_DISPLACED,
+    [
+      {
+        startYear: 1947,
+        endYear: 1948,
+        amount: { number: 700000, source: [Source.WIKIPEDIA] },
+      },
+      {
+        startYear: 1949,
+        endYear: 1956,
+        amount: { number: 40000, source: [Source.WIKIPEDIA] },
+      },
+    ],
+  ],
+]);
