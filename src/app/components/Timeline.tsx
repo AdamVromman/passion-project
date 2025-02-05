@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import {
   DataPeriod,
@@ -97,7 +97,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     return ceiled;
   };
 
-  const getMaxValueOnScreen = (side: Side) => {
+  const getMaxValueOnScreen = (side: Side): number => {
     let maxValue = 0;
     const container = document?.getElementById("svg-wrapper");
 
@@ -134,7 +134,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
       } else {
         setRightMaxValue(ceiled);
       }
+      return ceiled;
     }
+    return 0;
   };
 
   const getTickWidth = () => {
@@ -358,26 +360,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   //--------------------------------DRAWING DATA--------------------------------
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleZoom = (e: any) => {
-    const zoom = e.transform.k;
-
-    updateYears();
-    setZoomLevel(() => zoom);
-    setZoomLevelFloored(() => Math.floor(zoom));
-    updatePeriods(zoom, Side.LEFT);
-    updatePeriods(zoom, Side.RIGHT);
-    updateHeights();
-
-    d3.select(graphRef.current)
-      .select("#zoomable")
-      .attr("transform", `translate(${e.transform.x}, 0) scale(${zoom}, 1)`);
-
-    d3.select(graphRef.current)
-      .selectAll(".unzoom")
-      .attr("transform", `scale(${1 / zoom}, 1)`);
-  };
-
   const drawTicks = () => {
     const groups = d3
       .select(graphRef.current)
@@ -450,35 +432,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
     if (graphRef.current) {
       d3.select(graphRef.current).call(zoomFunction);
     }
-  };
-
-  const drawYAxis = (side: Side) => {
-    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
-    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
-    const nrOfTicks = Math.floor(graphEnd / 50);
-    const maxValue = side === Side.LEFT ? leftMaxValue : rightMaxValue;
-
-    const y = d3
-      .scaleLinear()
-      .domain([0, maxValue])
-      .range([graphEnd, graphStart]);
-
-    const yArray = [];
-
-    for (let i = 0; i < nrOfTicks; i++) {
-      yArray.push((maxValue / nrOfTicks) * i);
-    }
-
-    d3.select(graphRef.current)
-      .append("g")
-      .attr("class", `y-axis ${side}`)
-      .selectAll("text.y-axis")
-      .data(yArray)
-      .enter()
-      .append("text")
-      .text((d) => d)
-      .attr("x", PADDING.left / 2)
-      .attr("y", (d) => y(d));
   };
 
   const drawData = (side: Side) => {
@@ -598,7 +551,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             getDimensions().height -
             PADDING.bottom -
             PATH_PADDING -
-            ((d[data]?.number ?? 0) / getMaxValue(side)) * maxHeight
+            ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) * maxHeight
         )
         .attr("r", 0)
         .attr("class", `tick-data unzoom ${data} ${side} `);
@@ -720,17 +673,33 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   };
 
-  const updateHeights = () => {
+  const updateHeights = (side: Side) => {
+    const maxHeight =
+      getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
     //TODO: Update heights of the data points
+
+    getActiveData(side).forEach((data) => {
+      d3.select(graphRef.current)
+        .select("#group-timeline")
+        .selectAll<Element, TimelineYear>(`circle.${data}.${side}`)
+        .attr(
+          "cy",
+          (d) =>
+            getDimensions().height -
+            PADDING.bottom -
+            PATH_PADDING -
+            ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) * maxHeight
+        );
+    });
   };
 
   const updateYAxis = (side: Side) => {
-    console.log("updateYAxis", side);
-    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
+    const graphStart = PADDING.top + HEIGHT_TIMELINE;
     const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
-    const nrOfTicks = Math.floor(graphEnd / 50);
-    const maxValue = side === Side.LEFT ? leftMaxValue : rightMaxValue;
-    console.log("maxValue", maxValue);
+    const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
+    const maxValue = getMaxValueOnScreen(side);
+
+    d3.select(graphRef.current).select(`.y-axis.${side}`).remove();
 
     const y = d3
       .scaleLinear()
@@ -739,32 +708,73 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
     const yArray = [];
 
-    for (let i = 0; i < nrOfTicks; i++) {
+    for (let i = 0; i <= nrOfTicks; i++) {
       yArray.push((maxValue / nrOfTicks) * i);
     }
 
     d3.select(graphRef.current)
-      .select(`g.y-axis.${side}`)
+      .append("g")
+      .attr("class", `y-axis.${side}`)
       .selectAll<Element, number>("text.y-axis")
+      .data(yArray)
+      .enter()
+      .append("text")
+      .attr("class", "y-axis")
       .text((d) => d)
+      .attr("text-anchor", "end")
+      .attr("x", PADDING.left - PATH_PADDING)
       .attr("y", (d) => y(d));
   };
 
+  const handleZoom = useCallback(
+    (e: any) => {
+      const zoom = e.transform.k;
+
+      updateYears();
+      setZoomLevel(() => zoom);
+      setZoomLevelFloored(() => Math.floor(zoom));
+
+      console.log(leftData, rightData);
+
+      if (!Object.values(leftData).every((value) => !value)) {
+        getMaxValueOnScreen(Side.LEFT);
+        updateHeights(Side.LEFT);
+        updatePeriods(zoom, Side.LEFT);
+      }
+
+      if (!Object.values(rightData).every((value) => !value)) {
+        getMaxValueOnScreen(Side.RIGHT);
+        updateHeights(Side.RIGHT);
+        updatePeriods(zoom, Side.RIGHT);
+      }
+
+      d3.select(graphRef.current)
+        .select("#zoomable")
+        .attr("transform", `translate(${e.transform.x}, 0) scale(${zoom}, 1)`);
+
+      d3.select(graphRef.current)
+        .selectAll(".unzoom")
+        .attr("transform", `scale(${1 / zoom}, 1)`);
+    },
+    [leftData, rightData]
+  );
+
   //--------------------------------USE EFFECTS--------------------------------
 
-  useEffect(() => {
-    if (!Object.values(leftData).every((value) => !value)) {
-      getMaxValueOnScreen(Side.LEFT);
-    }
+  // useEffect(() => {
+  //   if (!Object.values(leftData).every((value) => !value)) {
+  //     getMaxValueOnScreen(Side.LEFT);
+  //     updateHeights(Side.LEFT);
+  //   }
 
-    if (!Object.values(rightData).every((value) => !value)) {
-      getMaxValueOnScreen(Side.RIGHT);
-    }
-  }, [zoomLevel]);
+  //   if (!Object.values(rightData).every((value) => !value)) {
+  //     getMaxValueOnScreen(Side.RIGHT);
+  //     updateHeights(Side.RIGHT);
+  //   }
+  // }, [zoomLevel]);
 
   useEffect(() => {
     drawTimeline();
-    drawYAxis();
     drawData(Side.LEFT);
     drawData(Side.RIGHT);
 
