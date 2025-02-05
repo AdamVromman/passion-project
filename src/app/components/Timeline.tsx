@@ -689,8 +689,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
           const { x: spotX, y: spotY } = placeholder.getBoundingClientRect();
 
           Draggable.create(icon, {
-            type: "x,y",
             inertia: true,
+            type: "x,y",
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
             onDragStart: (event: PointerEvent) => {
@@ -719,7 +719,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             },
             snap: {
               points: (point) => {
-                if (point.x < 0 && point.y < 0) {
+                if (point.x < 100 && point.y < 100) {
                   return { x: 0, y: 0 };
                 }
 
