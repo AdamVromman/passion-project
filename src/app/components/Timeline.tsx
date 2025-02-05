@@ -443,10 +443,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .select("#group-timeline")
       .selectAll<Element, TimelineYear>("svg.tick");
 
-    groups.selectAll(".tick-data").remove();
+    groups.selectAll(`.tick-data.${side}`).remove();
     d3.select(graphRef.current)
       .select("#group-timeline")
-      .selectAll("line.period-line")
+      .selectAll(`line.period-line.${side}`)
       .remove();
 
     getActiveData(side).forEach((data) => {
@@ -462,7 +462,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
           .attr(
             "class",
             (d) =>
-              `period-line unzoom ${data} ${
+              `period-line unzoom ${data} ${side} ${
                 d.endYear - d.startYear <= 2 ? "short" : ""
               }`
           )
@@ -526,7 +526,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             .attr("cx", TICK_OFFSET)
             .attr("cy", periodHeight)
             .attr("r", 0)
-            .attr("class", `tick-data unzoom ${data} period`);
+            .attr("class", `tick-data unzoom ${data} ${side} period`);
 
           d3.select(graphRef.current)
             .select("#group-timeline")
@@ -536,7 +536,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             .attr("cx", TICK_OFFSET)
             .attr("cy", periodHeight)
             .attr("r", 0)
-            .attr("class", `tick-data unzoom ${data} period`);
+            .attr("class", `tick-data unzoom ${data} ${side} period`);
         });
       }
 
@@ -554,7 +554,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             ((d[data]?.number ?? 0) / getMaxValue(side)) * maxHeight
         )
         .attr("r", 0)
-        .attr("class", `tick-data unzoom ${data}`);
+        .attr("class", `tick-data unzoom ${data} ${side} `);
     });
   };
 
@@ -680,14 +680,14 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
     drawData(Side.LEFT);
     animateData(false, Side.LEFT);
-  }, [animateData, drawData, leftData]);
+  }, [leftData]);
 
   useEffect(() => {
     console.log("rightData", rightData);
 
     drawData(Side.RIGHT);
     animateData(false, Side.RIGHT);
-  }, [animateData, drawData, rightData]);
+  }, [rightData]);
 
   useGSAP(
     () => {
