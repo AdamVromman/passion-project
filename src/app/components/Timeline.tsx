@@ -720,6 +720,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const updateYAxis = (side: Side) => {
+    d3.select(graphRef.current).selectAll(`.y-axis.${side}`).remove();
     if (
       (side === Side.LEFT && getActiveData(side).length > 0) ||
       (side === Side.RIGHT && getActiveData(side).length > 0)
@@ -728,8 +729,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
       const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
       const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
       const maxValue = getMaxValueOnScreen(side);
-
-      d3.select(graphRef.current).selectAll(`.y-axis.${side}`).remove();
 
       const y = d3
         .scaleLinear()
