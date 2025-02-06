@@ -11,9 +11,10 @@ export enum Source {
   UNRWA = "UNRWA",
   WIKIPEDIA = "Wikipedia",
   INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION = "Interactive Encyclopedia Of the Palestine Question",
+  MIDDLE_EAST_EYE = "Middle East Eye",
 }
 
-export interface Event {
+export interface DataEvent {
   name: string;
   arabicName: string;
   description: string;
@@ -51,7 +52,19 @@ export interface DataPeriod {
   amount: dataNumber;
 }
 
-export const events = [];
+export const events: DataEvent[] = [
+  {
+    name: "The Nakba",
+    arabicName: "النَّكْبَة",
+    description: "",
+    date: new Date("1947-12-01"),
+    endDate: new Date("1949-07-20"),
+    location: "Palestine",
+    link: "https://www.middleeasteye.net/news/israel-palestine-nakba-ethnic-cleansing-explained-five-maps-charts",
+    source: [Source.AL_JAZEERA, Source.MIDDLE_EAST_EYE, Source.CBS],
+    image: "",
+  },
+];
 
 //TODO: Displaced people
 export const timeline: TimelineYear[] = [

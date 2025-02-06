@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import {
+  DataEvent,
   DataPeriod,
+  events,
   periods,
   timeline,
   TimelineYear,
@@ -18,6 +20,8 @@ import {
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
+import { time } from "console";
+import { get } from "http";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
@@ -439,6 +443,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .selectAll<Element, TimelineYear>("svg.tick");
 
     groups.selectAll(`.tick-data.${side}`).remove();
+
     d3.select(graphRef.current)
       .select("#group-timeline")
       .selectAll(`line.period-line.${side}`)
@@ -551,6 +556,69 @@ const Timeline = ({ gsapTimeline }: Props) => {
         .attr("r", 0)
         .attr("class", `tick-data unzoom ${data} ${side} `);
     });
+  };
+
+  const drawEvents = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll("svg.event")
+      .data(events)
+      .enter()
+      .append("svg")
+      .attr("class", "event")
+      .attr(
+        "x",
+        (d) =>
+          PADDING.left +
+          (d.date.getFullYear() - timeline[0].year) * getTickWidth()
+      )
+      .attr("y", 0)
+      .append("rect")
+      .attr("class", "event-rect unzoom")
+      .attr("y", HEIGHT_TIMELINE / 2 + PATH_PADDING)
+      .attr(
+        "x",
+        (d) => 25 + ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel
+      )
+      .attr("height", 10 + zoomLevel / 2)
+      .attr("width", (d) => {
+        return (
+          (d.endDate.getFullYear() - d.date.getFullYear()) *
+            getTickWidth() *
+            zoomLevel -
+          ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel +
+          ((d.endDate.getMonth() * getTickWidth()) / 12) * zoomLevel
+        );
+      })
+      .on("mouseenter", (e, d) => {
+        gsap.to(e.target, {
+          attr: {
+            height: 200,
+            width: 500,
+            rx: 30,
+          },
+
+          duration: 1,
+          ease: "elastic.out",
+        });
+      })
+      .on("mouseleave", (e, d) => {
+        gsap.to(e.target, {
+          attr: {
+            height: 10 + zoomLevel / 2,
+            width:
+              (d.endDate.getFullYear() - d.date.getFullYear()) *
+                getTickWidth() *
+                zoomLevel -
+              ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel +
+              ((d.endDate.getMonth() * getTickWidth()) / 12) * zoomLevel,
+            rx: (10 + zoomLevel) / 2,
+          },
+          duration: 0.6,
+          ease: "power4.out",
+        });
+      })
+      .attr("rx", (10 + zoomLevel * 2) / 2);
   };
 
   //--------------------------------UPDATING DATA--------------------------------
@@ -761,6 +829,28 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
+  const updateEvents = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll<Element, DataEvent>("svg.event")
+      .select("rect.event-rect")
+      .attr("height", 10 + (zoomLevel * 2) / 2)
+      .attr(
+        "x",
+        (d) => 25 + ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel
+      )
+      .attr("width", (d) => {
+        return (
+          (d.endDate.getFullYear() - d.date.getFullYear()) *
+            getTickWidth() *
+            zoomLevel -
+          ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel +
+          ((d.endDate.getMonth() * getTickWidth()) / 12) * zoomLevel
+        );
+      })
+      .attr("rx", (10 + zoomLevel) / 2);
+  };
+
   const handleZoom = (e: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
     setZoomLevel(() => e.transform.k);
     setPanLevel(() => e.transform.x);
@@ -770,6 +860,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   useEffect(() => {
     updateYears();
+    updateEvents();
     setZoomLevelFloored(() => Math.floor(zoomLevel));
     if (!Object.values(leftData).every((value) => !value)) {
       getMaxValueOnScreen(Side.LEFT);
@@ -796,6 +887,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   useEffect(() => {
     drawTimeline();
+    drawEvents();
     drawData(Side.LEFT);
     drawData(Side.RIGHT);
 
