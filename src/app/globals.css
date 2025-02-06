@@ -136,35 +136,34 @@ html {
 
 #data-icon-bounds {
   @apply w-full h-full;
-  @apply flex flex-row gap-8;
+  @apply flex flex-row gap-8 justify-start;
 
   .separator {
     @apply h-full w-[4px] bg-BROWN rounded-full;
   }
 
-  .inactive {
-    @apply max-h-full grid gap-4 grid-cols-5 grid-rows-2;
+  .data-icon-row {
+    @apply h-1/2;
+    @apply flex flex-row flex-wrap gap-4 items-center;
   }
+
+  .inactive,
   .active {
-    @apply w-1/2 h-full;
-    @apply flex flex-col gap-4;
+    @apply h-full w-fit;
+    @apply flex flex-col gap-4 items-start;
+  }
 
-    .active-row {
-      @apply w-full h-1/2;
-      @apply flex flex-row gap-4 items-center;
+  .active-row-placeholder {
+    @apply bg-WHITE text-BROWN;
+    @apply flex justify-center items-center;
+  }
 
-      .active-row-placeholder {
-        @apply h-full aspect-square;
-        @apply rounded-7_5;
-        @apply bg-WHITE text-BROWN;
-        @apply flex justify-center items-center;
-      }
-    }
+  .data-button {
+    @apply w-[50px] h-[50px] rounded-7_5;
   }
 
   .data-icon {
-    @apply h-full aspect-square;
-    @apply border-4 rounded-7_5;
+    @apply border-4;
 
     &.adultsKilled {
       @apply bg-orange-500/10 border-orange-500;

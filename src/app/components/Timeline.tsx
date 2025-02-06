@@ -1070,48 +1070,52 @@ const Timeline = ({ gsapTimeline }: Props) => {
         <div className="h-1/5 flex flex-row justify-between gap-8 items-center pb-4">
           <div id="data-icon-bounds">
             <div className="inactive">
-              {Object.keys(leftData).map((key) => {
-                return (
-                  <button
-                    id={`timeline-data-icon-${key}`}
-                    className={`data-icon ${key} left`}
-                    key={key}
-                  >
-                    {key[0]}
-                  </button>
-                );
-              })}
-              {Object.keys(rightData).map((key) => {
-                return (
-                  <button
-                    id={`timeline-data-icon-${key}`}
-                    className={`data-icon ${key} right`}
-                    key={key}
-                  >
-                    {key[0]}
-                  </button>
-                );
-              })}
+              <div className="data-icon-row left">
+                {Object.keys(leftData).map((key) => {
+                  return (
+                    <button
+                      id={`timeline-data-icon-${key}`}
+                      className={`data-button data-icon ${key} left`}
+                      key={key}
+                    >
+                      {key[0]}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="data-icon-row right">
+                {Object.keys(rightData).map((key) => {
+                  return (
+                    <button
+                      id={`timeline-data-icon-${key}`}
+                      className={`data-button data-icon ${key} right`}
+                      key={key}
+                    >
+                      {key[0]}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="separator"></div>
             <div className="active">
-              <div className="active-row left">
+              <div className="data-icon-row left">
                 {Object.keys(leftData).map((key) => (
                   <div
                     key={key}
                     id={`active-row-placeholder-${key}`}
-                    className="active-row-placeholder"
+                    className="data-button active-row-placeholder"
                   >
                     {key[0]}
                   </div>
                 ))}
               </div>
-              <div className="active-row right">
+              <div className="data-icon-row right">
                 {Object.keys(rightData).map((key) => (
                   <div
                     key={key}
                     id={`active-row-placeholder-${key}`}
-                    className="active-row-placeholder"
+                    className="data-button active-row-placeholder"
                   >
                     {key[0]}
                   </div>
