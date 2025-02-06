@@ -64,6 +64,17 @@ export const events: DataEvent[] = [
     source: [Source.AL_JAZEERA, Source.MIDDLE_EAST_EYE, Source.CBS],
     image: "",
   },
+
+  {
+    name: "The Nakba",
+    arabicName: "النَّكْبَة",
+    description: "",
+    date: new Date("1959-12-01"),
+    location: "Palestine",
+    link: "https://www.middleeasteye.net/news/israel-palestine-nakba-ethnic-cleansing-explained-five-maps-charts",
+    source: [Source.AL_JAZEERA, Source.MIDDLE_EAST_EYE, Source.CBS],
+    image: "",
+  },
 ];
 
 //TODO: Displaced people

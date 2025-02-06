@@ -558,6 +558,19 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   };
 
+  const getEventWidth = (d: DataEvent) => {
+    if (d.endDate) {
+      return (
+        (d.endDate.getFullYear() - d.date.getFullYear()) *
+          getTickWidth() *
+          zoomLevel -
+        ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel +
+        ((d.endDate.getMonth() * getTickWidth()) / 12) * zoomLevel
+      );
+    } else {
+      return 10 + zoomLevel / 2;
+    }
+  };
   const drawEvents = () => {
     d3.select(graphRef.current)
       .select("#group-timeline")
@@ -581,43 +594,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
         (d) => 25 + ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel
       )
       .attr("height", 10 + zoomLevel / 2)
-      .attr("width", (d) => {
-        return (
-          (d.endDate.getFullYear() - d.date.getFullYear()) *
-            getTickWidth() *
-            zoomLevel -
-          ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel +
-          ((d.endDate.getMonth() * getTickWidth()) / 12) * zoomLevel
-        );
-      })
-      .on("mouseenter", (e, d) => {
-        gsap.to(e.target, {
-          attr: {
-            height: 200,
-            width: 500,
-            rx: 30,
-          },
-
-          duration: 1,
-          ease: "elastic.out",
-        });
-      })
-      .on("mouseleave", (e, d) => {
-        gsap.to(e.target, {
-          attr: {
-            height: 10 + zoomLevel / 2,
-            width:
-              (d.endDate.getFullYear() - d.date.getFullYear()) *
-                getTickWidth() *
-                zoomLevel -
-              ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel +
-              ((d.endDate.getMonth() * getTickWidth()) / 12) * zoomLevel,
-            rx: (10 + zoomLevel) / 2,
-          },
-          duration: 0.6,
-          ease: "power4.out",
-        });
-      })
+      .attr("width", getEventWidth)
+      .on("mouseenter", (e, d) => {})
+      .on("mouseleave", (e, d) => {})
       .attr("rx", (10 + zoomLevel * 2) / 2);
   };
 
@@ -834,20 +813,12 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .select("#group-timeline")
       .selectAll<Element, DataEvent>("svg.event")
       .select("rect.event-rect")
-      .attr("height", 10 + (zoomLevel * 2) / 2)
+      .attr("height", 10 + zoomLevel / 2)
       .attr(
         "x",
         (d) => 25 + ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel
       )
-      .attr("width", (d) => {
-        return (
-          (d.endDate.getFullYear() - d.date.getFullYear()) *
-            getTickWidth() *
-            zoomLevel -
-          ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel +
-          ((d.endDate.getMonth() * getTickWidth()) / 12) * zoomLevel
-        );
-      })
+      .attr("width", getEventWidth)
       .attr("rx", (10 + zoomLevel) / 2);
   };
 
