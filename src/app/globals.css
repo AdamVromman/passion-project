@@ -259,13 +259,27 @@ html {
     @apply pointer-events-auto;
   }
 
-  .event {
-    @apply bg-BLACK text-WHITE;
+  #mouseElementContent {
+    @apply bg-RED;
+    @apply rounded-2xl;
+    @apply w-0 h-0;
+    @apply flex flex-col items-center justify-center;
+    @apply overflow-hidden;
+  }
+
+  #mouseElementContentVisibility {
+    @apply opacity-0;
     @apply px-8;
+    @apply overflow-hidden;
+  }
+
+  /* .event {
+    @apply bg-BLACK text-WHITE;
     @apply flex flex-col justify-start items-center;
     @apply opacity-0 rounded-2xl;
     @apply pointer-events-none;
     @apply relative overflow-hidden;
+    @apply max-w-[300px];
 
     &.selected,
     &.hovering {
@@ -275,15 +289,15 @@ html {
 
     &.selected {
       @apply p-4;
-      .event-full {
+       .event-full {
         @apply block;
-      }
+      } 
     }
 
-    &.hovering {
+     &.hovering {
       .event-full {
         @apply hidden;
       }
-    }
-  }
+    } 
+  } */
 }

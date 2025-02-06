@@ -66,7 +66,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const [panLevel, setPanLevel] = useState(0);
   const [zoomLevelFloored, setZoomLevelFloored] = useState(1);
 
-  const [hoveringEvent, setHoveringEvent] = useState<DataEvent | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<DataEvent | null>(null);
 
   const { contextSafe } = useGSAP({ scope: timelineRef });
@@ -359,87 +358,88 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   });
 
-  const animateEventHover = contextSafe((event: DataEvent) => {
-    console.log("animating hover");
+  const animateMouseHover = contextSafe(
+    (event?: DataEvent, dataPoint?: string) => {
+      console.log("animating hover");
 
-    gsap.set("#mouseElementEvent", { opacity: 1 });
-
-    gsap.fromTo(
-      "#mouseElementEvent",
-      {
-        width: 0,
-        height: 0,
-      },
-      {
+      gsap.to("#mouseElementContent", {
         height: 32,
         width: 32,
         duration: 0.4,
         ease: "elastic.out",
         onComplete: () => {
-          setHoveringEvent(event);
+          if (event) {
+            setSelectedEvent(event);
+          }
 
-          gsap.to("#mouseElementEvent", {
+          gsap.to("#mouseElementContentVisibility", {
+            opacity: 1,
+            duration: 0.4,
+          });
+
+          gsap.to("#mouseElementContent", {
             width: "100%",
             duration: 0.4,
             ease: "power4.out",
           });
         },
-      }
-    );
-  });
+      });
+    }
+  );
 
-  const animateEventHoverReverse = contextSafe(() => {
+  const animateMouseHoverReverse = contextSafe(() => {
     console.log("reversing hover");
-    gsap.to("#mouseElementEvent", {
-      width: 0,
-      height: 0,
-      duration: 0.6,
-      ease: "power4.out",
-      overwrite: true,
-      onComplete: () => {
-        setHoveringEvent(null);
-      },
-    });
-  });
 
-  const animateEventOpen = contextSafe((event: DataEvent) => {
-    console.log("animating open");
-    d3.select("#mouseElement").attr("class", "selected");
-    window.onmousemove = null;
-
-    gsap.to("#mouseElementEvent", {
-      height: "100%",
-      width: 300,
-      duration: 0.6,
-      ease: "power4.out",
-      onComplete: () => {
-        setSelectedEvent(event);
-      },
-    });
-  });
-
-  const animateEventOpenReverse = contextSafe(() => {
-    console.log("reverse open");
-    d3.select("#mouseElement").attr("class", "");
-    gsap.to("#mouseElementEvent", {
-      height: 32,
-      width: 32,
-      duration: 0.6,
-      ease: "power4.out",
+    gsap.to("#mouseElementContentVisibility", {
+      opacity: 0,
+      duration: 0.4,
       onComplete: () => {
         setSelectedEvent(null);
-        setHoveringEvent(null);
-        window.onmousemove = onMouseMove;
-        gsap.to("#mouseElementEvent", {
-          width: 0,
-          height: 0,
+        gsap.to("#mouseElementContent", {
+          width: 32,
           duration: 0.6,
           ease: "power4.out",
         });
-        gsap.set("#mouseElementEvent", { opacity: 0 });
       },
     });
   });
+
+  // const animateEventOpen = contextSafe((event: DataEvent) => {
+  //   console.log("animating open");
+  //   d3.select("#mouseElement").attr("class", "selected");
+  //   //d3.select("#mouseElementEvent").attr("class", "event selected");
+  //   window.onmousemove = null;
+
+  //   gsap.to("#mouseElementEvent", {
+  //     height: 500,
+  //     width: 300,
+  //     duration: 0.6,
+  //     ease: "power4.out",
+  //   });
+  // });
+
+  // const animateEventOpenReverse = contextSafe(() => {
+  //   console.log("reverse open");
+  //   d3.select("#mouseElement").attr("class", "");
+  //   d3.select("#mouseElementEvent").attr("class", "event");
+  //   gsap.to("#mouseElementEvent", {
+  //     height: 32,
+  //     width: 32,
+  //     duration: 0.6,
+  //     ease: "power4.out",
+  //     onComplete: () => {
+  //       setSelectedEvent(null);
+  //       window.onmousemove = onMouseMove;
+  //       gsap.to("#mouseElementEvent", {
+  //         width: 0,
+  //         height: 0,
+  //         duration: 0.6,
+  //         ease: "power4.out",
+  //       });
+  //       gsap.set("#mouseElementEvent", { opacity: 0 });
+  //     },
+  //   });
+  // });
 
   //--------------------------------DRAWING DATA--------------------------------
 
@@ -682,11 +682,11 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .attr("width", getEventWidth)
       .on("mouseenter", (_, d) => {
         window.onmousemove = onMouseMove;
-        animateEventHover(d);
+        animateMouseHover(d);
       })
       .on("mouseleave", (e) => {
         if (e.relatedTarget.id !== "mouseElement") {
-          animateEventHoverReverse();
+          animateMouseHoverReverse();
         }
       })
       .on("click", (_, d) => {
@@ -1414,14 +1414,19 @@ const Timeline = ({ gsapTimeline }: Props) => {
         }}
         id="mouseElement"
       >
-        <div id="mouseElementEvent" className={`event`}>
-          <div className="title whitespace-nowrap">
-            {(hoveringEvent ?? selectedEvent)?.name}
-          </div>
-          <div className="event-full">
-            {(selectedEvent ?? hoveringEvent)?.description}
+        <div id="mouseElementContent">
+          <div id="mouseElementContentVisibility">
+            {selectedEvent && (
+              <div className="title whitespace-nowrap">
+                {selectedEvent?.name}
+              </div>
+            )}
           </div>
         </div>
+        {/* <div id="mouseElementEvent" className="event">
+          <div className="title whitespace-nowrap">{selectedEvent?.name}</div>
+          <div className="event-full">{selectedEvent?.description}</div>
+        </div> */}
       </div>
     </div>
   );
