@@ -249,3 +249,41 @@ html {
     }
   }
 }
+
+#mouseElement {
+  @apply fixed -left-30 -top-30;
+  @apply p-10;
+  @apply pointer-events-none;
+
+  &.selected {
+    @apply pointer-events-auto;
+  }
+
+  .event {
+    @apply bg-BLACK text-WHITE;
+    @apply px-8;
+    @apply flex flex-col justify-start items-center;
+    @apply opacity-0 rounded-2xl;
+    @apply pointer-events-none;
+    @apply relative overflow-hidden;
+
+    &.selected,
+    &.hovering {
+      @apply pointer-events-auto;
+      @apply opacity-100;
+    }
+
+    &.selected {
+      @apply p-4;
+      .event-full {
+        @apply block;
+      }
+    }
+
+    &.hovering {
+      .event-full {
+        @apply hidden;
+      }
+    }
+  }
+}

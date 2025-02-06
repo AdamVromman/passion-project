@@ -20,8 +20,6 @@ import {
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
-import { time } from "console";
-import { get } from "http";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
@@ -33,6 +31,7 @@ const TICK_OFFSET = 25;
 const DATA_POINT_SIZE = 7;
 const DATA_POINT_SIZE_PERIOD = 4;
 const SNAP_DISTANCE = 100;
+const MOUSE_ELEMENT_PADDING = 30;
 
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
@@ -67,7 +66,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const [panLevel, setPanLevel] = useState(0);
   const [zoomLevelFloored, setZoomLevelFloored] = useState(1);
 
-  const { contextSafe } = useGSAP({ scope: graphRef });
+  const [hoveringEvent, setHoveringEvent] = useState<DataEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<DataEvent | null>(null);
+
+  const { contextSafe } = useGSAP({ scope: timelineRef });
 
   //--------------------------------UTILS--------------------------------
 
@@ -357,6 +359,88 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   });
 
+  const animateEventHover = contextSafe((event: DataEvent) => {
+    console.log("animating hover");
+
+    gsap.set("#mouseElementEvent", { opacity: 1 });
+
+    gsap.fromTo(
+      "#mouseElementEvent",
+      {
+        width: 0,
+        height: 0,
+      },
+      {
+        height: 32,
+        width: 32,
+        duration: 0.4,
+        ease: "elastic.out",
+        onComplete: () => {
+          setHoveringEvent(event);
+
+          gsap.to("#mouseElementEvent", {
+            width: "100%",
+            duration: 0.4,
+            ease: "power4.out",
+          });
+        },
+      }
+    );
+  });
+
+  const animateEventHoverReverse = contextSafe(() => {
+    console.log("reversing hover");
+    gsap.to("#mouseElementEvent", {
+      width: 0,
+      height: 0,
+      duration: 0.6,
+      ease: "power4.out",
+      overwrite: true,
+      onComplete: () => {
+        setHoveringEvent(null);
+      },
+    });
+  });
+
+  const animateEventOpen = contextSafe((event: DataEvent) => {
+    console.log("animating open");
+    d3.select("#mouseElement").attr("class", "selected");
+    window.onmousemove = null;
+
+    gsap.to("#mouseElementEvent", {
+      height: "100%",
+      width: 300,
+      duration: 0.6,
+      ease: "power4.out",
+      onComplete: () => {
+        setSelectedEvent(event);
+      },
+    });
+  });
+
+  const animateEventOpenReverse = contextSafe(() => {
+    console.log("reverse open");
+    d3.select("#mouseElement").attr("class", "");
+    gsap.to("#mouseElementEvent", {
+      height: 32,
+      width: 32,
+      duration: 0.6,
+      ease: "power4.out",
+      onComplete: () => {
+        setSelectedEvent(null);
+        setHoveringEvent(null);
+        window.onmousemove = onMouseMove;
+        gsap.to("#mouseElementEvent", {
+          width: 0,
+          height: 0,
+          duration: 0.6,
+          ease: "power4.out",
+        });
+        gsap.set("#mouseElementEvent", { opacity: 0 });
+      },
+    });
+  });
+
   //--------------------------------DRAWING DATA--------------------------------
 
   const drawTicks = () => {
@@ -571,6 +655,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       return 10 + zoomLevel / 2;
     }
   };
+
   const drawEvents = () => {
     d3.select(graphRef.current)
       .select("#group-timeline")
@@ -595,61 +680,22 @@ const Timeline = ({ gsapTimeline }: Props) => {
       )
       .attr("height", 10 + zoomLevel / 2)
       .attr("width", getEventWidth)
-      .on("mouseenter", (e, d) => {})
-      .on("mouseleave", (e, d) => {})
+      .on("mouseenter", (_, d) => {
+        window.onmousemove = onMouseMove;
+        animateEventHover(d);
+      })
+      .on("mouseleave", (e) => {
+        if (e.relatedTarget.id !== "mouseElement") {
+          animateEventHoverReverse();
+        }
+      })
+      .on("click", (_, d) => {
+        animateEventOpen(d);
+      })
       .attr("rx", (10 + zoomLevel * 2) / 2);
   };
 
   //--------------------------------UPDATING DATA--------------------------------
-
-  const updateTicks = () => {
-    //TODO: Correctly update ticks when zoomed in
-
-    d3.select(graphRef.current)
-      .select("#group-timeline")
-      .selectAll("svg.tick")
-      .attr("x", (_, i) => PADDING.left + i * getTickWidth());
-  };
-
-  const resize = () => {
-    updateTicks();
-    animateMain();
-    animateDecades();
-    if (zoomLevel > 2) animateLustra();
-    if (zoomLevel > 6) animateRegular();
-
-    if (getDimensions().height < HEIGHT_TIMELINE + 120) {
-      //TODO: ANIMATE EXIT GRAPH
-
-      d3.select(graphRef.current)
-        .select("#group-graph")
-        .attr("display", "none");
-    } else {
-      //TODO: ANIMATE ENTER GRAPH
-
-      d3.select(graphRef.current)
-        .select("#group-graph")
-        .attr("display", "block");
-    }
-
-    d3.select(graphRef.current)
-      .select("#horizontal-axis-bottom")
-      .attr("y", getDimensions().height - PADDING.bottom);
-
-    d3.select(graphRef.current)
-      .select("#vertical-axis line")
-      .attr("y1", getDimensions().height - PADDING.bottom);
-
-    d3.select(graphRef.current)
-      .select("#main-graph-stroke")
-      .attr("width", getDimensions().width - 8)
-      .attr("height", getDimensions().height - HEIGHT_TIMELINE - 8);
-
-    d3.select(graphRef.current)
-      .select("#svg-wrapper")
-      .attr("width", getDimensions().width - 8)
-      .attr("height", getDimensions().height - 8);
-  };
 
   const updateYears = () => {
     const container = document?.getElementById("svg-wrapper");
@@ -855,18 +901,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .selectAll(".unzoom")
       .attr("transform", `scale(${1 / zoomLevel}, 1)`);
   }, [zoomLevel, panLevel]);
-
-  useEffect(() => {
-    drawTimeline();
-    drawEvents();
-    drawData(Side.LEFT);
-    drawData(Side.RIGHT);
-
-    window.addEventListener("resize", resize);
-    return () => {
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
 
   useEffect(() => {
     if (zoomLevelFloored >= LUSTRUM_ZOOM) {
@@ -1127,6 +1161,83 @@ const Timeline = ({ gsapTimeline }: Props) => {
     { scope: timelineRef, dependencies: [gsapTimeline] }
   );
 
+  //--------------------------------MAIN USE EFFECT--------------------------------
+
+  useEffect(() => {
+    drawTimeline();
+    drawEvents();
+    drawData(Side.LEFT);
+    drawData(Side.RIGHT);
+
+    window.addEventListener("resize", onResize);
+    window.onmousemove = onMouseMove;
+    return () => {
+      window.onmousemove = null;
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
+  //--------------------------------WINDOW STUFF--------------------------------
+
+  const resizeTicks = () => {
+    //TODO: Correctly update ticks when zoomed in
+
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll("svg.tick")
+      .attr("x", (_, i) => PADDING.left + i * getTickWidth());
+  };
+
+  const onResize = () => {
+    resizeTicks();
+    animateMain();
+    animateDecades();
+    if (zoomLevel > 2) animateLustra();
+    if (zoomLevel > 6) animateRegular();
+
+    if (getDimensions().height < HEIGHT_TIMELINE + 120) {
+      //TODO: ANIMATE EXIT GRAPH
+
+      d3.select(graphRef.current)
+        .select("#group-graph")
+        .attr("display", "none");
+    } else {
+      //TODO: ANIMATE ENTER GRAPH
+
+      d3.select(graphRef.current)
+        .select("#group-graph")
+        .attr("display", "block");
+    }
+
+    d3.select(graphRef.current)
+      .select("#horizontal-axis-bottom")
+      .attr("y", getDimensions().height - PADDING.bottom);
+
+    d3.select(graphRef.current)
+      .select("#vertical-axis line")
+      .attr("y1", getDimensions().height - PADDING.bottom);
+
+    d3.select(graphRef.current)
+      .select("#main-graph-stroke")
+      .attr("width", getDimensions().width - 8)
+      .attr("height", getDimensions().height - HEIGHT_TIMELINE - 8);
+
+    d3.select(graphRef.current)
+      .select("#svg-wrapper")
+      .attr("width", getDimensions().width - 8)
+      .attr("height", getDimensions().height - 8);
+  };
+
+  const onMouseMove = (e: MouseEvent) => {
+    gsap.to("#mouseElement", {
+      x: e.clientX - MOUSE_ELEMENT_PADDING,
+      y: e.clientY - MOUSE_ELEMENT_PADDING,
+      duration: 0.2,
+      stagger: 0.5,
+      overwrite: true,
+    });
+  };
+
   return (
     <div ref={timelineRef} className="timeline-section">
       <div className="timeline-main opacity-0 w-full h-full">
@@ -1295,6 +1406,22 @@ const Timeline = ({ gsapTimeline }: Props) => {
             />
           </g>
         </svg>
+      </div>
+
+      <div
+        onMouseLeave={() => {
+          if (selectedEvent) animateEventOpenReverse();
+        }}
+        id="mouseElement"
+      >
+        <div id="mouseElementEvent" className={`event`}>
+          <div className="title whitespace-nowrap">
+            {(hoveringEvent ?? selectedEvent)?.name}
+          </div>
+          <div className="event-full">
+            {(selectedEvent ?? hoveringEvent)?.description}
+          </div>
+        </div>
       </div>
     </div>
   );

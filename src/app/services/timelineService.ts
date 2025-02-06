@@ -12,18 +12,19 @@ export enum Source {
   WIKIPEDIA = "Wikipedia",
   INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION = "Interactive Encyclopedia Of the Palestine Question",
   MIDDLE_EAST_EYE = "Middle East Eye",
+  UNIVERSITY_OF_MICHIGAN = "University of Michigan",
+  UN = "United Nations",
 }
 
 export interface DataEvent {
   name: string;
-  arabicName: string;
+  arabicName?: string;
   description: string;
   date: Date;
   endDate?: Date;
   location: string;
   link: string;
   source: Source[];
-  image: string;
 }
 
 interface dataNumber {
@@ -54,26 +55,99 @@ export interface DataPeriod {
 
 export const events: DataEvent[] = [
   {
+    name: "The Balfour Declaration",
+    description:
+      "The Balfour declaration was the open support of the establishment of a Jewish state and the promise of that land being Palestine. The declaration was made by the British Foreign Secretary Arthur Balfour in a letter to Lord Rothschild, a leader of the British Jewish community.",
+    date: new Date("1917-11-02"),
+    location: "The United Kingdom",
+    link: "https://www.aljazeera.com/features/2018/11/2/more-than-a-century-on-the-balfour-declaration-explained",
+    source: [Source.AL_JAZEERA, Source.MIDDLE_EAST_EYE, Source.CBS],
+  },
+  {
+    name: "The British Mandate",
+    description:
+      "During the first world war, Great Britain promised the Arabs independence in return for their support in fighting the Ottoman Empire. However, after the war was over, the British and French divided the Middle East between themselves and called these territories mandates. Palestine was one of these mandates.",
+    date: new Date("1920-07-01"),
+    endDate: new Date("1948-05-15"),
+    location: "Palestine and Transjordan",
+    link: "https://lsa.umich.edu/content/dam/cmenas-assets/cmenas-documents/unit-of-israel-palestine/Section1_BritishMandateInPalestine.pdf",
+    source: [Source.UNIVERSITY_OF_MICHIGAN],
+  },
+  {
+    name: "The United Nations Partition Plan",
+    description:
+      "With resolution 181, also know as the United Nations Partition Plan, the UN decided to partition Palestine into two separate states, one Jewish and one Arab. The Jewish state would receive 55% of the land and the Arab state would receive 45%. Jerusalem would remain under international control.",
+    date: new Date("1947-11-29"),
+    location: "New York City",
+    link: "https://www.un.org/unispal/data-collection/general-assembly/",
+    source: [Source.AL_JAZEERA, Source.UN],
+  },
+  {
     name: "The Nakba",
     arabicName: "النَّكْبَة",
-    description: "",
+    description:
+      "The Nakba (The Great Catastrophe) is the term used by Palestinians to describe the ethnic cleansing campaign that took place after Israel declared independence and the British mandate ended. During these months, over 750,000 Palestinians were expelled from their homes through massacres, bombings and psychological warfare. In total, 15,000 people were killed and over 500 villages were destroyed.",
     date: new Date("1947-12-01"),
     endDate: new Date("1949-07-20"),
     location: "Palestine",
     link: "https://www.middleeasteye.net/news/israel-palestine-nakba-ethnic-cleansing-explained-five-maps-charts",
     source: [Source.AL_JAZEERA, Source.MIDDLE_EAST_EYE, Source.CBS],
-    image: "",
   },
-
   {
-    name: "The Nakba",
-    arabicName: "النَّكْبَة",
+    name: "The Suez Crisis",
     description: "",
-    date: new Date("1959-12-01"),
-    location: "Palestine",
-    link: "https://www.middleeasteye.net/news/israel-palestine-nakba-ethnic-cleansing-explained-five-maps-charts",
-    source: [Source.AL_JAZEERA, Source.MIDDLE_EAST_EYE, Source.CBS],
-    image: "",
+    date: new Date("1956-10-29"),
+    endDate: new Date("1956-11-07"),
+  },
+  {
+    name: "Creation of the Palestinian Liberation Organization",
+    description: "",
+    date: new Date("1964-05-28"),
+  },
+  {
+    name: "The Six-Day War",
+    description: "",
+    date: new Date("1967-06-05"),
+    endDate: new Date("1967-06-10"),
+  },
+  {
+    name: "The War of Attrition",
+    description: "",
+    date: new Date("1967-06-05"),
+    endDate: new Date("1970-08-07"),
+  },
+  {
+    name: "Munich Olympics Massacre",
+    description: "",
+    date: new Date("1972-09-05"),
+  },
+  {
+    name: "The Yom Kippur War",
+    description: "",
+    date: new Date("1973-10-06"),
+    endDate: new Date("1973-10-25"),
+  },
+  {
+    name: "Camp David Accords",
+    description: "",
+    date: new Date("1978-09-17"),
+  },
+  {
+    name: "The First Intifada",
+    description: "",
+    date: new Date("1987-12-08"),
+    endDate: new Date("1993-09-13"),
+  },
+  {
+    name: "The Oslo Accords",
+    description: "",
+    date: new Date("1993-09-13"),
+  },
+  {
+    name: "The Second Intifada",
+    description: "",
+    date: new Date("2000-09-28"),
+    endDate: new Date("2005-02-08"),
   },
 ];
 
