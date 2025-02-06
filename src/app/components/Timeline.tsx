@@ -106,8 +106,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
             maxValue = Math.max(maxValue, max);
           });
 
-        console.log(maxValue);
-
         const max =
           d3.max(visibleTicks, (d) => {
             let value = 0;
@@ -722,8 +720,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const updateYAxis = (side: Side) => {
-    console.log("updating y axis");
-    console.log(getActiveData(side));
     if (
       (side === Side.LEFT && getActiveData(side).length > 0) ||
       (side === Side.RIGHT && getActiveData(side).length > 0)
@@ -774,7 +770,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
   //--------------------------------USE EFFECTS--------------------------------
 
   useEffect(() => {
-    console.log("zoom or pan changed");
     updateYears();
     setZoomLevelFloored(() => Math.floor(zoomLevel));
     if (!Object.values(leftData).every((value) => !value)) {
@@ -1099,6 +1094,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
                 );
               })}
             </div>
+            <div className="separator"></div>
             <div className="active">
               <div className="active-row left">
                 {Object.keys(leftData).map((key) => (
@@ -1111,7 +1107,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
                   </div>
                 ))}
               </div>
-              <hr />
               <div className="active-row right">
                 {Object.keys(rightData).map((key) => (
                   <div
@@ -1126,7 +1121,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             </div>
           </div>
 
-          <div className="text-BLACK text-4xl font-bold flex flex-col items-end">
+          <div className="text-BLACK text-4xl font-bold flex flex-col items-end w-1/4">
             <span>{leftYear}</span>
             <span>{rightYear}</span>
           </div>

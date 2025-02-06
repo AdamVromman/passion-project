@@ -136,22 +136,22 @@ html {
 
 #data-icon-bounds {
   @apply w-full h-full;
-  @apply flex flex-row justify-between;
+  @apply flex flex-row gap-8;
+
+  .separator {
+    @apply h-full w-[4px] bg-BROWN rounded-full;
+  }
 
   .inactive {
     @apply max-h-full grid gap-4 grid-cols-5 grid-rows-2;
   }
   .active {
     @apply w-1/2 h-full;
-    @apply flex flex-col gap-2;
-
-    hr {
-      @apply border-t-4 border-BROWN rounded-full;
-    }
+    @apply flex flex-col gap-4;
 
     .active-row {
-      @apply w-full grow;
-      @apply flex flex-row gap-4 items-center justify-end;
+      @apply w-full h-1/2;
+      @apply flex flex-row gap-4 items-center;
 
       .active-row-placeholder {
         @apply h-full aspect-square;
