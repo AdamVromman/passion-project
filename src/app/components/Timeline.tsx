@@ -198,7 +198,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
   };
 
   const getWindowWidth = () => {
-    if (window) return window.innerWidth;
+    if (typeof window !== "undefined") return window.innerWidth;
     return 768;
   };
 
@@ -516,7 +516,6 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
 
   const drawTimeline = () => {
     drawTicks();
-    console.log(svgWidth);
 
     // This function allows zoom/pan and also limits the zoom and the pan to a certain extent.
     const zoomFunction = d3
@@ -729,12 +728,12 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       )
       .attr("y", 0)
       .append("rect")
-      .attr("class", (_, i) => `event-rect unzoom ${i % 2 === 0 ? "odd" : ""}`)
+      .attr("class", "event-rect unzoom")
       .attr("y", HEIGHT_TIMELINE / 2)
       .attr("x", (d) => 25 + (d.date.getMonth() * getActualTickWidth()) / 12)
       .attr("rx", (EVENT_MIN_WIDTH / 2) * zoomLevel)
       .attr("height", EVENT_HEIGHT)
-      .attr("width", getEventWidth)
+      .attr("width", 0)
       .on("mouseenter", (_, d) => {
         window.onmousemove = onMouseMove;
         animateMouseHover(d);
@@ -1202,6 +1201,19 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             },
             "<"
           );
+
+        d3.select(graphRef.current)
+          .selectAll<Element, DataEvent>(".event-svg .event-rect")
+          .each((d, i, nodes) => {
+            gsapTimeline.to(
+              nodes[i],
+              {
+                attr: { width: getEventWidth(d) },
+                duration: 0.5,
+              },
+              "<+0.05"
+            );
+          });
       }
     },
     { scope: timelineRef, dependencies: [gsapTimeline] }
@@ -1212,9 +1224,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
     resizeTicks();
     resizeDataPoints();
     resizePeriods();
-    resizeEvents();
 
-    console.log(svgHeight < HEIGHT_TIMELINE + 120);
     if (svgHeight < HEIGHT_TIMELINE + 120) {
       //TODO: ANIMATE EXIT GRAPH
       d3.select(graphRef.current)
@@ -1242,6 +1252,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       .attr("height", svgHeight - 8);
 
     if (scrolled) {
+      resizeEvents();
       animateMain();
       animateDecades();
       if (zoomLevel > 2) animateLustra();
