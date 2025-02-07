@@ -380,24 +380,22 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   });
 
-  const animateMouseHover = contextSafe(
-    (event?: DataEvent, dataPoint?: DataPoint) => {
-      console.log("animating hover");
+  const animateMouseHover = contextSafe((element: DataEvent | DataPoint) => {
+    console.log("animating hover");
 
-      if (event) {
-        setSelectedEvent(event);
-      } else if (dataPoint) {
-        setSelectedDataPoint(dataPoint);
-      }
-
-      gsap.to("#mouseElementContent", {
-        scale: 1,
-        duration: 0.4,
-        ease: "power4.out",
-        overwrite: true,
-      });
+    if ("name" in element) {
+      setSelectedEvent(element);
+    } else if ("year" in element) {
+      setSelectedDataPoint(element);
     }
-  );
+
+    gsap.to("#mouseElementContent", {
+      scale: 1,
+      duration: 0.4,
+      ease: "power4.out",
+      overwrite: true,
+    });
+  });
 
   const animateMouseHoverReverse = contextSafe(() => {
     console.log("reversing hover");
@@ -530,7 +528,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         .on("mouseenter", (_, d) => {
           console.log("mouse enter");
           if (d[data]) {
-            animateMouseHover(undefined, {
+            animateMouseHover({
               year: d.year,
               type: data,
               amount: d[data],
@@ -624,6 +622,20 @@ const Timeline = ({ gsapTimeline }: Props) => {
               d.amount.number / (d.endYear - d.startYear + 1)
             )
           );
+
+        svg
+          .on("mouseenter", (_, d) => {
+            console.log("mouse enter");
+            animateMouseHover({
+              year: d.startYear,
+              endYear: d.endYear,
+              type: data,
+              amount: d.amount,
+            });
+          })
+          .on("mouseleave", () => {
+            animateMouseHoverReverse();
+          });
       }
     });
   };
@@ -666,7 +678,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .on("mouseenter", (_, d) => {
         window.onmousemove = onMouseMove;
         animateMouseHover(d);
-        setSelectedEvent(d);
       })
       .on("mouseleave", (e) => {
         if (e.relatedTarget.id !== "mouseElement") {
@@ -1383,13 +1394,37 @@ const Timeline = ({ gsapTimeline }: Props) => {
             {selectedDataPoint && (
               <div className="datapoint">
                 <span className="number">
-                  <span>
-                    {Intl.NumberFormat("en-US").format(
-                      selectedDataPoint.amount.number
-                    )}
-                  </span>{" "}
-                  <span>{selectedDataPoint.type}</span> in{" "}
-                  <span>{selectedDataPoint.year}</span>
+                  {selectedDataPoint.endYear ? (
+                    <>
+                      <span>
+                        {Intl.NumberFormat("en-US").format(
+                          selectedDataPoint.amount.number
+                        )}
+                      </span>{" "}
+                      <span>{selectedDataPoint.type}</span> between{" "}
+                      <span>{selectedDataPoint.year}</span> and{" "}
+                      <span>{selectedDataPoint.endYear}</span>(avg.{" "}
+                      {Intl.NumberFormat("en-US", {
+                        maximumFractionDigits: 0,
+                      }).format(
+                        selectedDataPoint.amount.number /
+                          (selectedDataPoint.endYear -
+                            selectedDataPoint.year +
+                            1)
+                      )}{" "}
+                      per year)
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {Intl.NumberFormat("en-US").format(
+                          selectedDataPoint.amount.number
+                        )}
+                      </span>{" "}
+                      <span>{selectedDataPoint.type}</span> in{" "}
+                      <span>{selectedDataPoint.year}</span>
+                    </>
+                  )}
                 </span>
 
                 <ul className="sources">

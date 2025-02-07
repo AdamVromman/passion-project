@@ -66,6 +66,7 @@ export enum Side {
 
 export interface DataPoint {
   year: number;
+  endYear?: number;
   type: SelectableDataType;
   amount: DataNumber;
 }
