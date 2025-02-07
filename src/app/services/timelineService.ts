@@ -73,15 +73,7 @@ export const events: DataEvent[] = [
     link: "https://lsa.umich.edu/content/dam/cmenas-assets/cmenas-documents/unit-of-israel-palestine/Section1_BritishMandateInPalestine.pdf",
     source: [Source.UNIVERSITY_OF_MICHIGAN],
   },
-  {
-    name: "The United Nations Partition Plan",
-    description:
-      "With resolution 181, also know as the United Nations Partition Plan, the UN decided to partition Palestine into two separate states, one Jewish and one Arab. The Jewish state would receive 55% of the land and the Arab state would receive 45%. Jerusalem would remain under international control.",
-    date: new Date("1947-11-29"),
-    location: "New York City",
-    link: "https://www.un.org/unispal/data-collection/general-assembly/",
-    source: [Source.AL_JAZEERA, Source.UN],
-  },
+
   {
     name: "The Nakba",
     arabicName: "النَّكْبَة",
@@ -92,6 +84,15 @@ export const events: DataEvent[] = [
     location: "Palestine",
     link: "https://www.middleeasteye.net/news/israel-palestine-nakba-ethnic-cleansing-explained-five-maps-charts",
     source: [Source.AL_JAZEERA, Source.MIDDLE_EAST_EYE, Source.CBS],
+  },
+  {
+    name: "The United Nations Partition Plan",
+    description:
+      "With resolution 181, also know as the United Nations Partition Plan, the UN decided to partition Palestine into two separate states, one Jewish and one Arab. The Jewish state would receive 55% of the land and the Arab state would receive 45%. Jerusalem would remain under international control.",
+    date: new Date("1947-11-29"),
+    location: "New York City",
+    link: "https://www.un.org/unispal/data-collection/general-assembly/",
+    source: [Source.AL_JAZEERA, Source.UN],
   },
   {
     name: "The Suez Crisis",

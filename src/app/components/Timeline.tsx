@@ -33,7 +33,7 @@ const DATA_POINT_SIZE = 7;
 const DATA_POINT_SIZE_PERIOD = 4;
 const SNAP_DISTANCE = 100;
 const MOUSE_ELEMENT_PADDING = 30;
-const EVENT_MIN_WIDTH = 5;
+const EVENT_MIN_WIDTH = 10;
 const EVENT_HEIGHT = 50;
 
 interface Props {
@@ -489,10 +489,15 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const drawData = (side: Side) => {
-    const maxHeight =
-      getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
+  const getLinearScale = (side: Side) => {
+    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
+    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+    const maxValue = getMaxValueOnScreen(side);
 
+    return d3.scaleLinear().domain([0, maxValue]).range([graphEnd, graphStart]);
+  };
+
+  const drawData = (side: Side) => {
     const groups = d3
       .select(graphRef.current)
       .select("#group-timeline")
@@ -504,6 +509,15 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .select("#group-timeline")
       .selectAll(`line.period-line.${side}`)
       .remove();
+
+    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
+    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+    const maxValue = getMaxValueOnScreen(side);
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, maxValue])
+      .range([graphEnd, graphStart]);
 
     getActiveData(side).forEach((data) => {
       const localPeriods = periods.get(data);
@@ -541,46 +555,22 @@ const Timeline = ({ gsapTimeline }: Props) => {
               PATH_PADDING +
               DATA_POINT_SIZE_PERIOD
           )
-          .attr("y1", (d) => {
-            return (
-              getDimensions().height -
-              PADDING.bottom -
-              PATH_PADDING -
-              (d.amount.number /
-                (d.endYear - d.startYear) /
-                getMaxValueOnScreen(side)) *
-                maxHeight
-            );
-          })
-          .attr("y2", (d) => {
-            return (
-              getDimensions().height -
-              PADDING.bottom -
-              PATH_PADDING -
-              (d.amount.number /
-                (d.endYear - d.startYear) /
-                getMaxValueOnScreen(side)) *
-                maxHeight
-            );
-          });
+          .attr("y1", (d) => y(d.amount.number / (d.endYear - d.startYear + 1)))
+          .attr("y2", (d) =>
+            y(d.amount.number / (d.endYear - d.startYear + 1))
+          );
 
         localPeriods.forEach((period: DataPeriod) => {
-          const periodHeight =
-            getDimensions().height -
-            PADDING.bottom -
-            PATH_PADDING -
-            (period.amount.number /
-              (period.endYear - period.startYear) /
-              getMaxValueOnScreen(side)) *
-              maxHeight;
-
           d3.select(graphRef.current)
             .select("#group-timeline")
             .select(`#tick-${period.startYear}`)
             .append("circle")
             .attr("id", `period-data-${period.startYear}`)
             .attr("cx", TICK_OFFSET)
-            .attr("cy", periodHeight)
+            .attr(
+              "cy",
+              y(period.amount.number / (period.endYear - period.startYear + 1))
+            )
             .attr("r", 0)
             .attr("class", `tick-data unzoom ${data} ${side} period`);
 
@@ -590,7 +580,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
             .append("circle")
             .attr("id", `test-data-${period.endYear}`)
             .attr("cx", TICK_OFFSET)
-            .attr("cy", periodHeight)
+            .attr(
+              "cy",
+              y(period.amount.number / (period.endYear - period.startYear + 1))
+            )
             .attr("r", 0)
             .attr("class", `tick-data unzoom ${data} ${side} period`);
         });
@@ -601,14 +594,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         .append("circle")
         .attr("id", (d: TimelineYear) => `data-${d.year}`)
         .attr("cx", TICK_OFFSET)
-        .attr(
-          "cy",
-          (d) =>
-            getDimensions().height -
-            PADDING.bottom -
-            PATH_PADDING -
-            ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) * maxHeight
-        )
+        .attr("cy", (d) => y(d[data]?.number ?? 0))
         .attr("r", 0)
         .attr("class", `tick-data unzoom ${data} ${side} `)
         .on("mouseenter", (_, d) => {
@@ -645,7 +631,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     d3.select(graphRef.current)
       .select("#group-timeline-events")
       .selectAll("svg.event-svg")
-      .data(events.sort((a, b) => a.date.getTime() - b.date.getTime()))
+      .data(events)
       .enter()
       .append("svg")
       .attr("class", "event-svg")
@@ -748,8 +734,17 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const updateHeights = (side: Side) => {
+    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
+    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+    const maxValue = getMaxValueOnScreen(side);
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, maxValue])
+      .range([graphEnd, graphStart]);
+
     const maxHeight =
-      getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
+      getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - PATH_PADDING;
 
     getActiveData(side).forEach((data) => {
       getVisibleYears()
@@ -757,12 +752,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         .forEach((d) => {
           gsap.to(`#tick-${d.year} .tick-data.${data}.${side}`, {
             attr: {
-              cy:
-                getDimensions().height -
-                PADDING.bottom -
-                PATH_PADDING -
-                ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) *
-                  maxHeight,
+              cy: y(d[data]?.number ?? 0),
             },
             duration: 0.6,
           });
@@ -804,7 +794,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       (side === Side.LEFT && getActiveData(side).length > 0) ||
       (side === Side.RIGHT && getActiveData(side).length > 0)
     ) {
-      const graphStart = PADDING.top + HEIGHT_TIMELINE;
+      const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
       const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
       const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
       const maxValue = getMaxValueOnScreen(side);
@@ -828,7 +818,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         .enter()
         .append("text")
         .attr("class", "y-axis")
-        .text((d) => d)
+        .text((d) => Intl.NumberFormat("en-US").format(d))
         .attr("text-anchor", side === Side.LEFT ? "end" : "start")
         .attr(
           "x",
@@ -878,7 +868,11 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
 
     d3.select(graphRef.current)
-      .selectAll(".zoomable")
+      .select("#group-timeline")
+      .attr("transform", `translate(${panLevel}, 0) scale(${zoomLevel}, 1)`);
+
+    d3.select(graphRef.current)
+      .select("#group-timeline-events")
       .attr("transform", `translate(${panLevel}, 0) scale(${zoomLevel}, 1)`);
 
     d3.select(graphRef.current)
@@ -1341,34 +1335,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             id="svg-wrapper"
             className="w-full fill-WHITE"
           ></rect>
-          <g className="zoomable">
-            <g id="group-timeline"></g>
-          </g>
-          <rect
-            x={0}
-            y={0}
-            width={PADDING.left + 50}
-            fill="url(#fade-to-right)"
-            className="h-full"
-          ></rect>
-          <rect
-            x={getDimensions().width - PADDING.right - 50}
-            y={0}
-            width={PADDING.right + 50}
-            fill="url(#fade-to-left)"
-            className="h-full"
-          ></rect>
-
-          <rect
-            x={4}
-            y={HEIGHT_TIMELINE + 4}
-            width={getDimensions().width - 8}
-            height={1}
-            className="pointer-events-none stroke-BLACK fill-none stroke-8"
-            id="main-graph-stroke"
-            rx="10"
-          />
-
+          <g id="group-timeline"></g>
           <use
             y={
               HEIGHT_TIMELINE -
@@ -1378,7 +1345,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             }
             href="#horizontal-axis"
           />
-          <g className="zoomable" id="group-timeline-events"></g>
+          <g id="group-timeline-events"></g>
           <use
             id="horizontal-axis-bottom"
             y={getDimensions().height - PADDING.bottom}
@@ -1401,6 +1368,29 @@ const Timeline = ({ gsapTimeline }: Props) => {
               className="stroke-8 stroke-BLACK fill-none"
             />
           </g>
+          <rect
+            x={0}
+            y={0}
+            width={PADDING.left + 50}
+            fill="url(#fade-to-right)"
+            className="h-full pointer-events-none"
+          ></rect>
+          <rect
+            x={getDimensions().width - PADDING.right - 50}
+            y={0}
+            width={PADDING.right + 50}
+            fill="url(#fade-to-left)"
+            className="h-full pointer-events-none"
+          ></rect>
+          <rect
+            x={4}
+            y={HEIGHT_TIMELINE + 4}
+            width={getDimensions().width - 8}
+            height={1}
+            className="pointer-events-none stroke-BLACK fill-none stroke-8"
+            id="main-graph-stroke"
+            rx="10"
+          />
         </svg>
       </div>
 
@@ -1418,7 +1408,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
               <div className="datapoint">
                 <span className="number">
                   <span>
-                    {Intl.NumberFormat("en-GB").format(
+                    {Intl.NumberFormat("en-US").format(
                       selectedDataPoint.amount.number
                     )}
                   </span>{" "}
@@ -1444,35 +1434,35 @@ const Timeline = ({ gsapTimeline }: Props) => {
             )}
             {selectedEvent && (
               <div className="event">
-                <div className="title whitespace-nowrap">
-                  {selectedEvent.name}
-                </div>
+                <div className="title">{selectedEvent.name}</div>
                 <div className="date">
-                  {selectedEvent.date.toLocaleDateString("en-GB", {
+                  {selectedEvent.date.toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
                     year: "numeric",
                   })}
                   {selectedEvent.endDate && " - "}
                   {selectedEvent.endDate &&
-                    selectedEvent.endDate.toLocaleDateString("en-GB", {
+                    selectedEvent.endDate.toLocaleDateString("en-US", {
                       month: "long",
                       day: "numeric",
                       year: "numeric",
                     })}
                 </div>
                 <div className="event-full">
-                  <div className="description">{selectedEvent.description}</div>
+                  <div className="description">
+                    {selectedEvent?.description}
+                  </div>
 
                   <a
                     className="read-more"
                     target="_blank"
-                    href={selectedEvent.link}
+                    href={selectedEvent?.link}
                   >
                     read more
                   </a>
                   <ul className="sources">
-                    {selectedEvent.source.map((source) => (
+                    {selectedEvent?.source?.map((source) => (
                       <li key={source}>{source}</li>
                     ))}
                   </ul>

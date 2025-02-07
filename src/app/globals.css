@@ -350,9 +350,10 @@ html {
 .event-svg {
   .event-rect {
     @apply fill-RED;
+    @apply stroke-4 stroke-BLACK;
 
     &.odd {
-      @apply fill-GREEN;
+      @apply fill-RED;
     }
   }
 }
