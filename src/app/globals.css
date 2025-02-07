@@ -86,9 +86,8 @@ html {
 }
 
 .tick-data,
-.period-svg-line,
-.period-svg-circle {
-  &.short {
+.period-svg {
+  & .short {
     @apply opacity-0;
   }
 
