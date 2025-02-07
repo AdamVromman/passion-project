@@ -1,3 +1,5 @@
+import { DataNumber } from "./timelineService";
+
 export interface DailyData {
   gazaKilled: number;
   gazaInjured: number;
@@ -60,4 +62,10 @@ export interface RightData {
 export enum Side {
   LEFT = "left",
   RIGHT = "right",
+}
+
+export interface DataPoint {
+  year: number;
+  type: SelectableDataType;
+  amount: DataNumber;
 }

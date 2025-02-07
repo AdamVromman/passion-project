@@ -27,7 +27,7 @@ export interface DataEvent {
   source: Source[];
 }
 
-interface dataNumber {
+export interface DataNumber {
   number: number;
   source: Source[];
   note?: string;
@@ -35,22 +35,22 @@ interface dataNumber {
 
 export interface TimelineYear {
   year: number;
-  adultsKilled?: dataNumber;
-  adultsImprisoned?: dataNumber;
-  minorsKilled?: dataNumber;
-  minorsImprisoned?: dataNumber;
-  adultsInjured?: dataNumber;
-  minorsInjured?: dataNumber;
-  illegalSettlers?: dataNumber;
-  buildingsDemolished?: dataNumber;
-  palestiniansDisplaced?: dataNumber;
-  percentageOfPalestinianLandStolen?: dataNumber;
+  adultsKilled?: DataNumber;
+  adultsImprisoned?: DataNumber;
+  minorsKilled?: DataNumber;
+  minorsImprisoned?: DataNumber;
+  adultsInjured?: DataNumber;
+  minorsInjured?: DataNumber;
+  illegalSettlers?: DataNumber;
+  buildingsDemolished?: DataNumber;
+  palestiniansDisplaced?: DataNumber;
+  percentageOfPalestinianLandStolen?: DataNumber;
 }
 
 export interface DataPeriod {
   startYear: number;
   endYear: number;
-  amount: dataNumber;
+  amount: DataNumber;
 }
 
 export const events: DataEvent[] = [
@@ -1180,7 +1180,11 @@ export const timeline: TimelineYear[] = [
   },
   {
     year: 2024,
-    adultsKilled: { number: 23719 + 400, source: [Source.OCHA, Source.MOHTEL] },
+    adultsKilled: {
+      number: 23719 + 400,
+      source: [Source.OCHA, Source.MOHTEL],
+      note: "Due to the ongoing genocide in Palestine, these numbers might be heavily underestimated.",
+    },
     minorsKilled: { number: 92 + 8718, source: [Source.OCHA, Source.MOHTEL] },
     adultsImprisoned: {
       number: 3340 + 2093 + 849 + 333 + 1829,

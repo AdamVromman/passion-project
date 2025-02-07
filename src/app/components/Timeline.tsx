@@ -13,6 +13,7 @@ import {
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import {
+  DataPoint,
   LeftData,
   RightData,
   SelectableDataType,
@@ -67,6 +68,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const [zoomLevelFloored, setZoomLevelFloored] = useState(1);
 
   const [selectedEvent, setSelectedEvent] = useState<DataEvent | null>(null);
+  const [selectedDataPoint, setSelectedDataPoint] = useState<DataPoint | null>(
+    null
+  );
 
   const { contextSafe } = useGSAP({ scope: timelineRef });
 
@@ -359,17 +363,20 @@ const Timeline = ({ gsapTimeline }: Props) => {
   });
 
   const animateMouseHover = contextSafe(
-    (event?: DataEvent, dataPoint?: string) => {
+    (event?: DataEvent, dataPoint?: DataPoint) => {
       console.log("animating hover");
 
       if (event) {
         setSelectedEvent(event);
+      } else if (dataPoint) {
+        setSelectedDataPoint(dataPoint);
       }
 
       gsap.to("#mouseElementContent", {
         scale: 1,
         duration: 0.4,
         ease: "power4.out",
+        overwrite: true,
       });
     }
   );
@@ -381,8 +388,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
       scale: 0,
       duration: 0.2,
       ease: "power4.in",
+      overwrite: true,
       onComplete: () => {
         setSelectedEvent(null);
+        setSelectedDataPoint(null);
       },
     });
   });
@@ -599,7 +608,20 @@ const Timeline = ({ gsapTimeline }: Props) => {
             ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) * maxHeight
         )
         .attr("r", 0)
-        .attr("class", `tick-data unzoom ${data} ${side} `);
+        .attr("class", `tick-data unzoom ${data} ${side} `)
+        .on("mouseenter", (_, d) => {
+          console.log("mouse enter");
+          if (d[data]) {
+            animateMouseHover(undefined, {
+              year: d.year,
+              type: data,
+              amount: d[data],
+            });
+          }
+        })
+        .on("mouseleave", () => {
+          animateMouseHoverReverse();
+        });
     });
   };
 
@@ -1384,6 +1406,34 @@ const Timeline = ({ gsapTimeline }: Props) => {
       >
         <div id="mouseElementContent">
           <div id="mouseElementContentVisibility">
+            {selectedDataPoint && (
+              <div className="datapoint">
+                <span className="number">
+                  <span>
+                    {Intl.NumberFormat("en-GB").format(
+                      selectedDataPoint.amount.number
+                    )}
+                  </span>{" "}
+                  <span>{selectedDataPoint.type}</span> in{" "}
+                  <span>{selectedDataPoint.year}</span>
+                </span>
+
+                <ul className="sources">
+                  <li>
+                    <span>
+                      Source
+                      {selectedDataPoint.amount.source.length === 1 ? "" : "s"}:
+                    </span>
+                  </li>
+                  {selectedDataPoint.amount.source.map((source) => (
+                    <li key={source}>{source}</li>
+                  ))}
+                </ul>
+                {selectedDataPoint.amount.note && (
+                  <p className="note">{selectedDataPoint.amount.note}</p>
+                )}
+              </div>
+            )}
             {selectedEvent && (
               <div className="event">
                 <div className="title whitespace-nowrap">

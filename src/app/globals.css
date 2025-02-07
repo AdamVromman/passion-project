@@ -264,7 +264,7 @@ html {
     @apply rounded-2xl;
     @apply flex flex-col items-center justify-center;
     @apply overflow-hidden;
-    @apply w-[500px] scale-0;
+    @apply scale-0;
     transform-origin: top center;
   }
 
@@ -274,6 +274,7 @@ html {
   }
 
   .event {
+    @apply w-[500px];
     .title {
       @apply text-center text-2xl font-bold;
     }
@@ -297,6 +298,23 @@ html {
       li {
         @apply text-sm text-BROWN;
       }
+    }
+  }
+
+  .datapoint {
+    @apply max-w-[300px];
+    .number {
+      @apply text-2xl font-bold text-center;
+    }
+
+    .sources {
+      li {
+        @apply text-sm text-BROWN;
+      }
+    }
+
+    .note {
+      @apply mt-4 italic;
     }
   }
 
