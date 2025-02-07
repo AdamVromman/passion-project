@@ -346,3 +346,13 @@ html {
     } 
   } */
 }
+
+.event-svg {
+  .event-rect {
+    @apply fill-RED;
+
+    &.odd {
+      @apply fill-GREEN;
+    }
+  }
+}

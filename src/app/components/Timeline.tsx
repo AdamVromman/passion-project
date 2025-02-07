@@ -33,6 +33,8 @@ const DATA_POINT_SIZE = 7;
 const DATA_POINT_SIZE_PERIOD = 4;
 const SNAP_DISTANCE = 100;
 const MOUSE_ELEMENT_PADDING = 30;
+const EVENT_MIN_WIDTH = 5;
+const EVENT_HEIGHT = 50;
 
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
@@ -197,7 +199,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const animateDecades = contextSafe(() => {
     gsap.to(`.decade .line`, {
       opacity: 1,
-      attr: { y2: HEIGHT_TIMELINE - 8 },
+      attr: { y2: HEIGHT_TIMELINE - PATH_PADDING / 2 },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.05,
@@ -626,7 +628,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const getEventWidth = (d: DataEvent) => {
-    if (d.endDate) {
+    if (d.endDate && d.endDate.getFullYear() !== d.date.getFullYear()) {
       return (
         (d.endDate.getFullYear() - d.date.getFullYear()) *
           getTickWidth() *
@@ -635,18 +637,18 @@ const Timeline = ({ gsapTimeline }: Props) => {
         ((d.endDate.getMonth() * getTickWidth()) / 12) * zoomLevel
       );
     } else {
-      return 10 + zoomLevel / 2;
+      return EVENT_MIN_WIDTH;
     }
   };
 
   const drawEvents = () => {
     d3.select(graphRef.current)
-      .select("#group-timeline")
-      .selectAll("svg.event")
-      .data(events)
+      .select("#group-timeline-events")
+      .selectAll("svg.event-svg")
+      .data(events.sort((a, b) => a.date.getTime() - b.date.getTime()))
       .enter()
       .append("svg")
-      .attr("class", "event")
+      .attr("class", "event-svg")
       .attr(
         "x",
         (d) =>
@@ -655,13 +657,14 @@ const Timeline = ({ gsapTimeline }: Props) => {
       )
       .attr("y", 0)
       .append("rect")
-      .attr("class", "event-rect unzoom")
-      .attr("y", HEIGHT_TIMELINE / 2 + PATH_PADDING)
+      .attr("class", (_, i) => `event-rect unzoom ${i % 2 === 0 ? "odd" : ""}`)
+      .attr("y", HEIGHT_TIMELINE / 2)
       .attr(
         "x",
         (d) => 25 + ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel
       )
-      .attr("height", 10 + zoomLevel / 2)
+      .attr("rx", (EVENT_MIN_WIDTH / 2) * zoomLevel)
+      .attr("height", EVENT_HEIGHT)
       .attr("width", getEventWidth)
       .on("mouseenter", (_, d) => {
         window.onmousemove = onMouseMove;
@@ -675,8 +678,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       })
       .on("click", () => {
         animateEventOpen();
-      })
-      .attr("rx", (10 + zoomLevel * 2) / 2);
+      });
   };
 
   //--------------------------------UPDATING DATA--------------------------------
@@ -840,16 +842,14 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   const updateEvents = () => {
     d3.select(graphRef.current)
-      .select("#group-timeline")
-      .selectAll<Element, DataEvent>("svg.event")
+      .select("#group-timeline-events")
+      .selectAll<Element, DataEvent>("svg.event-svg")
       .select("rect.event-rect")
-      .attr("height", 10 + zoomLevel / 2)
       .attr(
         "x",
         (d) => 25 + ((d.date.getMonth() * getTickWidth()) / 12) * zoomLevel
       )
-      .attr("width", getEventWidth)
-      .attr("rx", (10 + zoomLevel) / 2);
+      .attr("width", getEventWidth);
   };
 
   const handleZoom = (e: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
@@ -878,7 +878,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
 
     d3.select(graphRef.current)
-      .select("#zoomable")
+      .selectAll(".zoomable")
       .attr("transform", `translate(${panLevel}, 0) scale(${zoomLevel}, 1)`);
 
     d3.select(graphRef.current)
@@ -1341,9 +1341,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
             id="svg-wrapper"
             className="w-full fill-WHITE"
           ></rect>
-          <g id="zoomable">
+          <g className="zoomable">
             <g id="group-timeline"></g>
-            <g id="group-graph"></g>
           </g>
           <rect
             x={0}
@@ -1370,7 +1369,16 @@ const Timeline = ({ gsapTimeline }: Props) => {
             rx="10"
           />
 
-          <use y={HEIGHT_TIMELINE / 2} href="#horizontal-axis" />
+          <use
+            y={
+              HEIGHT_TIMELINE -
+              PATH_PADDING / 2 -
+              (HEIGHT_TIMELINE / 2 - PATH_PADDING) / 2 -
+              15
+            }
+            href="#horizontal-axis"
+          />
+          <g className="zoomable" id="group-timeline-events"></g>
           <use
             id="horizontal-axis-bottom"
             y={getDimensions().height - PADDING.bottom}
