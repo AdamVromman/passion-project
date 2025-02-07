@@ -160,6 +160,14 @@ const Timeline = ({ gsapTimeline }: Props) => {
     );
   };
 
+  const getLinearScale = (side: Side) => {
+    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
+    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+    const maxValue = getMaxValueOnScreen(side);
+
+    return d3.scaleLinear().domain([0, maxValue]).range([graphEnd, graphStart]);
+  };
+
   //--------------------------------ANIMATIONS--------------------------------
 
   const animateMain = contextSafe(() => {
@@ -489,14 +497,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const getLinearScale = (side: Side) => {
-    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
-    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
-    const maxValue = getMaxValueOnScreen(side);
-
-    return d3.scaleLinear().domain([0, maxValue]).range([graphEnd, graphStart]);
-  };
-
   const drawData = (side: Side) => {
     const groups = d3
       .select(graphRef.current)
@@ -509,15 +509,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .select("#group-timeline")
       .selectAll(`line.period-line.${side}`)
       .remove();
-
-    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
-    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
-    const maxValue = getMaxValueOnScreen(side);
-
-    const y = d3
-      .scaleLinear()
-      .domain([0, maxValue])
-      .range([graphEnd, graphStart]);
 
     getActiveData(side).forEach((data) => {
       const localPeriods = periods.get(data);
@@ -555,9 +546,15 @@ const Timeline = ({ gsapTimeline }: Props) => {
               PATH_PADDING +
               DATA_POINT_SIZE_PERIOD
           )
-          .attr("y1", (d) => y(d.amount.number / (d.endYear - d.startYear + 1)))
+          .attr("y1", (d) =>
+            getLinearScale(side)(
+              d.amount.number / (d.endYear - d.startYear + 1)
+            )
+          )
           .attr("y2", (d) =>
-            y(d.amount.number / (d.endYear - d.startYear + 1))
+            getLinearScale(side)(
+              d.amount.number / (d.endYear - d.startYear + 1)
+            )
           );
 
         localPeriods.forEach((period: DataPeriod) => {
@@ -569,7 +566,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
             .attr("cx", TICK_OFFSET)
             .attr(
               "cy",
-              y(period.amount.number / (period.endYear - period.startYear + 1))
+              getLinearScale(side)(
+                period.amount.number / (period.endYear - period.startYear + 1)
+              )
             )
             .attr("r", 0)
             .attr("class", `tick-data unzoom ${data} ${side} period`);
@@ -582,7 +581,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
             .attr("cx", TICK_OFFSET)
             .attr(
               "cy",
-              y(period.amount.number / (period.endYear - period.startYear + 1))
+              getLinearScale(side)(
+                period.amount.number / (period.endYear - period.startYear + 1)
+              )
             )
             .attr("r", 0)
             .attr("class", `tick-data unzoom ${data} ${side} period`);
@@ -594,7 +595,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         .append("circle")
         .attr("id", (d: TimelineYear) => `data-${d.year}`)
         .attr("cx", TICK_OFFSET)
-        .attr("cy", (d) => y(d[data]?.number ?? 0))
+        .attr("cy", (d) => getLinearScale(side)(d[data]?.number ?? 0))
         .attr("r", 0)
         .attr("class", `tick-data unzoom ${data} ${side} `)
         .on("mouseenter", (_, d) => {
@@ -734,15 +735,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const updateHeights = (side: Side) => {
-    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
-    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
-    const maxValue = getMaxValueOnScreen(side);
-
-    const y = d3
-      .scaleLinear()
-      .domain([0, maxValue])
-      .range([graphEnd, graphStart]);
-
     const maxHeight =
       getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - PATH_PADDING;
 
@@ -752,7 +744,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         .forEach((d) => {
           gsap.to(`#tick-${d.year} .tick-data.${data}.${side}`, {
             attr: {
-              cy: y(d[data]?.number ?? 0),
+              cy: getLinearScale(side)(d[data]?.number ?? 0),
             },
             duration: 0.6,
           });
@@ -799,11 +791,6 @@ const Timeline = ({ gsapTimeline }: Props) => {
       const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
       const maxValue = getMaxValueOnScreen(side);
 
-      const y = d3
-        .scaleLinear()
-        .domain([0, maxValue])
-        .range([graphEnd, graphStart]);
-
       const yArray = [];
 
       for (let i = 0; i <= nrOfTicks; i++) {
@@ -826,7 +813,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             ? PADDING.left - PATH_PADDING
             : getDimensions().width - PADDING.right + PATH_PADDING
         )
-        .attr("y", (d) => y(d));
+        .attr("y", (d) => getLinearScale(side)(d));
     }
   };
 
