@@ -21,6 +21,8 @@ export default function Home() {
   const [dataWestBankPrevious, setDataWestBankPrevious] =
     useState<WestBankData | null>(null);
 
+  const [scrolled, setScrolled] = useState(false);
+
   const mainRef = useRef<HTMLDivElement>(null);
   const gsapTimeline = useRef<gsap.core.Timeline>(null);
 
@@ -175,8 +177,12 @@ export default function Home() {
           start: "top top",
           end: "49",
           onEnterBack: () => {
+            setScrolled(false);
             gsapTimeline?.current?.reverse();
           },
+        },
+        onComplete: () => {
+          setScrolled(true);
         },
       });
     },
@@ -216,7 +222,7 @@ export default function Home() {
           Day ++
         </button>
       </div>
-      <Timeline gsapTimeline={gsapTimeline.current} />
+      <Timeline scrolled={scrolled} gsapTimeline={gsapTimeline.current} />
     </div>
   );
 }

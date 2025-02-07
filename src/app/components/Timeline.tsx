@@ -20,6 +20,7 @@ import {
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
+import { s } from "motion/react-client";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60 };
 const HEIGHT_TIMELINE = 150;
@@ -37,9 +38,10 @@ const EVENT_HEIGHT = 50;
 
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
+  scrolled: boolean;
 }
 
-const Timeline = ({ gsapTimeline }: Props) => {
+const Timeline = ({ gsapTimeline, scrolled }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
@@ -67,6 +69,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const [selectedDataPoint, setSelectedDataPoint] = useState<DataPoint | null>(
     null
   );
+
+  const [svgWidth, setSvgWidth] = useState(1000);
+  const [svgHeight, setSvgHeight] = useState(500);
 
   const { contextSafe } = useGSAP({ scope: timelineRef });
 
@@ -166,31 +171,18 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const getTickWidth = () => {
-    return (
-      (getDimensions().width - PADDING.left - PADDING.right) / timeline.length
-    );
+    return (svgWidth - PADDING.left - PADDING.right) / timeline.length;
   };
 
   const getActualTickWidth = () => {
     return (
-      ((getDimensions().width - PADDING.left - PADDING.right) /
-        timeline.length) *
-      zoomLevel
+      ((svgWidth - PADDING.left - PADDING.right) / timeline.length) * zoomLevel
     );
-  };
-
-  const getDimensions = () => {
-    if (graphRef.current)
-      return {
-        width: graphRef.current.clientWidth,
-        height: graphRef.current.clientHeight,
-      };
-    return { width: -1, height: -1 };
   };
 
   const getLinearScale = (side: Side) => {
     const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
-    const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+    const graphEnd = svgHeight - PADDING.bottom - PATH_PADDING;
     const maxValue = getMaxValueOnScreen(side);
 
     return d3.scaleLinear().domain([0, maxValue]).range([graphEnd, graphStart]);
@@ -207,16 +199,16 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const animateMain = contextSafe(() => {
     gsap.to("#horizontal-axis line", {
       duration: 1,
-      attr: { x2: getDimensions().width - PADDING.right },
+      attr: { x2: svgWidth - PADDING.right },
       ease: "power4.out",
     });
 
     gsap.to("#horizontal-axis polyline", {
       duration: 1,
       attr: {
-        points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
-          getDimensions().width - PADDING.right
-        }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
+        points: `${svgWidth - PADDING.right - 15}, -15 , ${
+          svgWidth - PADDING.right
+        }, 0, ${svgWidth - PADDING.right - 15}, 15`,
       },
       ease: "power4.out",
     });
@@ -248,7 +240,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
     gsap.to(`.decade .line-2`, {
       opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - PATH_PADDING },
+      attr: { y2: svgHeight - PADDING.bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.05,
@@ -271,7 +263,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
     gsap.to(`.lustrum .line-2`, {
       opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - PATH_PADDING },
+      attr: { y2: svgHeight - PADDING.bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.01,
@@ -313,7 +305,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
     gsap.to(`.regular .line-2`, {
       opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - PATH_PADDING },
+      attr: { y2: svgHeight - PADDING.bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
     });
@@ -419,9 +411,11 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
   });
 
-  const animateEventOpen = contextSafe(() => {
+  const animateEventOpen = contextSafe((event: DataEvent) => {
     d3.select("#mouseElement").attr("class", "selected");
     window.onmousemove = null;
+    setSelectedDataPoint(null);
+    setSelectedEvent(event);
 
     gsap.set("#mouseElement .event .event-full", { display: "block" });
     gsap.from("#mouseElement .event .event-full", {
@@ -492,6 +486,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
   const drawTimeline = () => {
     drawTicks();
+    console.log(svgWidth);
 
     // This function allows zoom/pan and also limits the zoom and the pan to a certain extent.
     const zoomFunction = d3
@@ -500,7 +495,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .scaleExtent([1, 10])
       .translateExtent([
         [0, 0],
-        [getDimensions().width, getDimensions().height],
+        [svgWidth, svgHeight],
       ]);
 
     // Attach the zoom/pan functionality to the svg element.
@@ -524,7 +519,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .attr("id", (d) => `datapoint-svg-${d.year}-${type}`)
       .attr(
         "x",
-        (d) => PADDING.left + (d.year - timeline[0].year) * getActualTickWidth()
+        (d) => PADDING.left + (d.year - timeline[0].year) * getTickWidth()
       )
       .attr("y", 0);
 
@@ -543,6 +538,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
           });
         }
       })
+      .attr("transform", `scale(${1 / zoomLevel}, 1)`)
       .on("mouseleave", () => {
         animateMouseHoverReverse();
       });
@@ -581,8 +577,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         .attr(
           "x",
           (d) =>
-            PADDING.left +
-            (d.startYear - timeline[0].year) * getActualTickWidth()
+            PADDING.left + (d.startYear - timeline[0].year) * getTickWidth()
         )
         .attr("y", 0);
 
@@ -593,6 +588,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
           getLinearScale(side)(d.amount.number / (d.endYear - d.startYear + 1))
         )
         .attr("r", 0)
+        .attr("transform", `scale(${1 / zoomLevel}, 1)`)
         .attr("class", "period-svg-circle unzoom");
 
       svg
@@ -605,6 +601,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
           getLinearScale(side)(d.amount.number / (d.endYear - d.startYear + 1))
         )
         .attr("r", 0)
+        .attr("transform", `scale(${1 / zoomLevel}, 1)`)
         .attr("class", "period-svg-circle unzoom end");
 
       svg
@@ -616,6 +613,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
               d.endYear - d.startYear <= 2 ? "short" : ""
             }`
         )
+        .attr("transform", `scale(${1 / zoomLevel}, 1)`)
         .attr("x1", TICK_OFFSET + PATH_PADDING - DATA_POINT_SIZE_PERIOD)
         .attr(
           "x2",
@@ -705,8 +703,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
           animateMouseHoverReverse();
         }
       })
-      .on("click", () => {
-        animateEventOpen();
+      .on("click", (_, d) => {
+        animateEventOpen(d);
       });
   };
 
@@ -817,7 +815,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
       (side === Side.RIGHT && rightData)
     ) {
       const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
-      const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+      const graphEnd = svgHeight - PADDING.bottom - PATH_PADDING;
       const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
       const maxValue = getMaxValueOnScreen(side);
 
@@ -841,7 +839,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
           "x",
           side === Side.LEFT
             ? PADDING.left - PATH_PADDING
-            : getDimensions().width - PADDING.right + PATH_PADDING
+            : svgWidth - PADDING.right + PATH_PADDING
         )
         .attr("y", (d) => getLinearScale(side)(d));
     }
@@ -864,6 +862,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   //--------------------------------USE EFFECTS--------------------------------
 
   useEffect(() => {
+    window.onresize = onResize;
     updateYears();
     updateEvents();
     setZoomLevelFloored(() => Math.floor(zoomLevel));
@@ -1053,7 +1052,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "#main-graph-stroke",
             {
               attr: {
-                height: getDimensions().height - HEIGHT_TIMELINE - 8,
+                height: svgHeight - HEIGHT_TIMELINE - 8,
                 rx: 60,
               },
               duration: 0.5,
@@ -1076,7 +1075,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             {
               opacity: 1,
               attr: {
-                y2: getDimensions().height - PADDING.bottom - PATH_PADDING,
+                y2: svgHeight - PADDING.bottom - PATH_PADDING,
               },
               duration: 0.4,
               ease: "power4.out",
@@ -1103,7 +1102,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "#horizontal-axis line",
             {
               duration: 1,
-              attr: { x2: getDimensions().width - PADDING.right },
+              attr: { x2: svgWidth - PADDING.right },
               ease: "power4.out",
             },
             "<"
@@ -1113,9 +1112,9 @@ const Timeline = ({ gsapTimeline }: Props) => {
             {
               duration: 1,
               attr: {
-                points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
-                  getDimensions().width - PADDING.right
-                }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
+                points: `${svgWidth - PADDING.right - 15}, -15 , ${
+                  svgWidth - PADDING.right
+                }, 0, ${svgWidth - PADDING.right - 15}, 15`,
               },
               ease: "power4.out",
             },
@@ -1152,9 +1151,59 @@ const Timeline = ({ gsapTimeline }: Props) => {
     { scope: timelineRef, dependencies: [gsapTimeline] }
   );
 
+  useEffect(() => {
+    drawTimeline();
+    resizeTicks();
+    resizeDataPoints();
+    resizePeriods();
+    resizeEvents();
+
+    console.log(svgHeight < HEIGHT_TIMELINE + 120);
+    if (svgHeight < HEIGHT_TIMELINE + 120) {
+      //TODO: ANIMATE EXIT GRAPH
+      d3.select(graphRef.current)
+        .select("#group-graph")
+        .attr("display", "none");
+    } else {
+      //TODO: ANIMATE ENTER GRAPH
+      d3.select(graphRef.current)
+        .select("#group-graph")
+        .attr("display", "block");
+    }
+    d3.select(graphRef.current)
+      .select("#horizontal-axis-bottom")
+      .attr("y", svgHeight - PADDING.bottom);
+    d3.select(graphRef.current)
+      .select("#vertical-axis line")
+      .attr("y1", svgHeight - PADDING.bottom);
+    d3.select(graphRef.current)
+      .select("#main-graph-stroke")
+      .attr("width", svgWidth - 8)
+      .attr("height", svgHeight - HEIGHT_TIMELINE - 8);
+    d3.select(graphRef.current)
+      .select("#svg-wrapper")
+      .attr("width", svgWidth - 8)
+      .attr("height", svgHeight - 8);
+
+    if (scrolled) {
+      animateMain();
+      animateDecades();
+      if (zoomLevel > 2) animateLustra();
+      if (zoomLevel > 6) animateRegular();
+      updateHeights(Side.RIGHT);
+      updateHeights(Side.LEFT);
+    }
+  }, [svgWidth, svgHeight]);
+
   //--------------------------------MAIN USE EFFECT--------------------------------
 
   useEffect(() => {
+    if (graphRef.current) {
+      const { width, height } = graphRef.current.getBoundingClientRect();
+      setSvgHeight(height);
+      setSvgWidth(width);
+    }
+
     drawTimeline();
     drawEvents();
     drawData(Side.LEFT);
@@ -1162,11 +1211,11 @@ const Timeline = ({ gsapTimeline }: Props) => {
     drawPeriods(Side.LEFT);
     drawPeriods(Side.RIGHT);
 
-    window.addEventListener("resize", onResize);
+    window.onresize = onResize;
     window.onmousemove = onMouseMove;
     return () => {
       window.onmousemove = null;
-      window.removeEventListener("resize", onResize);
+      window.onresize = null;
     };
   }, []);
 
@@ -1177,48 +1226,56 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
     d3.select(graphRef.current)
       .select("#group-timeline")
-      .selectAll("svg.tick")
-      .attr("x", (_, i) => PADDING.left + i * getTickWidth());
+      .selectAll<Element, TimelineYear>("svg.tick")
+      .attr(
+        "x",
+        (d) => PADDING.left + (d.year - timeline[0].year) * getTickWidth()
+      );
+  };
+
+  const resizeDataPoints = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll<Element, TimelineYear>("svg.datapoint-svg")
+      .attr(
+        "x",
+        (d) => PADDING.left + (d.year - timeline[0].year) * getTickWidth()
+      );
+  };
+
+  const resizePeriods = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll<Element, DataPeriod>("svg.period-svg")
+      .attr(
+        "x",
+        (d) => PADDING.left + (d.startYear - timeline[0].year) * getTickWidth()
+      );
+
+    updatePeriods();
+  };
+
+  const resizeEvents = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline-events")
+      .selectAll<Element, DataEvent>("svg.event-svg")
+      .attr(
+        "x",
+        (d) =>
+          PADDING.left +
+          (d.date.getFullYear() - timeline[0].year) * getTickWidth()
+      )
+      .select("rect.event-rect")
+      .attr("x", (d) => 25 + (d.date.getMonth() * getTickWidth()) / 12)
+      .attr("width", getEventWidth);
   };
 
   const onResize = () => {
-    resizeTicks();
-    animateMain();
-    animateDecades();
-    if (zoomLevel > 2) animateLustra();
-    if (zoomLevel > 6) animateRegular();
-
-    if (getDimensions().height < HEIGHT_TIMELINE + 120) {
-      //TODO: ANIMATE EXIT GRAPH
-
-      d3.select(graphRef.current)
-        .select("#group-graph")
-        .attr("display", "none");
-    } else {
-      //TODO: ANIMATE ENTER GRAPH
-
-      d3.select(graphRef.current)
-        .select("#group-graph")
-        .attr("display", "block");
+    if (graphRef.current) {
+      const { width, height } = graphRef.current.getBoundingClientRect();
+      setSvgHeight(height);
+      setSvgWidth(width);
     }
-
-    d3.select(graphRef.current)
-      .select("#horizontal-axis-bottom")
-      .attr("y", getDimensions().height - PADDING.bottom);
-
-    d3.select(graphRef.current)
-      .select("#vertical-axis line")
-      .attr("y1", getDimensions().height - PADDING.bottom);
-
-    d3.select(graphRef.current)
-      .select("#main-graph-stroke")
-      .attr("width", getDimensions().width - 8)
-      .attr("height", getDimensions().height - HEIGHT_TIMELINE - 8);
-
-    d3.select(graphRef.current)
-      .select("#svg-wrapper")
-      .attr("width", getDimensions().width - 8)
-      .attr("height", getDimensions().height - 8);
   };
 
   const onMouseMove = (e: MouseEvent) => {
@@ -1360,23 +1417,23 @@ const Timeline = ({ gsapTimeline }: Props) => {
           <g id="group-timeline-events"></g>
           <use
             id="horizontal-axis-bottom"
-            y={getDimensions().height - PADDING.bottom}
+            y={svgHeight - PADDING.bottom}
             href="#horizontal-axis"
           />
           <g id="vertical-axis" className="opacity-0">
             <line
               x1={PADDING.left}
               x2={PADDING.left}
-              y1={getDimensions().height - PADDING.bottom}
-              y2={getDimensions().height - PADDING.bottom}
+              y1={svgHeight - PADDING.bottom}
+              y2={svgHeight - PADDING.bottom}
               className="stroke-8 stroke-BLACK"
             />
             <polyline
-              points={`${PADDING.left}, ${
-                getDimensions().height - PADDING.bottom
-              }, ${PADDING.left}, ${getDimensions().height - PADDING.bottom},${
+              points={`${PADDING.left}, ${svgHeight - PADDING.bottom}, ${
                 PADDING.left
-              }, ${getDimensions().height - PADDING.bottom}`}
+              }, ${svgHeight - PADDING.bottom},${PADDING.left}, ${
+                svgHeight - PADDING.bottom
+              }`}
               className="stroke-8 stroke-BLACK fill-none"
             />
           </g>
@@ -1388,7 +1445,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             className="h-full pointer-events-none"
           ></rect>
           <rect
-            x={getDimensions().width - PADDING.right - 50}
+            x={svgWidth - PADDING.right - 50}
             y={0}
             width={PADDING.right + 50}
             fill="url(#fade-to-left)"
@@ -1397,7 +1454,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
           <rect
             x={4}
             y={HEIGHT_TIMELINE + 4}
-            width={Math.max(getDimensions().width - 8, 0)}
+            width={Math.max(svgWidth - 8, 0)}
             height={1}
             className="pointer-events-none stroke-BLACK fill-none stroke-8"
             id="main-graph-stroke"
