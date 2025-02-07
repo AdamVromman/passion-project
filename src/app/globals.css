@@ -260,17 +260,44 @@ html {
   }
 
   #mouseElementContent {
-    @apply bg-RED;
+    @apply bg-BLACK text-WHITE;
     @apply rounded-2xl;
-    @apply w-0 h-0;
     @apply flex flex-col items-center justify-center;
     @apply overflow-hidden;
+    @apply w-[500px] scale-0;
+    transform-origin: top center;
   }
 
   #mouseElementContentVisibility {
-    @apply opacity-0;
-    @apply px-8;
+    @apply px-8 py-4;
     @apply overflow-hidden;
+  }
+
+  .event {
+    .title {
+      @apply text-center text-2xl font-bold;
+    }
+
+    .date {
+      @apply text-center text-lg italic font-light;
+    }
+
+    .event-full {
+      @apply hidden mt-8;
+    }
+
+    .read-more {
+      @apply bg-WHITE text-BLACK;
+      @apply px-4 py-2 rounded-full;
+      @apply block mt-4 w-fit mx-auto;
+    }
+
+    .sources {
+      @apply mt-8;
+      li {
+        @apply text-sm text-BROWN;
+      }
+    }
   }
 
   /* .event {

@@ -362,84 +362,45 @@ const Timeline = ({ gsapTimeline }: Props) => {
     (event?: DataEvent, dataPoint?: string) => {
       console.log("animating hover");
 
+      if (event) {
+        setSelectedEvent(event);
+      }
+
       gsap.to("#mouseElementContent", {
-        height: 32,
-        width: 32,
+        scale: 1,
         duration: 0.4,
-        ease: "elastic.out",
-        onComplete: () => {
-          if (event) {
-            setSelectedEvent(event);
-          }
-
-          gsap.to("#mouseElementContentVisibility", {
-            opacity: 1,
-            duration: 0.4,
-          });
-
-          gsap.to("#mouseElementContent", {
-            width: "100%",
-            duration: 0.4,
-            ease: "power4.out",
-          });
-        },
+        ease: "power4.out",
       });
     }
   );
 
   const animateMouseHoverReverse = contextSafe(() => {
     console.log("reversing hover");
-
-    gsap.to("#mouseElementContentVisibility", {
-      opacity: 0,
-      duration: 0.4,
+    d3.select("#mouseElement").attr("class", "");
+    gsap.to("#mouseElementContent", {
+      scale: 0,
+      duration: 0.2,
+      ease: "power4.in",
       onComplete: () => {
         setSelectedEvent(null);
-        gsap.to("#mouseElementContent", {
-          width: 32,
-          duration: 0.6,
-          ease: "power4.out",
-        });
       },
     });
   });
 
-  // const animateEventOpen = contextSafe((event: DataEvent) => {
-  //   console.log("animating open");
-  //   d3.select("#mouseElement").attr("class", "selected");
-  //   //d3.select("#mouseElementEvent").attr("class", "event selected");
-  //   window.onmousemove = null;
+  const animateEventOpen = contextSafe(() => {
+    console.log("animating open");
+    d3.select("#mouseElement").attr("class", "selected");
+    window.onmousemove = null;
 
-  //   gsap.to("#mouseElementEvent", {
-  //     height: 500,
-  //     width: 300,
-  //     duration: 0.6,
-  //     ease: "power4.out",
-  //   });
-  // });
-
-  // const animateEventOpenReverse = contextSafe(() => {
-  //   console.log("reverse open");
-  //   d3.select("#mouseElement").attr("class", "");
-  //   d3.select("#mouseElementEvent").attr("class", "event");
-  //   gsap.to("#mouseElementEvent", {
-  //     height: 32,
-  //     width: 32,
-  //     duration: 0.6,
-  //     ease: "power4.out",
-  //     onComplete: () => {
-  //       setSelectedEvent(null);
-  //       window.onmousemove = onMouseMove;
-  //       gsap.to("#mouseElementEvent", {
-  //         width: 0,
-  //         height: 0,
-  //         duration: 0.6,
-  //         ease: "power4.out",
-  //       });
-  //       gsap.set("#mouseElementEvent", { opacity: 0 });
-  //     },
-  //   });
-  // });
+    gsap.set("#mouseElement .event .event-full", { display: "block" });
+    gsap.from("#mouseElement .event .event-full", {
+      height: 0,
+      opacity: 0,
+      paddingTop: 0,
+      duration: 0.6,
+      ease: "power4.out",
+    });
+  });
 
   //--------------------------------DRAWING DATA--------------------------------
 
@@ -683,14 +644,15 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .on("mouseenter", (_, d) => {
         window.onmousemove = onMouseMove;
         animateMouseHover(d);
+        setSelectedEvent(d);
       })
       .on("mouseleave", (e) => {
         if (e.relatedTarget.id !== "mouseElement") {
           animateMouseHoverReverse();
         }
       })
-      .on("click", (_, d) => {
-        animateEventOpen(d);
+      .on("click", () => {
+        animateEventOpen();
       })
       .attr("rx", (10 + zoomLevel * 2) / 2);
   };
@@ -1229,8 +1191,12 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const onMouseMove = (e: MouseEvent) => {
+    const elementWidth =
+      document.getElementById("mouseElement")?.getBoundingClientRect().width ??
+      0;
+
     gsap.to("#mouseElement", {
-      x: e.clientX - MOUSE_ELEMENT_PADDING,
+      x: e.clientX - elementWidth / 2,
       y: e.clientY - MOUSE_ELEMENT_PADDING,
       duration: 0.2,
       stagger: 0.5,
@@ -1410,23 +1376,53 @@ const Timeline = ({ gsapTimeline }: Props) => {
 
       <div
         onMouseLeave={() => {
-          if (selectedEvent) animateEventOpenReverse();
+          if (selectedEvent) {
+            animateMouseHoverReverse();
+          }
         }}
         id="mouseElement"
       >
         <div id="mouseElementContent">
           <div id="mouseElementContentVisibility">
             {selectedEvent && (
-              <div className="title whitespace-nowrap">
-                {selectedEvent?.name}
+              <div className="event">
+                <div className="title whitespace-nowrap">
+                  {selectedEvent.name}
+                </div>
+                <div className="date">
+                  {selectedEvent.date.toLocaleDateString("en-GB", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                  {selectedEvent.endDate && " - "}
+                  {selectedEvent.endDate &&
+                    selectedEvent.endDate.toLocaleDateString("en-GB", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                </div>
+                <div className="event-full">
+                  <div className="description">{selectedEvent.description}</div>
+
+                  <a
+                    className="read-more"
+                    target="_blank"
+                    href={selectedEvent.link}
+                  >
+                    read more
+                  </a>
+                  <ul className="sources">
+                    {selectedEvent.source.map((source) => (
+                      <li key={source}>{source}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </div>
         </div>
-        {/* <div id="mouseElementEvent" className="event">
-          <div className="title whitespace-nowrap">{selectedEvent?.name}</div>
-          <div className="event-full">{selectedEvent?.description}</div>
-        </div> */}
       </div>
     </div>
   );
