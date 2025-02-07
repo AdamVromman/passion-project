@@ -319,7 +319,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   });
 
   const animateShort = contextSafe(() => {
-    gsap.to(`.period-line.short`, {
+    gsap.to(`.period-svg-line.short`, {
       opacity: 1,
       duration: 0.4,
       ease: "power4.out",
@@ -327,7 +327,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   });
 
   const reverseShort = contextSafe(() => {
-    gsap.to(`.period-line.short`, {
+    gsap.to(`.period-svg-line.short`, {
       opacity: 0,
       duration: 0.4,
       ease: "power4.out",
@@ -880,9 +880,19 @@ const Timeline = ({ gsapTimeline }: Props) => {
       reverseRegular();
     }
 
-    if (zoomLevelFloored >= SHORT_ZOOM) {
+    if (
+      (getActiveData(Side.LEFT).length > 0 ||
+        getActiveData(Side.RIGHT).length > 0) &&
+      zoomLevelFloored >= SHORT_ZOOM
+    ) {
       animateShort();
-    } else {
+    }
+
+    if (
+      (getActiveData(Side.LEFT).length > 0 ||
+        getActiveData(Side.RIGHT).length > 0) &&
+      zoomLevelFloored < SHORT_ZOOM
+    ) {
       reverseShort();
     }
   }, [zoomLevelFloored]);
@@ -1372,7 +1382,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
           <rect
             x={4}
             y={HEIGHT_TIMELINE + 4}
-            width={getDimensions().width - 8}
+            width={Math.max(getDimensions().width - 8, 0)}
             height={1}
             className="pointer-events-none stroke-BLACK fill-none stroke-8"
             id="main-graph-stroke"
