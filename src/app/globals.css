@@ -78,11 +78,18 @@ html {
 
 .timeline-section {
   @apply bg-BEIGE;
-  @apply absolute left-30 top-30;
-  @apply rounded-90 p-60;
-  width: calc(100vw - 60px);
-  height: calc(100vh - 60px);
-  transform: translateY(calc(100vh - 90px));
+  @apply absolute top-[10px] left-[10px] lg:left-30 lg:top-30;
+  @apply rounded-30 lg:rounded-90 p-15 lg:p-60;
+
+  width: calc(100vw - 20px);
+  height: calc(100vh - 20px);
+  transform: translateY(calc(100vh - 40px));
+
+  @media (width >= 64rem) {
+    width: calc(100vw - 60px);
+    height: calc(100vh - 60px);
+    transform: translateY(calc(100vh - 90px));
+  }
 }
 
 .datapoint-svg,
@@ -135,22 +142,25 @@ html {
 }
 
 #data-icon-bounds {
-  @apply w-full h-full;
-  @apply flex flex-row gap-8 justify-start;
+  @apply flex flex-row lg:flex-row gap-4 lg:gap-8 justify-start;
 
   .separator {
     @apply h-full w-[4px] bg-BROWN rounded-full;
   }
 
+  .separator-vertical {
+    @apply h-full w-[4px] bg-BROWN rounded-full;
+  }
+
   .data-icon-row {
-    @apply h-1/2;
-    @apply flex flex-row flex-wrap gap-4 items-center;
+    @apply lg:h-1/2;
+    @apply flex flex-row flex-wrap gap-2 lg:gap-4 items-center;
   }
 
   .inactive,
   .active {
-    @apply h-full w-fit;
-    @apply flex flex-col gap-4 items-start;
+    @apply lg:h-full lg:w-1/2;
+    @apply flex flex-col lg:flex-row gap-2 lg:gap-4 items-start;
   }
 
   .active-row-placeholder {
@@ -159,7 +169,7 @@ html {
   }
 
   .data-button {
-    @apply w-[50px] h-[50px] rounded-7_5;
+    @apply w-[40px] h-[40px] lg:w-[50px] lg:h-[50px] rounded-7_5;
   }
 
   .data-icon {
@@ -348,12 +358,10 @@ html {
 }
 
 .event-svg {
+  @apply cursor-pointer;
+
   .event-rect {
     @apply fill-RED;
     @apply stroke-4 stroke-BLACK;
-
-    &.odd {
-      @apply fill-RED;
-    }
   }
 }

@@ -206,7 +206,7 @@ export default function Home() {
         <button
           onClick={() => {
             setEyeOpen(false);
-            setDay(new Date(day.getTime() - 24 * 60 * 60 * 1000));
+            if (day) setDay(new Date(day.getTime() - 24 * 60 * 60 * 1000));
           }}
           className="bg-RED p-15 rounded-full"
         >
@@ -215,7 +215,7 @@ export default function Home() {
         <button
           onClick={() => {
             setEyeOpen(false);
-            setDay(new Date(day.getTime() + 24 * 60 * 60 * 1000));
+            if (day) setDay(new Date(day.getTime() + 24 * 60 * 60 * 1000));
           }}
           className="bg-RED p-15 rounded-full"
         >

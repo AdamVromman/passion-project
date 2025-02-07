@@ -20,9 +20,9 @@ import {
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
-import { s } from "motion/react-client";
 
-const PADDING = { top: 30, left: 120, right: 120, bottom: 60 };
+const PADDING = { top: 30, left: 120, right: 120, bottom: 60, rx: 60 };
+const PADDING_MOBILE = { top: 30, left: 20, right: 20, bottom: 20, rx: 20 };
 const HEIGHT_TIMELINE = 150;
 const LUSTRUM_ZOOM = 2;
 const REGULAR_ZOOM = 6;
@@ -171,18 +171,21 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
   };
 
   const getTickWidth = () => {
-    return (svgWidth - PADDING.left - PADDING.right) / timeline.length;
-  };
-
-  const getActualTickWidth = () => {
-    return (
-      ((svgWidth - PADDING.left - PADDING.right) / timeline.length) * zoomLevel
+    return Math.max(
+      (svgWidth - getResponsivePadding().left - getResponsivePadding().right) /
+        timeline.length,
+      5
     );
   };
 
+  const getActualTickWidth = () => {
+    return getTickWidth() * zoomLevel;
+  };
+
   const getLinearScale = (side: Side) => {
-    const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
-    const graphEnd = svgHeight - PADDING.bottom - PATH_PADDING;
+    const graphStart =
+      getResponsivePadding().top + HEIGHT_TIMELINE + PATH_PADDING;
+    const graphEnd = svgHeight - getResponsivePadding().bottom - PATH_PADDING;
     const maxValue = getMaxValueOnScreen(side);
 
     return d3.scaleLinear().domain([0, maxValue]).range([graphEnd, graphStart]);
@@ -194,37 +197,61 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
     );
   };
 
+  const getWindowWidth = () => {
+    if (window) return window.innerWidth;
+    return 768;
+  };
+
+  const getResponsivePadding = () => {
+    return getWindowWidth() >= 1024 ? PADDING : PADDING_MOBILE;
+  };
+
   //--------------------------------ANIMATIONS--------------------------------
 
   const animateMain = contextSafe(() => {
     gsap.to("#horizontal-axis line", {
       duration: 1,
-      attr: { x2: svgWidth - PADDING.right },
+      attr: { x2: svgWidth - getResponsivePadding().right },
       ease: "power4.out",
     });
 
     gsap.to("#horizontal-axis polyline", {
       duration: 1,
       attr: {
-        points: `${svgWidth - PADDING.right - 15}, -15 , ${
-          svgWidth - PADDING.right
-        }, 0, ${svgWidth - PADDING.right - 15}, 15`,
+        points: `${svgWidth - getResponsivePadding().right - 15}, -15 , ${
+          svgWidth - getResponsivePadding().right
+        }, 0, ${svgWidth - getResponsivePadding().right - 15}, 15`,
       },
       ease: "power4.out",
     });
     gsap.to("#vertical-axis line", {
       duration: 1,
-      attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
+      attr: {
+        y2:
+          getResponsivePadding().top +
+          HEIGHT_TIMELINE +
+          getResponsivePadding().top,
+      },
       ease: "power4.out",
     });
     gsap.to("#vertical-axis polyline", {
       duration: 1,
       attr: {
-        points: `${PADDING.left - 15}, ${
-          PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
-        } , ${PADDING.left}, ${PADDING.top + HEIGHT_TIMELINE + PADDING.top}, ${
-          PADDING.left + 15
-        }, ${PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15}`,
+        points: `${getResponsivePadding().left - 15}, ${
+          getResponsivePadding().top +
+          HEIGHT_TIMELINE +
+          getResponsivePadding().top +
+          15
+        } , ${getResponsivePadding().left}, ${
+          getResponsivePadding().top +
+          HEIGHT_TIMELINE +
+          getResponsivePadding().top
+        }, ${getResponsivePadding().left + 15}, ${
+          getResponsivePadding().top +
+          HEIGHT_TIMELINE +
+          getResponsivePadding().top +
+          15
+        }`,
       },
       ease: "power4.out",
     });
@@ -240,7 +267,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
     });
     gsap.to(`.decade .line-2`, {
       opacity: 1,
-      attr: { y2: svgHeight - PADDING.bottom - PATH_PADDING },
+      attr: { y2: svgHeight - getResponsivePadding().bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.05,
@@ -263,7 +290,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
     });
     gsap.to(`.lustrum .line-2`, {
       opacity: 1,
-      attr: { y2: svgHeight - PADDING.bottom - PATH_PADDING },
+      attr: { y2: svgHeight - getResponsivePadding().bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.01,
@@ -305,7 +332,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
     });
     gsap.to(`.regular .line-2`, {
       opacity: 1,
-      attr: { y2: svgHeight - PADDING.bottom - PATH_PADDING },
+      attr: { y2: svgHeight - getResponsivePadding().bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
     });
@@ -438,7 +465,10 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       .enter()
       .append("svg")
       .attr("id", (d) => `tick-${d.year}`)
-      .attr("x", (_, i) => PADDING.left + i * getActualTickWidth())
+      .attr(
+        "x",
+        (_, i) => getResponsivePadding().left + i * getActualTickWidth()
+      )
       .attr("y", 0)
       .attr(
         "class",
@@ -495,7 +525,15 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       .scaleExtent([1, 10])
       .translateExtent([
         [0, 0],
-        [svgWidth, svgHeight],
+        [
+          Math.max(
+            svgWidth,
+            getTickWidth() * timeline.length +
+              getResponsivePadding().left +
+              getResponsivePadding().right
+          ),
+          svgHeight,
+        ],
       ]);
 
     // Attach the zoom/pan functionality to the svg element.
@@ -519,7 +557,9 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       .attr("id", (d) => `datapoint-svg-${d.year}-${type}`)
       .attr(
         "x",
-        (d) => PADDING.left + (d.year - timeline[0].year) * getTickWidth()
+        (d) =>
+          getResponsivePadding().left +
+          (d.year - timeline[0].year) * getTickWidth()
       )
       .attr("y", 0);
 
@@ -577,7 +617,8 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
         .attr(
           "x",
           (d) =>
-            PADDING.left + (d.startYear - timeline[0].year) * getTickWidth()
+            getResponsivePadding().left +
+            (d.startYear - timeline[0].year) * getTickWidth()
         )
         .attr("y", 0);
 
@@ -683,7 +724,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       .attr(
         "x",
         (d) =>
-          PADDING.left +
+          getResponsivePadding().left +
           (d.date.getFullYear() - timeline[0].year) * getActualTickWidth()
       )
       .attr("y", 0)
@@ -720,7 +761,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
         const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickLeft = tick.getBoundingClientRect().left;
-          if (tickLeft >= left + PADDING.left) {
+          if (tickLeft >= left + getResponsivePadding().left) {
             setLeftYear(timeline[i].year);
             break;
           }
@@ -731,7 +772,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
         const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickRight = tick.getBoundingClientRect().right;
-          if (tickRight <= right - PADDING.right) {
+          if (tickRight <= right - getResponsivePadding().right) {
             setRightYear(timeline[i].year);
             break;
           }
@@ -814,8 +855,9 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       (side === Side.LEFT && getActiveLeft().length > 0) ||
       (side === Side.RIGHT && rightData)
     ) {
-      const graphStart = PADDING.top + HEIGHT_TIMELINE + PATH_PADDING;
-      const graphEnd = svgHeight - PADDING.bottom - PATH_PADDING;
+      const graphStart =
+        getResponsivePadding().top + HEIGHT_TIMELINE + PATH_PADDING;
+      const graphEnd = svgHeight - getResponsivePadding().bottom - PATH_PADDING;
       const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
       const maxValue = getMaxValueOnScreen(side);
 
@@ -838,8 +880,8 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
         .attr(
           "x",
           side === Side.LEFT
-            ? PADDING.left - PATH_PADDING
-            : svgWidth - PADDING.right + PATH_PADDING
+            ? getResponsivePadding().left - PATH_PADDING
+            : svgWidth - getResponsivePadding().right + PATH_PADDING
         )
         .attr("y", (d) => getLinearScale(side)(d));
     }
@@ -862,7 +904,6 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
   //--------------------------------USE EFFECTS--------------------------------
 
   useEffect(() => {
-    window.onresize = onResize;
     updateYears();
     updateEvents();
     setZoomLevelFloored(() => Math.floor(zoomLevel));
@@ -1053,7 +1094,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             {
               attr: {
                 height: svgHeight - HEIGHT_TIMELINE - 8,
-                rx: 60,
+                rx: getResponsivePadding().rx,
               },
               duration: 0.5,
             },
@@ -1075,7 +1116,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             {
               opacity: 1,
               attr: {
-                y2: svgHeight - PADDING.bottom - PATH_PADDING,
+                y2: svgHeight - getResponsivePadding().bottom - PATH_PADDING,
               },
               duration: 0.4,
               ease: "power4.out",
@@ -1102,7 +1143,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             "#horizontal-axis line",
             {
               duration: 1,
-              attr: { x2: svgWidth - PADDING.right },
+              attr: { x2: svgWidth - getResponsivePadding().right },
               ease: "power4.out",
             },
             "<"
@@ -1112,9 +1153,11 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             {
               duration: 1,
               attr: {
-                points: `${svgWidth - PADDING.right - 15}, -15 , ${
-                  svgWidth - PADDING.right
-                }, 0, ${svgWidth - PADDING.right - 15}, 15`,
+                points: `${
+                  svgWidth - getResponsivePadding().right - 15
+                }, -15 , ${svgWidth - getResponsivePadding().right}, 0, ${
+                  svgWidth - getResponsivePadding().right - 15
+                }, 15`,
               },
               ease: "power4.out",
             },
@@ -1124,7 +1167,12 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             "#vertical-axis line",
             {
               duration: 1,
-              attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
+              attr: {
+                y2:
+                  getResponsivePadding().top +
+                  HEIGHT_TIMELINE +
+                  getResponsivePadding().top,
+              },
               ease: "power4.out",
             },
             "<"
@@ -1134,12 +1182,20 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             {
               duration: 1,
               attr: {
-                points: `${PADDING.left - 15}, ${
-                  PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
-                } , ${PADDING.left}, ${
-                  PADDING.top + HEIGHT_TIMELINE + PADDING.top
-                }, ${PADDING.left + 15}, ${
-                  PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
+                points: `${getResponsivePadding().left - 15}, ${
+                  getResponsivePadding().top +
+                  HEIGHT_TIMELINE +
+                  getResponsivePadding().top +
+                  15
+                } , ${getResponsivePadding().left}, ${
+                  getResponsivePadding().top +
+                  HEIGHT_TIMELINE +
+                  getResponsivePadding().top
+                }, ${getResponsivePadding().left + 15}, ${
+                  getResponsivePadding().top +
+                  HEIGHT_TIMELINE +
+                  getResponsivePadding().top +
+                  15
                 }`,
               },
               ease: "power4.out",
@@ -1172,10 +1228,10 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
     }
     d3.select(graphRef.current)
       .select("#horizontal-axis-bottom")
-      .attr("y", svgHeight - PADDING.bottom);
+      .attr("y", svgHeight - getResponsivePadding().bottom);
     d3.select(graphRef.current)
       .select("#vertical-axis line")
-      .attr("y1", svgHeight - PADDING.bottom);
+      .attr("y1", svgHeight - getResponsivePadding().bottom);
     d3.select(graphRef.current)
       .select("#main-graph-stroke")
       .attr("width", svgWidth - 8)
@@ -1229,7 +1285,9 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       .selectAll<Element, TimelineYear>("svg.tick")
       .attr(
         "x",
-        (d) => PADDING.left + (d.year - timeline[0].year) * getTickWidth()
+        (d) =>
+          getResponsivePadding().left +
+          (d.year - timeline[0].year) * getTickWidth()
       );
   };
 
@@ -1239,7 +1297,9 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       .selectAll<Element, TimelineYear>("svg.datapoint-svg")
       .attr(
         "x",
-        (d) => PADDING.left + (d.year - timeline[0].year) * getTickWidth()
+        (d) =>
+          getResponsivePadding().left +
+          (d.year - timeline[0].year) * getTickWidth()
       );
   };
 
@@ -1249,7 +1309,9 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       .selectAll<Element, DataPeriod>("svg.period-svg")
       .attr(
         "x",
-        (d) => PADDING.left + (d.startYear - timeline[0].year) * getTickWidth()
+        (d) =>
+          getResponsivePadding().left +
+          (d.startYear - timeline[0].year) * getTickWidth()
       );
 
     updatePeriods();
@@ -1262,7 +1324,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
       .attr(
         "x",
         (d) =>
-          PADDING.left +
+          getResponsivePadding().left +
           (d.date.getFullYear() - timeline[0].year) * getTickWidth()
       )
       .select("rect.event-rect")
@@ -1295,7 +1357,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
   return (
     <div ref={timelineRef} className="timeline-section">
       <div className="timeline-main opacity-0 w-full h-full">
-        <div className="h-1/5 flex flex-row justify-between gap-8 items-center pb-4">
+        <div className="h-2/5 lg:h-1/5 flex flex-col-reverse lg:flex-row justify-between gap-8 items-center pb-4">
           <div id="data-icon-bounds">
             <div className="inactive">
               <div className="data-icon-row left">
@@ -1310,8 +1372,6 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
                     </button>
                   );
                 })}
-              </div>
-              <div className="data-icon-row right">
                 {getRightSideButtons().map((key) => {
                   return (
                     <button
@@ -1338,6 +1398,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
                   </div>
                 ))}
               </div>
+              <div className="separator-vertical"></div>
               <div className="data-icon-row right">
                 <div
                   id={`active-row-placeholder-right`}
@@ -1349,8 +1410,9 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             </div>
           </div>
 
-          <div className="text-BLACK text-4xl font-bold flex flex-col items-end w-1/4">
+          <div className="text-BLACK text-4xl font-bold flex flex-row lg:flex-col items-end lg:w-1/4">
             <span>{leftYear}</span>
+            <span className="lg:hidden">—</span>
             <span>{rightYear}</span>
           </div>
         </div>
@@ -1360,7 +1422,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
           ref={graphRef}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className=" w-full h-4/5 max-h-full rounded-60 origin-center"
+          className=" w-full h-3/5 lg:h-4/5 max-h-full rounded-[20px] lg:rounded-60 origin-center"
         >
           <linearGradient id="fade-to-right">
             <stop
@@ -1385,15 +1447,17 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
           <defs>
             <g id="horizontal-axis" className="opacity-0">
               <line
-                x1={PADDING.left}
-                x2={PADDING.left}
+                x1={getResponsivePadding().left}
+                x2={getResponsivePadding().left}
                 y1={0}
                 y2={0}
-                className="stroke-8 stroke-BLACK"
+                className="stroke-4 lg:stroke-8 stroke-BLACK"
               />
               <polyline
-                points={`${PADDING.left}, 0 , ${PADDING.left}, 0, ${PADDING.left}, 0`}
-                className="stroke-8 stroke-BLACK fill-none"
+                points={`${getResponsivePadding().left}, 0 , ${
+                  getResponsivePadding().left
+                }, 0, ${getResponsivePadding().left}, 0`}
+                className="stroke-4 lg:stroke-8 stroke-BLACK fill-none"
               />
             </g>
           </defs>
@@ -1417,37 +1481,39 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
           <g id="group-timeline-events"></g>
           <use
             id="horizontal-axis-bottom"
-            y={svgHeight - PADDING.bottom}
+            y={svgHeight - getResponsivePadding().bottom}
             href="#horizontal-axis"
           />
           <g id="vertical-axis" className="opacity-0">
             <line
-              x1={PADDING.left}
-              x2={PADDING.left}
-              y1={svgHeight - PADDING.bottom}
-              y2={svgHeight - PADDING.bottom}
-              className="stroke-8 stroke-BLACK"
+              x1={getResponsivePadding().left}
+              x2={getResponsivePadding().left}
+              y1={svgHeight - getResponsivePadding().bottom}
+              y2={svgHeight - getResponsivePadding().bottom}
+              className="stroke-4 lg:stroke-8 stroke-BLACK"
             />
             <polyline
-              points={`${PADDING.left}, ${svgHeight - PADDING.bottom}, ${
-                PADDING.left
-              }, ${svgHeight - PADDING.bottom},${PADDING.left}, ${
-                svgHeight - PADDING.bottom
+              points={`${getResponsivePadding().left}, ${
+                svgHeight - getResponsivePadding().bottom
+              }, ${getResponsivePadding().left}, ${
+                svgHeight - getResponsivePadding().bottom
+              },${getResponsivePadding().left}, ${
+                svgHeight - getResponsivePadding().bottom
               }`}
-              className="stroke-8 stroke-BLACK fill-none"
+              className="stroke-4 lg:stroke-8 stroke-BLACK fill-none"
             />
           </g>
           <rect
             x={0}
             y={0}
-            width={PADDING.left + 50}
+            width={getResponsivePadding().left + 50}
             fill="url(#fade-to-right)"
             className="h-full pointer-events-none"
           ></rect>
           <rect
-            x={svgWidth - PADDING.right - 50}
+            x={svgWidth - getResponsivePadding().right - 50}
             y={0}
-            width={PADDING.right + 50}
+            width={getResponsivePadding().right + 50}
             fill="url(#fade-to-left)"
             className="h-full pointer-events-none"
           ></rect>
@@ -1456,9 +1522,9 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             y={HEIGHT_TIMELINE + 4}
             width={Math.max(svgWidth - 8, 0)}
             height={1}
-            className="pointer-events-none stroke-BLACK fill-none stroke-8"
+            className="pointer-events-none stroke-BLACK fill-none stroke-4 lg:stroke-8"
             id="main-graph-stroke"
-            rx="10"
+            rx={getResponsivePadding().rx}
           />
         </svg>
       </div>
