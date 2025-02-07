@@ -85,7 +85,7 @@ html {
   transform: translateY(calc(100vh - 90px));
 }
 
-.tick-data,
+.datapoint-svg,
 .period-svg {
   & .short {
     @apply opacity-0;
