@@ -12,11 +12,7 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 export default function Home() {
   const [eyeOpen, setEyeOpen] = useState(false);
 
-  const date = new Date(Date.now() - 24 * 60 * 60 * 1000 * 10);
-
-  const [day, setDay] = useState(
-    new Date(date.getFullYear(), date.getMonth(), date.getDate(), 1, 0)
-  );
+  const [day, setDay] = useState<Date | null>(null);
 
   const [dailyData, setDailyData] = useState<DailyData | null>(null);
 
@@ -24,6 +20,8 @@ export default function Home() {
   const [dataWestBank, setDataWestBank] = useState<WestBankData | null>(null);
   const [dataWestBankPrevious, setDataWestBankPrevious] =
     useState<WestBankData | null>(null);
+
+  const [scrolled, setScrolled] = useState(false);
 
   const mainRef = useRef<HTMLDivElement>(null);
   const gsapTimeline = useRef<gsap.core.Timeline>(null);
@@ -76,9 +74,45 @@ export default function Home() {
     });
   };
 
+  const getLastUpdatedDate = async () => {
+    let lastDate: Date = new Date("2025-01-28");
+
+    await fetch(
+      "https://data.techforpalestine.org/api/v2/casualties_daily.json"
+    ).then(async (response) => {
+      if (response.ok) {
+        await response.json().then((data: GazaData[]) => {
+          const lastGazaDate = new Date(data[data.length - 1].report_date);
+          if (lastGazaDate.getTime() > lastDate.getTime())
+            lastDate = lastGazaDate;
+        });
+      }
+    });
+
+    await fetch(
+      "https://data.techforpalestine.org/api/v2/west_bank_daily.json"
+    ).then(async (response) => {
+      if (response.ok) {
+        await response.json().then((data: WestBankData[]) => {
+          const lastWestBankDate = new Date(data[data.length - 1].report_date);
+          if (lastWestBankDate.getTime() > lastDate.getTime())
+            lastDate = lastWestBankDate;
+        });
+      }
+    });
+
+    setDay(lastDate);
+  };
+
   useEffect(() => {
-    getDataGaza(day);
-    getDataWestBank(day);
+    getLastUpdatedDate();
+  }, []);
+
+  useEffect(() => {
+    if (day) {
+      getDataGaza(day);
+      getDataWestBank(day);
+    }
   }, [day]);
 
   useEffect(() => {
@@ -143,8 +177,12 @@ export default function Home() {
           start: "top top",
           end: "49",
           onEnterBack: () => {
+            setScrolled(false);
             gsapTimeline?.current?.reverse();
           },
+        },
+        onComplete: () => {
+          setScrolled(true);
         },
       });
     },
@@ -156,7 +194,7 @@ export default function Home() {
       <BackgroundText eyeOpen={eyeOpen} />
       <Eye eyeOpen={eyeOpen} dailyData={dailyData} />
       <div className="fixed top-0 left-0 w-screen h-screen bg-red flex flex-col p-20 items-center text-WHITE">
-        <p className=" w-fit">{day.toLocaleDateString("nl-BE")}</p>
+        <p className=" w-fit">{day?.toLocaleDateString("nl-BE")}</p>
         {dailyData && (
           <div className="flex gap-4">
             <span className="">{dailyData.gazaKilled}</span>
@@ -168,7 +206,7 @@ export default function Home() {
         <button
           onClick={() => {
             setEyeOpen(false);
-            setDay(new Date(day.getTime() - 24 * 60 * 60 * 1000));
+            if (day) setDay(new Date(day.getTime() - 24 * 60 * 60 * 1000));
           }}
           className="bg-RED p-15 rounded-full"
         >
@@ -177,14 +215,14 @@ export default function Home() {
         <button
           onClick={() => {
             setEyeOpen(false);
-            setDay(new Date(day.getTime() + 24 * 60 * 60 * 1000));
+            if (day) setDay(new Date(day.getTime() + 24 * 60 * 60 * 1000));
           }}
           className="bg-RED p-15 rounded-full"
         >
           Day ++
         </button>
       </div>
-      <Timeline gsapTimeline={gsapTimeline.current} />
+      <Timeline scrolled={scrolled} gsapTimeline={gsapTimeline.current} />
     </div>
   );
 }

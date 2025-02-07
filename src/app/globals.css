@@ -78,16 +78,23 @@ html {
 
 .timeline-section {
   @apply bg-BEIGE;
-  @apply absolute left-30 top-30;
-  @apply rounded-90 p-60;
-  width: calc(100vw - 60px);
-  height: calc(100vh - 60px);
-  transform: translateY(calc(100vh - 90px));
+  @apply absolute top-[10px] left-[10px] lg:left-30 lg:top-30;
+  @apply rounded-30 lg:rounded-90 p-15 lg:p-60;
+
+  width: calc(100vw - 20px);
+  height: calc(100vh - 20px);
+  transform: translateY(calc(100vh - 40px));
+
+  @media (width >= 64rem) {
+    width: calc(100vw - 60px);
+    height: calc(100vh - 60px);
+    transform: translateY(calc(100vh - 90px));
+  }
 }
 
-.tick-data,
-.period-line {
-  &.short {
+.datapoint-svg,
+.period-svg {
+  & .short {
     @apply opacity-0;
   }
 
@@ -135,36 +142,38 @@ html {
 }
 
 #data-icon-bounds {
-  @apply w-full h-full;
-  @apply flex flex-row justify-between;
+  @apply flex flex-row lg:flex-row gap-4 lg:gap-8 justify-start;
 
-  .inactive {
-    @apply max-h-full grid gap-4 grid-cols-5 grid-rows-2;
+  .separator {
+    @apply h-full w-[4px] bg-BROWN rounded-full;
   }
+
+  .separator-vertical {
+    @apply h-full w-[4px] bg-BROWN rounded-full;
+  }
+
+  .data-icon-row {
+    @apply lg:h-1/2;
+    @apply flex flex-row flex-wrap gap-2 lg:gap-4 items-center;
+  }
+
+  .inactive,
   .active {
-    @apply w-1/2 h-full;
-    @apply flex flex-col gap-2;
+    @apply lg:h-full lg:w-1/2;
+    @apply flex flex-col lg:flex-row gap-2 lg:gap-4 items-start;
+  }
 
-    hr {
-      @apply border-t-4 border-BROWN rounded-full;
-    }
+  .active-row-placeholder {
+    @apply bg-WHITE text-BROWN;
+    @apply flex justify-center items-center;
+  }
 
-    .active-row {
-      @apply w-full grow;
-      @apply flex flex-row gap-4 items-center justify-end;
-
-      .active-row-placeholder {
-        @apply h-full aspect-square;
-        @apply rounded-7_5;
-        @apply bg-WHITE text-BROWN;
-        @apply flex justify-center items-center;
-      }
-    }
+  .data-button {
+    @apply w-[40px] h-[40px] lg:w-[50px] lg:h-[50px] rounded-7_5;
   }
 
   .data-icon {
-    @apply h-full aspect-square;
-    @apply border-4 rounded-7_5;
+    @apply border-4;
 
     &.adultsKilled {
       @apply bg-orange-500/10 border-orange-500;
@@ -248,5 +257,111 @@ html {
         @apply bg-cyan-500 border-cyan-500;
       }
     }
+  }
+}
+
+#mouseElement {
+  @apply fixed -left-30 -top-30;
+  @apply p-10;
+  @apply pointer-events-none;
+
+  &.selected {
+    @apply pointer-events-auto;
+  }
+
+  #mouseElementContent {
+    @apply bg-BLACK text-WHITE;
+    @apply rounded-2xl;
+    @apply flex flex-col items-center justify-center;
+    @apply overflow-hidden;
+    @apply scale-0;
+    transform-origin: top center;
+  }
+
+  #mouseElementContentVisibility {
+    @apply px-8 py-4;
+    @apply overflow-hidden;
+  }
+
+  .event {
+    @apply w-[500px];
+    .title {
+      @apply text-center text-2xl font-bold;
+    }
+
+    .date {
+      @apply text-center text-lg italic font-light;
+    }
+
+    .event-full {
+      @apply hidden mt-8;
+    }
+
+    .read-more {
+      @apply bg-WHITE text-BLACK;
+      @apply px-4 py-2 rounded-full;
+      @apply block mt-4 w-fit mx-auto;
+    }
+
+    .sources {
+      @apply mt-8;
+      li {
+        @apply text-sm text-BROWN;
+      }
+    }
+  }
+
+  .datapoint {
+    @apply max-w-[300px];
+    .number {
+      @apply text-2xl font-bold text-center;
+    }
+
+    .sources {
+      li {
+        @apply text-sm text-BROWN;
+      }
+    }
+
+    .note {
+      @apply mt-4 italic;
+    }
+  }
+
+  /* .event {
+    @apply bg-BLACK text-WHITE;
+    @apply flex flex-col justify-start items-center;
+    @apply opacity-0 rounded-2xl;
+    @apply pointer-events-none;
+    @apply relative overflow-hidden;
+    @apply max-w-[300px];
+
+    &.selected,
+    &.hovering {
+      @apply pointer-events-auto;
+      @apply opacity-100;
+    }
+
+    &.selected {
+      @apply p-4;
+       .event-full {
+        @apply block;
+      } 
+    }
+
+     &.hovering {
+      .event-full {
+        @apply hidden;
+      }
+    } 
+  } */
+}
+
+.event-svg {
+  @apply cursor-pointer;
+
+  .event-rect {
+    @apply fill-RED;
+    @apply stroke-4 stroke-BLACK;
   }
 }

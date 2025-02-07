@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import {
+  DataEvent,
   DataPeriod,
+  events,
   periods,
   timeline,
   TimelineYear,
@@ -11,15 +13,16 @@ import {
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import {
+  DataPoint,
   LeftData,
-  RightData,
   SelectableDataType,
   Side,
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
 
-const PADDING = { top: 30, left: 120, right: 120, bottom: 60 };
+const PADDING = { top: 30, left: 120, right: 120, bottom: 60, rx: 60 };
+const PADDING_MOBILE = { top: 30, left: 20, right: 20, bottom: 20, rx: 20 };
 const HEIGHT_TIMELINE = 150;
 const LUSTRUM_ZOOM = 2;
 const REGULAR_ZOOM = 6;
@@ -29,12 +32,16 @@ const TICK_OFFSET = 25;
 const DATA_POINT_SIZE = 7;
 const DATA_POINT_SIZE_PERIOD = 4;
 const SNAP_DISTANCE = 100;
+const MOUSE_ELEMENT_PADDING = 30;
+const EVENT_MIN_WIDTH = 10;
+const EVENT_HEIGHT = 50;
 
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
+  scrolled: boolean;
 }
 
-const Timeline = ({ gsapTimeline }: Props) => {
+const Timeline = ({ gsapTimeline, scrolled }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
@@ -47,12 +54,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     minorsInjured: false,
   });
 
-  const [rightData, setRightData] = useState<RightData>({
-    illegalSettlers: false,
-    buildingsDemolished: false,
-    palestiniansDisplaced: false,
-    percentageOfPalestinianLandStolen: false,
-  });
+  const [rightData, setRightData] = useState<SelectableDataType | null>(null);
 
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
@@ -63,12 +65,20 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const [panLevel, setPanLevel] = useState(0);
   const [zoomLevelFloored, setZoomLevelFloored] = useState(1);
 
-  const { contextSafe } = useGSAP({ scope: graphRef });
+  const [selectedEvent, setSelectedEvent] = useState<DataEvent | null>(null);
+  const [selectedDataPoint, setSelectedDataPoint] = useState<DataPoint | null>(
+    null
+  );
+
+  const [svgWidth, setSvgWidth] = useState(1000);
+  const [svgHeight, setSvgHeight] = useState(500);
+
+  const { contextSafe } = useGSAP({ scope: timelineRef });
 
   //--------------------------------UTILS--------------------------------
 
-  const getActiveData = (side: Side): SelectableDataType[] => {
-    return Object.entries(side === Side.LEFT ? leftData : rightData)
+  const getActiveLeft = (): SelectableDataType[] => {
+    return Object.entries(leftData)
       .filter((entry) => entry[1])
       .map((entry) => {
         return entry[0] as SelectableDataType;
@@ -91,35 +101,65 @@ const Timeline = ({ gsapTimeline }: Props) => {
         }
       });
 
-      getActiveData(side).forEach((entry) => {
-        periods
-          .get(entry)
-          ?.filter(
-            (period) =>
-              (period.startYear >= leftYear && period.startYear <= rightYear) ||
-              (period.endYear <= rightYear && period.endYear >= leftYear) ||
-              (period.startYear <= leftYear && period.endYear >= rightYear)
-          )
-          .forEach((period) => {
-            const max =
-              period.amount.number / (period.endYear - period.startYear + 1);
-            maxValue = Math.max(maxValue, max);
-          });
+      if (side === Side.RIGHT) {
+        if (rightData) {
+          periods
+            .get(rightData)
+            ?.filter(
+              (period) =>
+                (period.startYear >= leftYear &&
+                  period.startYear <= rightYear) ||
+                (period.endYear <= rightYear && period.endYear >= leftYear) ||
+                (period.startYear <= leftYear && period.endYear >= rightYear)
+            )
+            .forEach((period) => {
+              const max =
+                period.amount.number / (period.endYear - period.startYear + 1);
+              maxValue = Math.max(maxValue, max);
+            });
 
-        console.log(maxValue);
+          const max =
+            d3.max(visibleTicks, (d) => {
+              let value = 0;
+              const yearData = d[rightData as keyof TimelineYear];
+              if (typeof yearData === "object") {
+                value = yearData.number;
+              }
+              return value;
+            }) ?? 0;
 
-        const max =
-          d3.max(visibleTicks, (d) => {
-            let value = 0;
-            const yearData = d[entry as keyof TimelineYear];
-            if (typeof yearData === "object") {
-              value = yearData.number;
-            }
-            return value;
-          }) ?? 0;
+          maxValue = Math.max(maxValue, max);
+        }
+      } else {
+        getActiveLeft().forEach((entry) => {
+          periods
+            .get(entry)
+            ?.filter(
+              (period) =>
+                (period.startYear >= leftYear &&
+                  period.startYear <= rightYear) ||
+                (period.endYear <= rightYear && period.endYear >= leftYear) ||
+                (period.startYear <= leftYear && period.endYear >= rightYear)
+            )
+            .forEach((period) => {
+              const max =
+                period.amount.number / (period.endYear - period.startYear + 1);
+              maxValue = Math.max(maxValue, max);
+            });
 
-        maxValue = Math.max(maxValue, max);
-      });
+          const max =
+            d3.max(visibleTicks, (d) => {
+              let value = 0;
+              const yearData = d[entry as keyof TimelineYear];
+              if (typeof yearData === "object") {
+                value = yearData.number;
+              }
+              return value;
+            }) ?? 0;
+
+          maxValue = Math.max(maxValue, max);
+        });
+      }
 
       const digits = Math.floor(Math.log10(maxValue) + 1);
       const powerNumber = Math.max(Math.pow(10, digits - 2), 1);
@@ -131,24 +171,39 @@ const Timeline = ({ gsapTimeline }: Props) => {
   };
 
   const getTickWidth = () => {
-    return (
-      (getDimensions().width - PADDING.left - PADDING.right) / timeline.length
+    return Math.max(
+      (svgWidth - getResponsivePadding().left - getResponsivePadding().right) /
+        timeline.length,
+      5
     );
   };
 
-  const getDimensions = () => {
-    if (graphRef.current)
-      return {
-        width: graphRef.current.clientWidth,
-        height: graphRef.current.clientHeight,
-      };
-    return { width: -1, height: -1 };
+  const getActualTickWidth = () => {
+    return getTickWidth() * zoomLevel;
   };
 
-  const getVisibleYears = () => {
-    return timeline.filter(
-      (tick) => tick.year >= leftYear && tick.year <= rightYear
+  const getLinearScale = (side: Side) => {
+    const graphStart =
+      getResponsivePadding().top + HEIGHT_TIMELINE + PATH_PADDING;
+    const graphEnd = svgHeight - getResponsivePadding().bottom - PATH_PADDING;
+    const maxValue = getMaxValueOnScreen(side);
+
+    return d3.scaleLinear().domain([0, maxValue]).range([graphEnd, graphStart]);
+  };
+
+  const getRightSideButtons = () => {
+    return Object.values(SelectableDataType).filter(
+      (d) => !Object.keys(leftData).includes(d)
     );
+  };
+
+  const getWindowWidth = () => {
+    if (typeof window !== "undefined") return window.innerWidth;
+    return 768;
+  };
+
+  const getResponsivePadding = () => {
+    return getWindowWidth() >= 1024 ? PADDING : PADDING_MOBILE;
   };
 
   //--------------------------------ANIMATIONS--------------------------------
@@ -156,32 +211,47 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const animateMain = contextSafe(() => {
     gsap.to("#horizontal-axis line", {
       duration: 1,
-      attr: { x2: getDimensions().width - PADDING.right },
+      attr: { x2: svgWidth - getResponsivePadding().right },
       ease: "power4.out",
     });
 
     gsap.to("#horizontal-axis polyline", {
       duration: 1,
       attr: {
-        points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
-          getDimensions().width - PADDING.right
-        }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
+        points: `${svgWidth - getResponsivePadding().right - 15}, -15 , ${
+          svgWidth - getResponsivePadding().right
+        }, 0, ${svgWidth - getResponsivePadding().right - 15}, 15`,
       },
       ease: "power4.out",
     });
     gsap.to("#vertical-axis line", {
       duration: 1,
-      attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
+      attr: {
+        y2:
+          getResponsivePadding().top +
+          HEIGHT_TIMELINE +
+          getResponsivePadding().top,
+      },
       ease: "power4.out",
     });
     gsap.to("#vertical-axis polyline", {
       duration: 1,
       attr: {
-        points: `${PADDING.left - 15}, ${
-          PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
-        } , ${PADDING.left}, ${PADDING.top + HEIGHT_TIMELINE + PADDING.top}, ${
-          PADDING.left + 15
-        }, ${PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15}`,
+        points: `${getResponsivePadding().left - 15}, ${
+          getResponsivePadding().top +
+          HEIGHT_TIMELINE +
+          getResponsivePadding().top +
+          15
+        } , ${getResponsivePadding().left}, ${
+          getResponsivePadding().top +
+          HEIGHT_TIMELINE +
+          getResponsivePadding().top
+        }, ${getResponsivePadding().left + 15}, ${
+          getResponsivePadding().top +
+          HEIGHT_TIMELINE +
+          getResponsivePadding().top +
+          15
+        }`,
       },
       ease: "power4.out",
     });
@@ -190,14 +260,14 @@ const Timeline = ({ gsapTimeline }: Props) => {
   const animateDecades = contextSafe(() => {
     gsap.to(`.decade .line`, {
       opacity: 1,
-      attr: { y2: HEIGHT_TIMELINE - 8 },
+      attr: { y2: HEIGHT_TIMELINE - PATH_PADDING / 2 },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.05,
     });
     gsap.to(`.decade .line-2`, {
       opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - PATH_PADDING },
+      attr: { y2: svgHeight - getResponsivePadding().bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.05,
@@ -220,7 +290,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
     gsap.to(`.lustrum .line-2`, {
       opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - PATH_PADDING },
+      attr: { y2: svgHeight - getResponsivePadding().bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
       stagger: 0.01,
@@ -262,7 +332,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
     });
     gsap.to(`.regular .line-2`, {
       opacity: 1,
-      attr: { y2: getDimensions().height - PADDING.bottom - PATH_PADDING },
+      attr: { y2: svgHeight - getResponsivePadding().bottom - PATH_PADDING },
       duration: 0.4,
       ease: "power4.out",
     });
@@ -294,7 +364,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
   });
 
   const animateShort = contextSafe(() => {
-    gsap.to(`.period-line.short`, {
+    gsap.to(`.period-svg-line.short`, {
       opacity: 1,
       duration: 0.4,
       ease: "power4.out",
@@ -302,56 +372,85 @@ const Timeline = ({ gsapTimeline }: Props) => {
   });
 
   const reverseShort = contextSafe(() => {
-    gsap.to(`.period-line.short`, {
+    gsap.to(`.period-svg-line.short`, {
       opacity: 0,
       duration: 0.4,
       ease: "power4.out",
     });
   });
 
-  const animateDataType = contextSafe((timeline: boolean, type: string) => {
-    if (timeline) {
-      gsapTimeline?.to(
-        `.tick .tick-data.${type}:not(.period)`,
-        {
-          attr: { r: DATA_POINT_SIZE },
-          duration: 0.2,
-          ease: "bounce.out",
-          stagger: 0.01,
-        },
-        "<"
-      );
+  const animateDataType = contextSafe((type: SelectableDataType) => {
+    gsap.to(`svg.datapoint-svg.${type} .datapoint-svg-circle`, {
+      attr: { r: DATA_POINT_SIZE },
+      duration: 0.2,
+      ease: "elastic.out",
+      stagger: 0.01,
+    });
 
-      gsapTimeline?.to(
-        `.tick .tick-data.${type}.period`,
-        {
-          attr: { r: DATA_POINT_SIZE_PERIOD },
-          duration: 0.2,
-          ease: "bounce.out",
-          stagger: 0.01,
-        },
-        "<"
-      );
-    } else {
-      gsap.to(`.tick .tick-data.${type}:not(.period)`, {
-        attr: { r: DATA_POINT_SIZE },
-        duration: 0.2,
-        ease: "bounce.out",
-        stagger: 0.01,
-      });
-
-      gsap.to(`.tick .tick-data.${type}.period`, {
+    if (periods.has(type)) {
+      gsap.to(`svg.period-svg.${type} .period-svg-circle`, {
         attr: { r: DATA_POINT_SIZE_PERIOD },
         duration: 0.2,
-        ease: "bounce.out",
+        ease: "elastic.out",
         stagger: 0.01,
       });
     }
   });
 
-  const animateData = contextSafe((timeline: boolean, side: Side) => {
-    getActiveData(side).forEach((data) => {
-      animateDataType(timeline, data);
+  const animateData = contextSafe((side: Side) => {
+    if (side === Side.LEFT) {
+      getActiveLeft().forEach((data) => {
+        animateDataType(data);
+      });
+    } else {
+      if (rightData) {
+        animateDataType(rightData);
+      }
+    }
+  });
+
+  const animateMouseHover = contextSafe((element: DataEvent | DataPoint) => {
+    if ("name" in element) {
+      setSelectedEvent(element);
+    } else if ("year" in element) {
+      setSelectedDataPoint(element);
+    }
+
+    gsap.to("#mouseElementContent", {
+      scale: 1,
+      duration: 0.4,
+      ease: "power4.out",
+      overwrite: true,
+    });
+  });
+
+  const animateMouseHoverReverse = contextSafe(() => {
+    d3.select("#mouseElement").attr("class", "");
+    gsap.to("#mouseElementContent", {
+      scale: 0,
+      duration: 0.2,
+      ease: "power4.in",
+      overwrite: true,
+      onComplete: () => {
+        setSelectedEvent(null);
+        setSelectedDataPoint(null);
+      },
+    });
+  });
+
+  const animateEventOpen = contextSafe((event: DataEvent) => {
+    d3.select("#mouseElement").attr("class", "selected");
+    window.onmousemove = null;
+    setSelectedDataPoint(null);
+    setSelectedEvent(event);
+
+    gsap.set("#mouseElement .event .event-full", { display: "block" });
+    gsap.from("#mouseElement .event .event-full", {
+      height: 0,
+      opacity: 0,
+      paddingTop: 0,
+      duration: 0.6,
+      ease: "power4.out",
     });
   });
 
@@ -366,7 +465,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .enter()
       .append("svg")
       .attr("id", (d) => `tick-${d.year}`)
-      .attr("x", (_, i) => PADDING.left + i * getTickWidth())
+      .attr(
+        "x",
+        (_, i) => getResponsivePadding().left + i * getActualTickWidth()
+      )
       .attr("y", 0)
       .attr(
         "class",
@@ -422,7 +524,15 @@ const Timeline = ({ gsapTimeline }: Props) => {
       .scaleExtent([1, 10])
       .translateExtent([
         [0, 0],
-        [getDimensions().width, getDimensions().height],
+        [
+          Math.max(
+            svgWidth,
+            getTickWidth() * timeline.length +
+              getResponsivePadding().left +
+              getResponsivePadding().right
+          ),
+          svgHeight,
+        ],
       ]);
 
     // Attach the zoom/pan functionality to the svg element.
@@ -431,180 +541,214 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const drawData = (side: Side) => {
-    const maxHeight =
-      getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
-
-    const groups = d3
+  const drawDataOfType = (type: SelectableDataType, side: Side) => {
+    const svg = d3
       .select(graphRef.current)
       .select("#group-timeline")
-      .selectAll<Element, TimelineYear>("svg.tick");
+      .append("g")
+      .attr("class", `group-timeline-datapoints ${side}`)
+      .attr("id", `group-timeline-datapoints-${type}`)
+      .selectAll<Element, TimelineYear>("svg.datapoint-svg")
+      .data(timeline.filter((d) => typeof d[type]?.number !== "undefined"))
+      .enter()
+      .append("svg")
+      .attr("class", `datapoint-svg ${type} ${side}`)
+      .attr("id", (d) => `datapoint-svg-${d.year}-${type}`)
+      .attr(
+        "x",
+        (d) =>
+          getResponsivePadding().left +
+          (d.year - timeline[0].year) * getTickWidth()
+      )
+      .attr("y", 0);
 
-    groups.selectAll(`.tick-data.${side}`).remove();
+    svg
+      .append("circle")
+      .attr("cx", TICK_OFFSET)
+      .attr("cy", (d) => getLinearScale(side)(d[type]?.number ?? 0))
+      .attr("r", 0)
+      .attr("class", "datapoint-svg-circle unzoom")
+      .on("mouseenter", (_, d) => {
+        if (d[type]) {
+          animateMouseHover({
+            year: d.year,
+            type: type,
+            amount: d[type],
+          });
+        }
+      })
+      .attr("transform", `scale(${1 / zoomLevel}, 1)`)
+      .on("mouseleave", () => {
+        animateMouseHoverReverse();
+      });
+  };
+
+  const drawData = (side: Side) => {
     d3.select(graphRef.current)
-      .select("#group-timeline")
-      .selectAll(`line.period-line.${side}`)
+      .selectAll(`.group-timeline-datapoints.${side}`)
       .remove();
 
-    getActiveData(side).forEach((data) => {
-      const localPeriods = periods.get(data);
-
-      if (localPeriods) {
-        d3.select(graphRef.current)
-          .select("#group-timeline")
-          .selectAll<Element, DataPeriod>("line.period-line")
-          .data(localPeriods)
-          .enter()
-          .append("line")
-          .attr(
-            "class",
-            (d) =>
-              `period-line unzoom ${data} ${side} line-${d.startYear} ${
-                d.endYear - d.startYear <= 2 ? "short" : ""
-              }`
-          )
-          .attr(
-            "x1",
-            (d) =>
-              timeline.findIndex((i) => i.year === d.startYear) *
-                getTickWidth() +
-              PADDING.left +
-              TICK_OFFSET +
-              PATH_PADDING -
-              DATA_POINT_SIZE_PERIOD
-          )
-          .attr(
-            "x2",
-            (d) =>
-              timeline.findIndex((i) => i.year === d.endYear) * getTickWidth() +
-              PADDING.left +
-              TICK_OFFSET -
-              PATH_PADDING +
-              DATA_POINT_SIZE_PERIOD
-          )
-          .attr("y1", (d) => {
-            return (
-              getDimensions().height -
-              PADDING.bottom -
-              PATH_PADDING -
-              (d.amount.number /
-                (d.endYear - d.startYear) /
-                getMaxValueOnScreen(side)) *
-                maxHeight
-            );
-          })
-          .attr("y2", (d) => {
-            return (
-              getDimensions().height -
-              PADDING.bottom -
-              PATH_PADDING -
-              (d.amount.number /
-                (d.endYear - d.startYear) /
-                getMaxValueOnScreen(side)) *
-                maxHeight
-            );
-          });
-
-        localPeriods.forEach((period: DataPeriod) => {
-          const periodHeight =
-            getDimensions().height -
-            PADDING.bottom -
-            PATH_PADDING -
-            (period.amount.number /
-              (period.endYear - period.startYear) /
-              getMaxValueOnScreen(side)) *
-              maxHeight;
-
-          d3.select(graphRef.current)
-            .select("#group-timeline")
-            .select(`#tick-${period.startYear}`)
-            .append("circle")
-            .attr("id", `period-data-${period.startYear}`)
-            .attr("cx", TICK_OFFSET)
-            .attr("cy", periodHeight)
-            .attr("r", 0)
-            .attr("class", `tick-data unzoom ${data} ${side} period`);
-
-          d3.select(graphRef.current)
-            .select("#group-timeline")
-            .select(`#tick-${period.endYear}`)
-            .append("circle")
-            .attr("id", `test-data-${period.endYear}`)
-            .attr("cx", TICK_OFFSET)
-            .attr("cy", periodHeight)
-            .attr("r", 0)
-            .attr("class", `tick-data unzoom ${data} ${side} period`);
-        });
+    if (side === Side.RIGHT) {
+      if (rightData) {
+        drawDataOfType(rightData, side);
       }
+    } else {
+      getActiveLeft().forEach((data) => drawDataOfType(data, side));
+    }
+  };
 
-      groups
-        .filter((d) => typeof d[data]?.number !== "undefined")
-        .append("circle")
-        .attr("id", (d: TimelineYear) => `data-${d.year}`)
-        .attr("cx", TICK_OFFSET)
+  const drawPeriodOfType = (type: SelectableDataType, side: Side) => {
+    const localPeriods = periods.get(type);
+
+    if (localPeriods) {
+      const svg = d3
+        .select(graphRef.current)
+        .select("#group-timeline")
+        .append("g")
+        .attr("class", `group-timeline-periods ${side}`)
+        .attr("id", `group-timeline-periods-${type}`)
+        .selectAll<Element, DataPeriod>("svg.period-svg")
+        .data(localPeriods)
+        .enter()
+        .append("svg")
+        .attr("class", `period-svg ${type} ${side}`)
+        .attr("id", (d) => `period-svg-${d.startYear}-${type}`)
         .attr(
-          "cy",
+          "x",
           (d) =>
-            getDimensions().height -
-            PADDING.bottom -
-            PATH_PADDING -
-            ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) * maxHeight
+            getResponsivePadding().left +
+            (d.startYear - timeline[0].year) * getTickWidth()
+        )
+        .attr("y", 0);
+
+      svg
+        .append("circle")
+        .attr("cx", TICK_OFFSET)
+        .attr("cy", (d) =>
+          getLinearScale(side)(d.amount.number / (d.endYear - d.startYear + 1))
         )
         .attr("r", 0)
-        .attr("class", `tick-data unzoom ${data} ${side} `);
-    });
+        .attr("transform", `scale(${1 / zoomLevel}, 1)`)
+        .attr("class", "period-svg-circle unzoom");
+
+      svg
+        .append("circle")
+        .attr(
+          "cx",
+          (d) => TICK_OFFSET + getActualTickWidth() * (d.endYear - d.startYear)
+        )
+        .attr("cy", (d) =>
+          getLinearScale(side)(d.amount.number / (d.endYear - d.startYear + 1))
+        )
+        .attr("r", 0)
+        .attr("transform", `scale(${1 / zoomLevel}, 1)`)
+        .attr("class", "period-svg-circle unzoom end");
+
+      svg
+        .append("line")
+        .attr(
+          "class",
+          (d) =>
+            `period-svg-line unzoom ${
+              d.endYear - d.startYear <= 2 ? "short" : ""
+            }`
+        )
+        .attr("transform", `scale(${1 / zoomLevel}, 1)`)
+        .attr("x1", TICK_OFFSET + PATH_PADDING - DATA_POINT_SIZE_PERIOD)
+        .attr(
+          "x2",
+          (d) =>
+            TICK_OFFSET -
+            PATH_PADDING +
+            DATA_POINT_SIZE_PERIOD +
+            getActualTickWidth() * (d.endYear - d.startYear)
+        )
+        .attr("y1", (d) =>
+          getLinearScale(side)(d.amount.number / (d.endYear - d.startYear + 1))
+        )
+        .attr("y2", (d) =>
+          getLinearScale(side)(d.amount.number / (d.endYear - d.startYear + 1))
+        );
+
+      svg
+        .on("mouseenter", (_, d) => {
+          animateMouseHover({
+            year: d.startYear,
+            endYear: d.endYear,
+            type: type,
+            amount: d.amount,
+          });
+        })
+        .on("mouseleave", () => {
+          animateMouseHoverReverse();
+        });
+    }
+  };
+
+  const drawPeriods = (side: Side) => {
+    d3.select(graphRef.current)
+      .selectAll(`.group-timeline-periods.${side}`)
+      .remove();
+
+    if (side === Side.RIGHT) {
+      if (rightData) {
+        drawPeriodOfType(rightData, side);
+      }
+    } else {
+      getActiveLeft().forEach((data) => drawPeriodOfType(data, side));
+    }
+  };
+
+  const getEventWidth = (d: DataEvent) => {
+    if (d.endDate && d.endDate.getFullYear() !== d.date.getFullYear()) {
+      return (
+        (d.endDate.getFullYear() - d.date.getFullYear()) *
+          getActualTickWidth() -
+        (d.date.getMonth() * getActualTickWidth()) / 12 +
+        (d.endDate.getMonth() * getActualTickWidth()) / 12
+      );
+    } else {
+      return EVENT_MIN_WIDTH;
+    }
+  };
+
+  const drawEvents = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline-events")
+      .selectAll("svg.event-svg")
+      .data(events)
+      .enter()
+      .append("svg")
+      .attr("class", "event-svg")
+      .attr(
+        "x",
+        (d) =>
+          getResponsivePadding().left +
+          (d.date.getFullYear() - timeline[0].year) * getActualTickWidth()
+      )
+      .attr("y", 0)
+      .append("rect")
+      .attr("class", "event-rect unzoom")
+      .attr("y", HEIGHT_TIMELINE / 2)
+      .attr("x", (d) => 25 + (d.date.getMonth() * getActualTickWidth()) / 12)
+      .attr("rx", (EVENT_MIN_WIDTH / 2) * zoomLevel)
+      .attr("height", EVENT_HEIGHT)
+      .attr("width", 0)
+      .on("mouseenter", (_, d) => {
+        window.onmousemove = onMouseMove;
+        animateMouseHover(d);
+      })
+      .on("mouseleave", (e) => {
+        if (e.relatedTarget.id !== "mouseElement") {
+          animateMouseHoverReverse();
+        }
+      })
+      .on("click", (_, d) => {
+        animateEventOpen(d);
+      });
   };
 
   //--------------------------------UPDATING DATA--------------------------------
-
-  const updateTicks = () => {
-    //TODO: Correctly update ticks when zoomed in
-
-    d3.select(graphRef.current)
-      .select("#group-timeline")
-      .selectAll("svg.tick")
-      .attr("x", (_, i) => PADDING.left + i * getTickWidth());
-  };
-
-  const resize = () => {
-    updateTicks();
-    animateMain();
-    animateDecades();
-    if (zoomLevel > 2) animateLustra();
-    if (zoomLevel > 6) animateRegular();
-
-    if (getDimensions().height < HEIGHT_TIMELINE + 120) {
-      //TODO: ANIMATE EXIT GRAPH
-
-      d3.select(graphRef.current)
-        .select("#group-graph")
-        .attr("display", "none");
-    } else {
-      //TODO: ANIMATE ENTER GRAPH
-
-      d3.select(graphRef.current)
-        .select("#group-graph")
-        .attr("display", "block");
-    }
-
-    d3.select(graphRef.current)
-      .select("#horizontal-axis-bottom")
-      .attr("y", getDimensions().height - PADDING.bottom);
-
-    d3.select(graphRef.current)
-      .select("#vertical-axis line")
-      .attr("y1", getDimensions().height - PADDING.bottom);
-
-    d3.select(graphRef.current)
-      .select("#main-graph-stroke")
-      .attr("width", getDimensions().width - 8)
-      .attr("height", getDimensions().height - HEIGHT_TIMELINE - 8);
-
-    d3.select(graphRef.current)
-      .select("#svg-wrapper")
-      .attr("width", getDimensions().width - 8)
-      .attr("height", getDimensions().height - 8);
-  };
 
   const updateYears = () => {
     const container = document?.getElementById("svg-wrapper");
@@ -616,7 +760,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickLeft = tick.getBoundingClientRect().left;
-          if (tickLeft >= left + PADDING.left) {
+          if (tickLeft >= left + getResponsivePadding().left) {
             setLeftYear(timeline[i].year);
             break;
           }
@@ -627,7 +771,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
         const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickRight = tick.getBoundingClientRect().right;
-          if (tickRight <= right - PADDING.right) {
+          if (tickRight <= right - getResponsivePadding().right) {
             setRightYear(timeline[i].year);
             break;
           }
@@ -636,109 +780,85 @@ const Timeline = ({ gsapTimeline }: Props) => {
     }
   };
 
-  const updatePeriods = (side: Side) => {
-    getActiveData(side).forEach((data) => {
-      const localPeriods = periods.get(data);
+  const updatePeriods = () => {
+    const svg = d3.selectAll<Element, DataPeriod>("svg.period-svg");
 
-      if (localPeriods) {
-        d3.select(graphRef.current)
-          .select("#group-timeline")
-          .selectAll<Element, DataPeriod>("line.period-line")
-          .attr(
-            "x1",
-            (d) =>
-              (timeline.findIndex((i) => i.year === d.startYear) *
-                getTickWidth() +
-                PADDING.left) *
-                zoomLevel +
-              PATH_PADDING +
-              TICK_OFFSET -
-              DATA_POINT_SIZE_PERIOD
-          )
-          .attr(
-            "x2",
-            (d) =>
-              (timeline.findIndex((i) => i.year === d.endYear) *
-                getTickWidth() +
-                PADDING.left) *
-                zoomLevel +
-              TICK_OFFSET -
-              PATH_PADDING +
-              DATA_POINT_SIZE_PERIOD
-          );
-      }
-    });
+    svg
+      .select("line.period-svg-line")
+      .attr(
+        "x2",
+        (d) =>
+          TICK_OFFSET -
+          PATH_PADDING +
+          DATA_POINT_SIZE_PERIOD +
+          getActualTickWidth() * (d.endYear - d.startYear)
+      );
+
+    svg
+      .select("circle.period-svg-circle.end")
+      .attr(
+        "cx",
+        (d) => TICK_OFFSET + getActualTickWidth() * (d.endYear - d.startYear)
+      );
   };
 
-  const updateHeights = (side: Side) => {
-    const maxHeight =
-      getDimensions().height - HEIGHT_TIMELINE - PADDING.bottom - 32;
+  const updateHeightsOfType = (type: SelectableDataType, side: Side) => {
+    d3.selectAll<Element, TimelineYear>(
+      `svg.datapoint-svg.${side}.${type}`
+    ).each((d) => {
+      gsap.to(`#datapoint-svg-${d.year}-${type} .datapoint-svg-circle`, {
+        attr: {
+          cy: getLinearScale(side)(d[type]?.number ?? 0),
+        },
+        duration: 0.6,
+      });
+    });
 
-    getActiveData(side).forEach((data) => {
-      getVisibleYears()
-        .filter((d) => typeof d[data]?.number !== "undefined")
-        .forEach((d) => {
-          gsap.to(`#tick-${d.year} .tick-data.${data}.${side}`, {
-            attr: {
-              cy:
-                getDimensions().height -
-                PADDING.bottom -
-                PATH_PADDING -
-                ((d[data]?.number ?? 0) / getMaxValueOnScreen(side)) *
-                  maxHeight,
-            },
-            duration: 0.6,
-          });
-        });
-
-      periods.get(data)?.forEach((period) => {
-        const value =
-          getDimensions().height -
-          PADDING.bottom -
-          PATH_PADDING -
-          (period.amount.number /
-            (period.endYear - period.startYear + 1) /
-            getMaxValueOnScreen(side)) *
-            maxHeight;
-        gsap.to(
-          `#tick-${period.startYear} .tick-data.${data}.${side}, #tick-${period.endYear} .tick-data.${data}.${side}`,
-          {
-            attr: {
-              cy: value,
-            },
-            duration: 0.6,
-          }
+    d3.selectAll<Element, DataPeriod>(`svg.period-svg.${side}.${type}`).each(
+      (d) => {
+        const y = getLinearScale(side)(
+          d.amount.number / (d.endYear - d.startYear + 1)
         );
 
-        gsap.to(`.period-line.line-${period.startYear}.${data}.${side}`, {
+        gsap.to(`#period-svg-${d.startYear}-${type} .period-svg-circle`, {
           attr: {
-            y1: value,
-            y2: value,
+            cy: y,
           },
           duration: 0.6,
         });
-      });
-    });
+
+        gsap.to(`#period-svg-${d.startYear}-${type} .period-svg-line`, {
+          attr: {
+            y1: y,
+            y2: y,
+          },
+          duration: 0.6,
+        });
+      }
+    );
+  };
+
+  const updateHeights = (side: Side) => {
+    if (side === Side.RIGHT) {
+      if (rightData) {
+        updateHeightsOfType(rightData, side);
+      }
+    } else {
+      getActiveLeft().forEach((data) => updateHeightsOfType(data, side));
+    }
   };
 
   const updateYAxis = (side: Side) => {
-    console.log("updating y axis");
-    console.log(getActiveData(side));
+    d3.select(graphRef.current).selectAll(`.y-axis.${side}`).remove();
     if (
-      (side === Side.LEFT && getActiveData(side).length > 0) ||
-      (side === Side.RIGHT && getActiveData(side).length > 0)
+      (side === Side.LEFT && getActiveLeft().length > 0) ||
+      (side === Side.RIGHT && rightData)
     ) {
-      const graphStart = PADDING.top + HEIGHT_TIMELINE;
-      const graphEnd = getDimensions().height - PADDING.bottom - PATH_PADDING;
+      const graphStart =
+        getResponsivePadding().top + HEIGHT_TIMELINE + PATH_PADDING;
+      const graphEnd = svgHeight - getResponsivePadding().bottom - PATH_PADDING;
       const nrOfTicks = Math.floor((graphEnd - graphStart) / 50);
       const maxValue = getMaxValueOnScreen(side);
-
-      d3.select(graphRef.current).selectAll(`.y-axis.${side}`).remove();
-
-      const y = d3
-        .scaleLinear()
-        .domain([0, maxValue])
-        .range([graphEnd, graphStart]);
 
       const yArray = [];
 
@@ -754,16 +874,25 @@ const Timeline = ({ gsapTimeline }: Props) => {
         .enter()
         .append("text")
         .attr("class", "y-axis")
-        .text((d) => d)
+        .text((d) => Intl.NumberFormat("en-US").format(d))
         .attr("text-anchor", side === Side.LEFT ? "end" : "start")
         .attr(
           "x",
           side === Side.LEFT
-            ? PADDING.left - PATH_PADDING
-            : getDimensions().width - PADDING.right + PATH_PADDING
+            ? getResponsivePadding().left - PATH_PADDING
+            : svgWidth - getResponsivePadding().right + PATH_PADDING
         )
-        .attr("y", (d) => y(d));
+        .attr("y", (d) => getLinearScale(side)(d));
     }
+  };
+
+  const updateEvents = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline-events")
+      .selectAll<Element, DataEvent>("svg.event-svg")
+      .select("rect.event-rect")
+      .attr("x", (d) => 25 + (d.date.getMonth() * getActualTickWidth()) / 12)
+      .attr("width", getEventWidth);
   };
 
   const handleZoom = (e: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
@@ -774,25 +903,29 @@ const Timeline = ({ gsapTimeline }: Props) => {
   //--------------------------------USE EFFECTS--------------------------------
 
   useEffect(() => {
-    console.log("zoom or pan changed");
     updateYears();
+    updateEvents();
     setZoomLevelFloored(() => Math.floor(zoomLevel));
     if (!Object.values(leftData).every((value) => !value)) {
       getMaxValueOnScreen(Side.LEFT);
       updateHeights(Side.LEFT);
-      updatePeriods(Side.LEFT);
+      updatePeriods();
       updateYAxis(Side.LEFT);
     }
 
-    if (!Object.values(rightData).every((value) => !value)) {
+    if (rightData) {
       getMaxValueOnScreen(Side.RIGHT);
       updateHeights(Side.RIGHT);
       updateYAxis(Side.RIGHT);
-      updatePeriods(Side.RIGHT);
+      updatePeriods();
     }
 
     d3.select(graphRef.current)
-      .select("#zoomable")
+      .select("#group-timeline")
+      .attr("transform", `translate(${panLevel}, 0) scale(${zoomLevel}, 1)`);
+
+    d3.select(graphRef.current)
+      .select("#group-timeline-events")
       .attr("transform", `translate(${panLevel}, 0) scale(${zoomLevel}, 1)`);
 
     d3.select(graphRef.current)
@@ -801,36 +934,33 @@ const Timeline = ({ gsapTimeline }: Props) => {
   }, [zoomLevel, panLevel]);
 
   useEffect(() => {
-    drawTimeline();
-    drawData(Side.LEFT);
-    drawData(Side.RIGHT);
-
-    window.addEventListener("resize", resize);
-    return () => {
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
-  useEffect(() => {
     if (zoomLevelFloored >= LUSTRUM_ZOOM) {
       animateLustra();
-      animateData(false, Side.LEFT);
-      animateData(false, Side.RIGHT);
+      animateData(Side.LEFT);
+      animateData(Side.RIGHT);
     } else {
       reverseLustra();
     }
 
     if (zoomLevelFloored >= REGULAR_ZOOM) {
       animateRegular();
-      animateData(false, Side.LEFT);
-      animateData(false, Side.RIGHT);
+      animateData(Side.LEFT);
+      animateData(Side.RIGHT);
     } else {
       reverseRegular();
     }
 
-    if (zoomLevelFloored >= SHORT_ZOOM) {
+    if (
+      (getActiveLeft().length > 0 || rightData) &&
+      zoomLevelFloored >= SHORT_ZOOM
+    ) {
       animateShort();
-    } else {
+    }
+
+    if (
+      (getActiveLeft().length > 0 || rightData) &&
+      zoomLevelFloored < SHORT_ZOOM
+    ) {
       reverseShort();
     }
   }, [zoomLevelFloored]);
@@ -838,15 +968,17 @@ const Timeline = ({ gsapTimeline }: Props) => {
   useEffect(() => {
     getMaxValueOnScreen(Side.LEFT);
     drawData(Side.LEFT);
+    drawPeriods(Side.LEFT);
     updateYAxis(Side.LEFT);
-    animateData(false, Side.LEFT);
+    animateData(Side.LEFT);
   }, [leftData]);
 
   useEffect(() => {
     getMaxValueOnScreen(Side.RIGHT);
     drawData(Side.RIGHT);
+    drawPeriods(Side.RIGHT);
     updateYAxis(Side.RIGHT);
-    animateData(false, Side.RIGHT);
+    animateData(Side.RIGHT);
   }, [rightData]);
 
   useGSAP(
@@ -900,10 +1032,10 @@ const Timeline = ({ gsapTimeline }: Props) => {
         }
       });
 
-      Object.keys(rightData).forEach((key) => {
+      getRightSideButtons().forEach((key) => {
         const icon = document.getElementById(`timeline-data-icon-${key}`);
         const placeholder = document.getElementById(
-          `active-row-placeholder-${key}`
+          `active-row-placeholder-right`
         );
 
         if (icon && placeholder) {
@@ -924,19 +1056,11 @@ const Timeline = ({ gsapTimeline }: Props) => {
             snap: {
               points: (point) => {
                 if (point.x < SNAP_DISTANCE && point.y < SNAP_DISTANCE) {
-                  setRightData((prev) => {
-                    const newData = { ...prev };
-                    newData[key as keyof RightData] = false;
-                    return newData;
-                  });
+                  setRightData(null);
                   return { x: 0, y: 0 };
                 }
 
-                setRightData((prev) => {
-                  const newData = { ...prev };
-                  newData[key as keyof RightData] = true;
-                  return newData;
-                });
+                setRightData(key);
                 return { x: spotX - iconX, y: spotY - iconY };
               },
             },
@@ -968,8 +1092,8 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "#main-graph-stroke",
             {
               attr: {
-                height: getDimensions().height - HEIGHT_TIMELINE - 8,
-                rx: 60,
+                height: svgHeight - HEIGHT_TIMELINE - 8,
+                rx: getResponsivePadding().rx,
               },
               duration: 0.5,
             },
@@ -991,7 +1115,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             {
               opacity: 1,
               attr: {
-                y2: getDimensions().height - PADDING.bottom - PATH_PADDING,
+                y2: svgHeight - getResponsivePadding().bottom - PATH_PADDING,
               },
               duration: 0.4,
               ease: "power4.out",
@@ -1018,7 +1142,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "#horizontal-axis line",
             {
               duration: 1,
-              attr: { x2: getDimensions().width - PADDING.right },
+              attr: { x2: svgWidth - getResponsivePadding().right },
               ease: "power4.out",
             },
             "<"
@@ -1028,9 +1152,11 @@ const Timeline = ({ gsapTimeline }: Props) => {
             {
               duration: 1,
               attr: {
-                points: `${getDimensions().width - PADDING.right - 15}, -15 , ${
-                  getDimensions().width - PADDING.right
-                }, 0, ${getDimensions().width - PADDING.right - 15}, 15`,
+                points: `${
+                  svgWidth - getResponsivePadding().right - 15
+                }, -15 , ${svgWidth - getResponsivePadding().right}, 0, ${
+                  svgWidth - getResponsivePadding().right - 15
+                }, 15`,
               },
               ease: "power4.out",
             },
@@ -1040,7 +1166,12 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "#vertical-axis line",
             {
               duration: 1,
-              attr: { y2: PADDING.top + HEIGHT_TIMELINE + PADDING.top },
+              attr: {
+                y2:
+                  getResponsivePadding().top +
+                  HEIGHT_TIMELINE +
+                  getResponsivePadding().top,
+              },
               ease: "power4.out",
             },
             "<"
@@ -1050,12 +1181,20 @@ const Timeline = ({ gsapTimeline }: Props) => {
             {
               duration: 1,
               attr: {
-                points: `${PADDING.left - 15}, ${
-                  PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
-                } , ${PADDING.left}, ${
-                  PADDING.top + HEIGHT_TIMELINE + PADDING.top
-                }, ${PADDING.left + 15}, ${
-                  PADDING.top + HEIGHT_TIMELINE + PADDING.top + 15
+                points: `${getResponsivePadding().left - 15}, ${
+                  getResponsivePadding().top +
+                  HEIGHT_TIMELINE +
+                  getResponsivePadding().top +
+                  15
+                } , ${getResponsivePadding().left}, ${
+                  getResponsivePadding().top +
+                  HEIGHT_TIMELINE +
+                  getResponsivePadding().top
+                }, ${getResponsivePadding().left + 15}, ${
+                  getResponsivePadding().top +
+                  HEIGHT_TIMELINE +
+                  getResponsivePadding().top +
+                  15
                 }`,
               },
               ease: "power4.out",
@@ -1063,71 +1202,228 @@ const Timeline = ({ gsapTimeline }: Props) => {
             "<"
           );
 
-        animateData(true, Side.LEFT);
-        animateData(true, Side.RIGHT);
+        d3.select(graphRef.current)
+          .selectAll<Element, DataEvent>(".event-svg .event-rect")
+          .each((d, i, nodes) => {
+            gsapTimeline.to(
+              nodes[i],
+              {
+                attr: { width: getEventWidth(d) },
+                duration: 0.5,
+              },
+              "<+0.05"
+            );
+          });
       }
     },
     { scope: timelineRef, dependencies: [gsapTimeline] }
   );
 
+  useEffect(() => {
+    drawTimeline();
+    resizeTicks();
+    resizeDataPoints();
+    resizePeriods();
+
+    if (svgHeight < HEIGHT_TIMELINE + 120) {
+      //TODO: ANIMATE EXIT GRAPH
+      d3.select(graphRef.current)
+        .select("#group-graph")
+        .attr("display", "none");
+    } else {
+      //TODO: ANIMATE ENTER GRAPH
+      d3.select(graphRef.current)
+        .select("#group-graph")
+        .attr("display", "block");
+    }
+    d3.select(graphRef.current)
+      .select("#horizontal-axis-bottom")
+      .attr("y", svgHeight - getResponsivePadding().bottom);
+    d3.select(graphRef.current)
+      .select("#vertical-axis line")
+      .attr("y1", svgHeight - getResponsivePadding().bottom);
+    d3.select(graphRef.current)
+      .select("#main-graph-stroke")
+      .attr("width", svgWidth - 8)
+      .attr("height", svgHeight - HEIGHT_TIMELINE - 8);
+    d3.select(graphRef.current)
+      .select("#svg-wrapper")
+      .attr("width", svgWidth - 8)
+      .attr("height", svgHeight - 8);
+
+    if (scrolled) {
+      resizeEvents();
+      animateMain();
+      animateDecades();
+      if (zoomLevel > 2) animateLustra();
+      if (zoomLevel > 6) animateRegular();
+      updateHeights(Side.RIGHT);
+      updateHeights(Side.LEFT);
+    }
+  }, [svgWidth, svgHeight]);
+
+  //--------------------------------MAIN USE EFFECT--------------------------------
+
+  useEffect(() => {
+    if (graphRef.current) {
+      const { width, height } = graphRef.current.getBoundingClientRect();
+      setSvgHeight(height);
+      setSvgWidth(width);
+    }
+
+    drawTimeline();
+    drawEvents();
+    drawData(Side.LEFT);
+    drawData(Side.RIGHT);
+    drawPeriods(Side.LEFT);
+    drawPeriods(Side.RIGHT);
+
+    window.onresize = onResize;
+    window.onmousemove = onMouseMove;
+    return () => {
+      window.onmousemove = null;
+      window.onresize = null;
+    };
+  }, []);
+
+  //--------------------------------WINDOW STUFF--------------------------------
+
+  const resizeTicks = () => {
+    //TODO: Correctly update ticks when zoomed in
+
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll<Element, TimelineYear>("svg.tick")
+      .attr(
+        "x",
+        (d) =>
+          getResponsivePadding().left +
+          (d.year - timeline[0].year) * getTickWidth()
+      );
+  };
+
+  const resizeDataPoints = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll<Element, TimelineYear>("svg.datapoint-svg")
+      .attr(
+        "x",
+        (d) =>
+          getResponsivePadding().left +
+          (d.year - timeline[0].year) * getTickWidth()
+      );
+  };
+
+  const resizePeriods = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline")
+      .selectAll<Element, DataPeriod>("svg.period-svg")
+      .attr(
+        "x",
+        (d) =>
+          getResponsivePadding().left +
+          (d.startYear - timeline[0].year) * getTickWidth()
+      );
+
+    updatePeriods();
+  };
+
+  const resizeEvents = () => {
+    d3.select(graphRef.current)
+      .select("#group-timeline-events")
+      .selectAll<Element, DataEvent>("svg.event-svg")
+      .attr(
+        "x",
+        (d) =>
+          getResponsivePadding().left +
+          (d.date.getFullYear() - timeline[0].year) * getTickWidth()
+      )
+      .select("rect.event-rect")
+      .attr("x", (d) => 25 + (d.date.getMonth() * getTickWidth()) / 12)
+      .attr("width", getEventWidth);
+  };
+
+  const onResize = () => {
+    if (graphRef.current) {
+      const { width, height } = graphRef.current.getBoundingClientRect();
+      setSvgHeight(height);
+      setSvgWidth(width);
+    }
+  };
+
+  const onMouseMove = (e: MouseEvent) => {
+    const elementWidth =
+      document.getElementById("mouseElement")?.getBoundingClientRect().width ??
+      0;
+
+    gsap.to("#mouseElement", {
+      x: e.clientX - elementWidth / 2,
+      y: e.clientY - MOUSE_ELEMENT_PADDING,
+      duration: 0.2,
+      stagger: 0.5,
+      overwrite: true,
+    });
+  };
+
   return (
     <div ref={timelineRef} className="timeline-section">
       <div className="timeline-main opacity-0 w-full h-full">
-        <div className="h-1/5 flex flex-row justify-between gap-8 items-center pb-4">
+        <div className="h-2/5 lg:h-1/5 flex flex-col-reverse lg:flex-row justify-between gap-8 items-center pb-4">
           <div id="data-icon-bounds">
             <div className="inactive">
-              {Object.keys(leftData).map((key) => {
-                return (
-                  <button
-                    id={`timeline-data-icon-${key}`}
-                    className={`data-icon ${key} left`}
-                    key={key}
-                  >
-                    {key[0]}
-                  </button>
-                );
-              })}
-              {Object.keys(rightData).map((key) => {
-                return (
-                  <button
-                    id={`timeline-data-icon-${key}`}
-                    className={`data-icon ${key} right`}
-                    key={key}
-                  >
-                    {key[0]}
-                  </button>
-                );
-              })}
+              <div className="data-icon-row left">
+                {Object.keys(leftData).map((key) => {
+                  return (
+                    <button
+                      id={`timeline-data-icon-${key}`}
+                      className={`data-button data-icon ${key} left`}
+                      key={key}
+                    >
+                      {key[0]}
+                    </button>
+                  );
+                })}
+                {getRightSideButtons().map((key) => {
+                  return (
+                    <button
+                      id={`timeline-data-icon-${key}`}
+                      className={`data-button data-icon ${key} right`}
+                      key={key}
+                    >
+                      {key[0]}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+            <div className="separator"></div>
             <div className="active">
-              <div className="active-row left">
+              <div className="data-icon-row left">
                 {Object.keys(leftData).map((key) => (
                   <div
                     key={key}
                     id={`active-row-placeholder-${key}`}
-                    className="active-row-placeholder"
+                    className="data-button active-row-placeholder"
                   >
                     {key[0]}
                   </div>
                 ))}
               </div>
-              <hr />
-              <div className="active-row right">
-                {Object.keys(rightData).map((key) => (
-                  <div
-                    key={key}
-                    id={`active-row-placeholder-${key}`}
-                    className="active-row-placeholder"
-                  >
-                    {key[0]}
-                  </div>
-                ))}
+              <div className="separator-vertical"></div>
+              <div className="data-icon-row right">
+                <div
+                  id={`active-row-placeholder-right`}
+                  className="data-button active-row-placeholder"
+                >
+                  r
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="text-BLACK text-4xl font-bold flex flex-col items-end">
+          <div className="text-BLACK text-4xl font-bold flex flex-row lg:flex-col items-end lg:w-1/4">
             <span>{leftYear}</span>
+            <span className="lg:hidden">—</span>
             <span>{rightYear}</span>
           </div>
         </div>
@@ -1137,7 +1433,7 @@ const Timeline = ({ gsapTimeline }: Props) => {
           ref={graphRef}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className=" w-full h-4/5 max-h-full rounded-60 origin-center"
+          className=" w-full h-3/5 lg:h-4/5 max-h-full rounded-[20px] lg:rounded-60 origin-center"
         >
           <linearGradient id="fade-to-right">
             <stop
@@ -1162,15 +1458,17 @@ const Timeline = ({ gsapTimeline }: Props) => {
           <defs>
             <g id="horizontal-axis" className="opacity-0">
               <line
-                x1={PADDING.left}
-                x2={PADDING.left}
+                x1={getResponsivePadding().left}
+                x2={getResponsivePadding().left}
                 y1={0}
                 y2={0}
-                className="stroke-8 stroke-BLACK"
+                className="stroke-4 lg:stroke-8 stroke-BLACK"
               />
               <polyline
-                points={`${PADDING.left}, 0 , ${PADDING.left}, 0, ${PADDING.left}, 0`}
-                className="stroke-8 stroke-BLACK fill-none"
+                points={`${getResponsivePadding().left}, 0 , ${
+                  getResponsivePadding().left
+                }, 0, ${getResponsivePadding().left}, 0`}
+                className="stroke-4 lg:stroke-8 stroke-BLACK fill-none"
               />
             </g>
           </defs>
@@ -1181,59 +1479,168 @@ const Timeline = ({ gsapTimeline }: Props) => {
             id="svg-wrapper"
             className="w-full fill-WHITE"
           ></rect>
-          <g id="zoomable">
-            <g id="group-timeline"></g>
-            <g id="group-graph"></g>
-          </g>
-          <rect
-            x={0}
-            y={0}
-            width={PADDING.left + 50}
-            fill="url(#fade-to-right)"
-            className="h-full"
-          ></rect>
-          <rect
-            x={getDimensions().width - PADDING.right - 50}
-            y={0}
-            width={PADDING.right + 50}
-            fill="url(#fade-to-left)"
-            className="h-full"
-          ></rect>
-
-          <rect
-            x={4}
-            y={HEIGHT_TIMELINE + 4}
-            width={getDimensions().width - 8}
-            height={1}
-            className="pointer-events-none stroke-BLACK fill-none stroke-8"
-            id="main-graph-stroke"
-            rx="10"
+          <g id="group-timeline"></g>
+          <use
+            y={
+              HEIGHT_TIMELINE -
+              PATH_PADDING / 2 -
+              (HEIGHT_TIMELINE / 2 - PATH_PADDING) / 2 -
+              15
+            }
+            href="#horizontal-axis"
           />
-
-          <use y={HEIGHT_TIMELINE / 2} href="#horizontal-axis" />
+          <g id="group-timeline-events"></g>
           <use
             id="horizontal-axis-bottom"
-            y={getDimensions().height - PADDING.bottom}
+            y={svgHeight - getResponsivePadding().bottom}
             href="#horizontal-axis"
           />
           <g id="vertical-axis" className="opacity-0">
             <line
-              x1={PADDING.left}
-              x2={PADDING.left}
-              y1={getDimensions().height - PADDING.bottom}
-              y2={getDimensions().height - PADDING.bottom}
-              className="stroke-8 stroke-BLACK"
+              x1={getResponsivePadding().left}
+              x2={getResponsivePadding().left}
+              y1={svgHeight - getResponsivePadding().bottom}
+              y2={svgHeight - getResponsivePadding().bottom}
+              className="stroke-4 lg:stroke-8 stroke-BLACK"
             />
             <polyline
-              points={`${PADDING.left}, ${
-                getDimensions().height - PADDING.bottom
-              }, ${PADDING.left}, ${getDimensions().height - PADDING.bottom},${
-                PADDING.left
-              }, ${getDimensions().height - PADDING.bottom}`}
-              className="stroke-8 stroke-BLACK fill-none"
+              points={`${getResponsivePadding().left}, ${
+                svgHeight - getResponsivePadding().bottom
+              }, ${getResponsivePadding().left}, ${
+                svgHeight - getResponsivePadding().bottom
+              },${getResponsivePadding().left}, ${
+                svgHeight - getResponsivePadding().bottom
+              }`}
+              className="stroke-4 lg:stroke-8 stroke-BLACK fill-none"
             />
           </g>
+          <rect
+            x={0}
+            y={0}
+            width={getResponsivePadding().left + 50}
+            fill="url(#fade-to-right)"
+            className="h-full pointer-events-none"
+          ></rect>
+          <rect
+            x={svgWidth - getResponsivePadding().right - 50}
+            y={0}
+            width={getResponsivePadding().right + 50}
+            fill="url(#fade-to-left)"
+            className="h-full pointer-events-none"
+          ></rect>
+          <rect
+            x={4}
+            y={HEIGHT_TIMELINE + 4}
+            width={Math.max(svgWidth - 8, 0)}
+            height={1}
+            className="pointer-events-none stroke-BLACK fill-none stroke-4 lg:stroke-8"
+            id="main-graph-stroke"
+            rx={getResponsivePadding().rx}
+          />
         </svg>
+      </div>
+
+      <div
+        onMouseLeave={() => {
+          if (selectedEvent) {
+            animateMouseHoverReverse();
+          }
+        }}
+        id="mouseElement"
+      >
+        <div id="mouseElementContent">
+          <div id="mouseElementContentVisibility">
+            {selectedDataPoint && (
+              <div className="datapoint">
+                <span className="number">
+                  {selectedDataPoint.endYear ? (
+                    <>
+                      <span>
+                        {Intl.NumberFormat("en-US").format(
+                          selectedDataPoint.amount.number
+                        )}
+                      </span>{" "}
+                      <span>{selectedDataPoint.type}</span> between{" "}
+                      <span>{selectedDataPoint.year}</span> and{" "}
+                      <span>{selectedDataPoint.endYear}</span>(avg.{" "}
+                      {Intl.NumberFormat("en-US", {
+                        maximumFractionDigits: 0,
+                      }).format(
+                        selectedDataPoint.amount.number /
+                          (selectedDataPoint.endYear -
+                            selectedDataPoint.year +
+                            1)
+                      )}{" "}
+                      per year)
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {Intl.NumberFormat("en-US").format(
+                          selectedDataPoint.amount.number
+                        )}
+                      </span>{" "}
+                      <span>{selectedDataPoint.type}</span> in{" "}
+                      <span>{selectedDataPoint.year}</span>
+                    </>
+                  )}
+                </span>
+
+                <ul className="sources">
+                  <li>
+                    <span>
+                      Source
+                      {selectedDataPoint.amount.source.length === 1 ? "" : "s"}:
+                    </span>
+                  </li>
+                  {selectedDataPoint.amount.source.map((source) => (
+                    <li key={source}>{source}</li>
+                  ))}
+                </ul>
+                {selectedDataPoint.amount.note && (
+                  <p className="note">{selectedDataPoint.amount.note}</p>
+                )}
+              </div>
+            )}
+            {selectedEvent && (
+              <div className="event">
+                <div className="title">{selectedEvent.name}</div>
+                <div className="date">
+                  {selectedEvent.date.toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                  {selectedEvent.endDate && " - "}
+                  {selectedEvent.endDate &&
+                    selectedEvent.endDate.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                </div>
+                <div className="event-full">
+                  <div className="description">
+                    {selectedEvent?.description}
+                  </div>
+
+                  <a
+                    className="read-more"
+                    target="_blank"
+                    href={selectedEvent?.link}
+                  >
+                    read more
+                  </a>
+                  <ul className="sources">
+                    {selectedEvent?.source?.map((source) => (
+                      <li key={source}>{source}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
