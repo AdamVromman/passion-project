@@ -228,10 +228,17 @@ html {
   .active-row-placeholder {
     @apply bg-WHITE text-BROWN;
     @apply flex justify-center items-center;
+
+    @apply transition-colors duration-300 ease-out;
+
+    &.closer {
+      @apply bg-BROWN text-WHITE;
+    }
   }
 
   .data-button {
     @apply w-[40px] h-[40px] lg:w-[50px] lg:h-[50px] rounded-7_5;
+    @apply text-BLACK font-bold;
   }
 
   .data-icon {

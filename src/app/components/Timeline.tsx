@@ -56,6 +56,8 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   });
 
   const [rightData, setRightData] = useState<SelectableDataType | null>(null);
+  const [previousRightData, setPreviousRightData] =
+    useState<SelectableDataType | null>(null);
 
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
@@ -935,6 +937,14 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     setPanLevel(() => e.transform.x);
   };
 
+  const movingRightSideBack = contextSafe((key: SelectableDataType) => {
+    const icon = document.getElementById(`timeline-data-icon-${key}`);
+
+    gsap.killTweensOf(icon);
+
+    gsap.to(icon, { x: 0, y: 0, duration: 1, ease: "power4.out" });
+  });
+
   //--------------------------------USE EFFECTS--------------------------------
 
   useEffect(() => {
@@ -1009,6 +1019,11 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   }, [leftData]);
 
   useEffect(() => {
+    if (previousRightData) {
+      movingRightSideBack(previousRightData);
+    }
+    setPreviousRightData(rightData);
+
     getMaxValueOnScreen(Side.RIGHT);
     drawData(Side.RIGHT);
     drawPeriods(Side.RIGHT);
@@ -1027,9 +1042,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           `active-row-placeholder-${key}`
         );
 
-        if (icon && placeholder) {
+        const returnElement = document.getElementById(
+          `active-row-return-${key}`
+        );
+
+        if (icon && placeholder && returnElement) {
           const { x: iconX, y: iconY } = icon.getBoundingClientRect();
           const { x: spotX, y: spotY } = placeholder.getBoundingClientRect();
+          const { x: returnX, y: returnY } =
+            returnElement.getBoundingClientRect();
+
+          const halfwayX = Math.abs(spotX - returnX) / 2;
 
           Draggable.create(icon, {
             inertia: true,
@@ -1042,17 +1065,33 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             },
             onDragEnd: () => {
               gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+              returnElement.classList.remove("closer");
+              placeholder.classList.remove("closer");
+            },
+
+            liveSnap: {
+              points: (point) => {
+                if (point.x <= halfwayX) {
+                  returnElement.classList.add("closer");
+                  placeholder.classList.remove("closer");
+                } else {
+                  returnElement.classList.remove("closer");
+                  placeholder.classList.add("closer");
+                }
+
+                return point;
+              },
             },
             snap: {
               points: (point) => {
-                if (point.x < SNAP_DISTANCE && point.y < SNAP_DISTANCE) {
+                if (point.x <= halfwayX) {
                   setLeftData((prev) => {
                     const newData = { ...prev };
                     newData[key as keyof LeftData] = false;
                     return newData;
                   });
 
-                  return { x: 0, y: 0 };
+                  return { x: returnX - iconX, y: returnY - iconY };
                 }
 
                 setLeftData((prev) => {
@@ -1073,9 +1112,18 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           `active-row-placeholder-right`
         );
 
-        if (icon && placeholder) {
+        const returnElement = document.getElementById(
+          `active-row-return-${key}`
+        );
+
+        if (icon && placeholder && returnElement) {
           const { x: iconX, y: iconY } = icon.getBoundingClientRect();
           const { x: spotX, y: spotY } = placeholder.getBoundingClientRect();
+
+          const { x: returnX, y: returnY } =
+            returnElement.getBoundingClientRect();
+
+          const halfwayX = Math.abs(spotX - returnX) / 2;
 
           Draggable.create(icon, {
             type: "x,y",
@@ -1087,12 +1135,27 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             },
             onDragEnd: () => {
               gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+              returnElement.classList.remove("closer");
+              placeholder.classList.remove("closer");
+            },
+            liveSnap: {
+              points: (point) => {
+                if (point.x <= halfwayX) {
+                  returnElement.classList.add("closer");
+                  placeholder.classList.remove("closer");
+                } else {
+                  returnElement.classList.remove("closer");
+                  placeholder.classList.add("closer");
+                }
+
+                return point;
+              },
             },
             snap: {
               points: (point) => {
-                if (point.x < SNAP_DISTANCE && point.y < SNAP_DISTANCE) {
+                if (point.x <= halfwayX) {
                   setRightData(null);
-                  return { x: 0, y: 0 };
+                  return { x: returnX - iconX, y: returnY - iconY };
                 }
 
                 setRightData(key);
@@ -1276,7 +1339,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       resizePeriods(rightData);
     }
 
-    console.log(windowWidth);
     if (windowWidth >= 1024) {
       window.onmousemove = onMouseMove;
     }
@@ -1507,24 +1569,35 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
               <div className="data-icon-row left">
                 {Object.keys(leftData).map((key) => {
                   return (
-                    <button
-                      id={`timeline-data-icon-${key}`}
-                      className={`data-button data-icon ${key} left`}
+                    <div
+                      id={`active-row-return-${key}`}
+                      className="data-button active-row-placeholder"
                       key={key}
                     >
-                      {key[0]}
-                    </button>
+                      <button
+                        id={`timeline-data-icon-${key}`}
+                        className={`data-button data-icon ${key} left`}
+                      >
+                        {key[0]}
+                      </button>
+                    </div>
                   );
                 })}
                 {getRightSideButtons().map((key) => {
                   return (
-                    <button
-                      id={`timeline-data-icon-${key}`}
-                      className={`data-button data-icon ${key} right`}
+                    <div
+                      className="data-button active-row-placeholder"
                       key={key}
+                      id={`active-row-return-${key}`}
                     >
-                      {key[0]}
-                    </button>
+                      <button
+                        id={`timeline-data-icon-${key}`}
+                        className={`data-button data-icon ${key} right`}
+                        key={key}
+                      >
+                        {key[0]}
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -1537,9 +1610,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                     key={key}
                     id={`active-row-placeholder-${key}`}
                     className="data-button active-row-placeholder"
-                  >
-                    {key[0]}
-                  </div>
+                  ></div>
                 ))}
               </div>
               <div className="separator-vertical"></div>
@@ -1547,9 +1618,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                 <div
                   id={`active-row-placeholder-right`}
                   className="data-button active-row-placeholder"
-                >
-                  r
-                </div>
+                ></div>
               </div>
             </div>
           </div>
