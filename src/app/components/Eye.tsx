@@ -9,7 +9,6 @@ import { DailyData, EyeLineElement } from "../services/types";
 interface Props {
   eyeOpen: boolean;
   dailyData: DailyData | null;
-  getData: () => void;
 }
 
 const CLOSED_LID =
@@ -23,7 +22,7 @@ const OPEN_CLIP =
 const CLOSED_CLIP =
   "M293.77,347.55s136.19,194.1,369.31,194.1,369.31-196.27,369.31-196.27v373.85H293.77v-371.68Z";
 
-const Eye = ({ eyeOpen, dailyData, getData }: Props) => {
+const Eye = ({ eyeOpen, dailyData }: Props) => {
   gsap.registerPlugin(MorphSVGPlugin);
 
   const ref = useRef(null);
@@ -49,9 +48,7 @@ const Eye = ({ eyeOpen, dailyData, getData }: Props) => {
 
   const { contextSafe } = useGSAP(
     () => {
-      const tl = gsap.timeline({
-        onReverseComplete: getData,
-      });
+      const tl = gsap.timeline({ paused: true });
       tl.to(eyeRef.current, {
         morphSVG: OPEN_LID,
         duration: 0.4,
@@ -67,7 +64,6 @@ const Eye = ({ eyeOpen, dailyData, getData }: Props) => {
         },
         "<"
       );
-      tl.pause();
       setTimeline(tl);
     },
     { scope: ref }

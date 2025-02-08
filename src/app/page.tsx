@@ -12,9 +12,9 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 export default function Home() {
   const [eyeOpen, setEyeOpen] = useState(false);
 
-  const [day, setDay] = useState<number>(24);
-  const [month, setMonth] = useState<number>(6);
-  const [year, setYear] = useState<number>(2024);
+  const [day, setDay] = useState<number>();
+  const [month, setMonth] = useState<number>();
+  const [year, setYear] = useState<number>();
 
   const [dailyData, setDailyData] = useState<DailyData | null>(null);
 
@@ -24,6 +24,7 @@ export default function Home() {
     useState<WestBankData | null>(null);
 
   const [scrolled, setScrolled] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const mainRef = useRef<HTMLDivElement>(null);
   const gsapTimeline = useRef<gsap.core.Timeline>(null);
@@ -116,9 +117,12 @@ export default function Home() {
       }
     });
 
-    setDay(lastDate.getDate());
-    setMonth(lastDate.getMonth());
-    setYear(lastDate.getFullYear());
+    if (lastDate) {
+      setDay(lastDate.getDate());
+      setMonth(lastDate.getMonth());
+      setYear(lastDate.getFullYear());
+      setLoaded(true);
+    }
   };
 
   const updateWidths = () => {
@@ -142,9 +146,10 @@ export default function Home() {
   };
 
   const dayToString = (day: number) => {
-    const date = new Date();
-    date.setDate(day);
-    return date.toLocaleDateString("en-US", { day: "numeric" });
+    if (day < 10) {
+      return "0" + day;
+    }
+    return day;
   };
 
   const monthToString = (month: number) => {
@@ -154,25 +159,32 @@ export default function Home() {
   };
 
   const dayMinus = () => {
-    const date = new Date(year, month, day);
-    const newDate = new Date(date.getTime() - 24 * 60 * 60 * 1000);
-    setDay(newDate.getDate());
-    setMonth(newDate.getMonth());
-    setYear(newDate.getFullYear());
+    if (day !== undefined && month !== undefined && year !== undefined) {
+      const date = new Date(year, month, day);
+      const newDate = new Date(date.getTime() - 24 * 60 * 60 * 1000);
+      setDay(newDate.getDate());
+      setMonth(newDate.getMonth());
+      setYear(newDate.getFullYear());
+    }
   };
 
   const dayPlus = () => {
-    const date = new Date(year, month, day);
-    const newDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-    setDay(newDate.getDate());
-    setMonth(newDate.getMonth());
-    setYear(newDate.getFullYear());
+    if (day !== undefined && month !== undefined && year !== undefined) {
+      const date = new Date(year, month, day);
+      const newDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+      setDay(newDate.getDate());
+      setMonth(newDate.getMonth());
+      setYear(newDate.getFullYear());
+    }
   };
 
   useEffect(() => {
     getLastUpdatedDate();
-    getData();
   }, []);
+
+  useEffect(() => {
+    if (loaded) getData();
+  }, [loaded]);
 
   const getData = () => {
     if (year && month && day) {
@@ -186,9 +198,13 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (day && month && year) {
+    if (day !== undefined && month !== undefined && year !== undefined) {
       updateWidths();
     }
+    const timeout = setTimeout(getData, 300);
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [day, month, year]);
 
   useEffect(() => {
@@ -268,45 +284,39 @@ export default function Home() {
   return (
     <div ref={mainRef} className="main">
       <BackgroundText eyeOpen={eyeOpen} />
-      <Eye
-        getData={() => {
-          getData();
-        }}
-        eyeOpen={eyeOpen}
-        dailyData={dailyData}
-      />
+      <Eye eyeOpen={eyeOpen} dailyData={dailyData} />
       <div className="fixed top-0 left-0 w-screen h-screen flex flex-col p-20 justify-start items-center text-WHITE">
         <div className="fixed opacity-0 pointer-events-none text-6xl font-bold">
-          {month && (
+          {month !== undefined && (
             <span className="border-2 border-transparent" ref={monthRef}>
               {monthToString(month)}
             </span>
           )}
-          {day && (
+          {day !== undefined && (
             <span className="border-2 border-transparent" ref={dayRef}>
               {dayToString(day)}
             </span>
           )}
-          {year && (
+          {year !== undefined && (
             <span className="border-2 border-transparent" ref={yearRef}>
               {year}
             </span>
           )}
         </div>
-        <div className="flex flex-row items-center gap-12">
-          <button
-            onClick={() => {
-              dayMinus();
-              setEyeOpen(false);
-            }}
-          >
-            <svg className="fill-WHITE w-14" viewBox="0 0 37.76 43.44">
-              <path d="M.03,21.79c.13.1,4.11,2.11,9.72,5.61,3.39,1.51,6.65,4.23,9.46,5.63,2.2,1.92,5.28,3.04,8.59,4.79,6.48,3.28,9.85,4.59,9.72,5.61.06-.58-.27-5.09,0-11.23.33-2.27-.13-6.8.23-10.28-.26-4.28.22-7.62-.23-10.57-.62-5.57.27-11.83,0-11.23.06-.81-3.39,2.08-9.72,5.61-3.17,1.65-5.68,2.58-9.21,5.06-3.91,1.35-6.6,3.32-8.85,5.36C4.46,19.17-.4,21.78.03,21.79Z" />
-            </svg>
-          </button>
+        {day !== undefined && month !== undefined && year !== undefined && (
+          <div className="flex flex-row items-center gap-12">
+            <button
+              onClick={() => {
+                dayMinus();
+                setEyeOpen(false);
+              }}
+            >
+              <svg className="fill-WHITE w-14" viewBox="0 0 37.76 43.44">
+                <path d="M.03,21.79c.13.1,4.11,2.11,9.72,5.61,3.39,1.51,6.65,4.23,9.46,5.63,2.2,1.92,5.28,3.04,8.59,4.79,6.48,3.28,9.85,4.59,9.72,5.61.06-.58-.27-5.09,0-11.23.33-2.27-.13-6.8.23-10.28-.26-4.28.22-7.62-.23-10.57-.62-5.57.27-11.83,0-11.23.06-.81-3.39,2.08-9.72,5.61-3.17,1.65-5.68,2.58-9.21,5.06-3.91,1.35-6.6,3.32-8.85,5.36C4.46,19.17-.4,21.78.03,21.79Z" />
+              </svg>
+            </button>
 
-          <div className="eye-date-picker">
-            {month && (
+            <div className="eye-date-picker">
               <select
                 onChange={(e) => {
                   setMonth(Number.parseInt(e.target.value));
@@ -324,8 +334,7 @@ export default function Home() {
                   );
                 })}
               </select>
-            )}
-            {day && (
+
               <div>
                 <select
                   onChange={(e) => {
@@ -334,18 +343,19 @@ export default function Home() {
                   value={day}
                   ref={dayInputRef}
                 >
-                  {new Array(31).fill(0).map((_, i) => {
-                    return (
-                      <option key={i + 1} value={i + 1}>
-                        {dayToString(i + 1)}
-                      </option>
-                    );
-                  })}
+                  {new Array(new Date(year, month + 1, 0).getDate())
+                    .fill(0)
+                    .map((_, i) => {
+                      return (
+                        <option key={i + 1} value={i + 1}>
+                          {dayToString(i + 1)}
+                        </option>
+                      );
+                    })}
                 </select>
                 <span>,</span>
               </div>
-            )}
-            {year && (
+
               <select
                 onChange={(e) => {
                   setYear(Number.parseInt(e.target.value));
@@ -358,19 +368,19 @@ export default function Home() {
                 <option value={2024}>2024</option>
                 <option value={2025}>2025</option>
               </select>
-            )}
+            </div>
+            <button
+              onClick={() => {
+                dayPlus();
+                setEyeOpen(false);
+              }}
+            >
+              <svg className="fill-WHITE w-14" viewBox="0 0 37.81 43.32">
+                <path d="M37.73,21.67c-.34.49-4.88-2.53-9.72-5.61-3.04-1.89-5.67-3.74-8.85-5.24-2.83-1.84-7.62-3.58-9.21-5.18C4.13,2.61.15-.12.23.02.55-.36-.42,5.22.23,11.24c-.37,3.43.25,7.02.17,10.7.31,3.71.09,7.21-.17,10.15.07,7,.79,11.05,0,11.23.11-.42,4.54-2.5,9.72-5.61,2.94-1.98,6.6-3.94,9.04-5.18,2.63-1.25,6.32-3.25,9.02-5.24,6.3-3.74,10.45-5.59,9.72-5.61Z" />
+              </svg>
+            </button>
           </div>
-          <button
-            onClick={() => {
-              dayPlus();
-              setEyeOpen(false);
-            }}
-          >
-            <svg className="fill-WHITE w-14" viewBox="0 0 37.81 43.32">
-              <path d="M37.73,21.67c-.34.49-4.88-2.53-9.72-5.61-3.04-1.89-5.67-3.74-8.85-5.24-2.83-1.84-7.62-3.58-9.21-5.18C4.13,2.61.15-.12.23.02.55-.36-.42,5.22.23,11.24c-.37,3.43.25,7.02.17,10.7.31,3.71.09,7.21-.17,10.15.07,7,.79,11.05,0,11.23.11-.42,4.54-2.5,9.72-5.61,2.94-1.98,6.6-3.94,9.04-5.18,2.63-1.25,6.32-3.25,9.02-5.24,6.3-3.74,10.45-5.59,9.72-5.61Z" />
-            </svg>
-          </button>
-        </div>
+        )}
       </div>
       <Timeline scrolled={scrolled} gsapTimeline={gsapTimeline.current} />
     </div>
