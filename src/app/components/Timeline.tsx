@@ -39,9 +39,10 @@ const EVENT_HEIGHT = 50;
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
   scrolled: boolean;
+  dayOfTheWeek: string | null;
 }
 
-const Timeline = ({ gsapTimeline, scrolled }: Props) => {
+const Timeline = ({ gsapTimeline, scrolled, dayOfTheWeek }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
@@ -1079,6 +1080,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             },
             "0"
           )
+          .to(".timeline-cta", { opacity: 0, duration: 0.5 }, "<")
           .to(
             ".timeline-main",
             {
@@ -1367,6 +1369,11 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
 
   return (
     <div ref={timelineRef} className="timeline-section">
+      <div className="timeline-cta">
+        The crimes against Palestinians did not start on October 07, 2023.
+        Scroll down to see more.
+      </div>
+
       <div className="timeline-main opacity-0 w-full h-full">
         <div className="h-2/5 lg:h-1/5 flex flex-col-reverse lg:flex-row justify-between gap-8 items-center pb-4">
           <div id="data-icon-bounds">

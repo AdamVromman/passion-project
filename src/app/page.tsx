@@ -347,6 +347,18 @@ export default function Home() {
     { scope: mainRef, dependencies: [mainRef] }
   );
 
+  useGSAP(
+    () => {
+      gsap.to("#eye-buttons", {
+        scale: 1,
+        opacity: 1,
+        duration: 1,
+        ease: "power2.out",
+      });
+    },
+    { scope: mainRef, dependencies: [eyeOpen] }
+  );
+
   return (
     <div ref={mainRef} className="main">
       <BackgroundText eyeOpen={eyeOpen} />
@@ -370,8 +382,12 @@ export default function Home() {
           )}
         </div>
         {hasDate() && (
-          <div className="flex flex-row items-center gap-12">
+          <div
+            id="eye-buttons"
+            className="flex flex-row items-center gap-12 opacity-0 scale-50"
+          >
             <button
+              className="cursor-pointer"
               onClick={() => {
                 dayMinus();
                 setEyeOpen(false);
@@ -439,6 +455,7 @@ export default function Home() {
               </select>
             </div>
             <button
+              className="cursor-pointer"
               onClick={() => {
                 dayPlus();
                 setEyeOpen(false);
@@ -493,9 +510,19 @@ export default function Home() {
         }}
         className="fixed top-0 left-0 scale-0 origin-center z-50 text-WHITE bg-RED p-4 rounded-full cursor-pointer"
       >
-        Open your eye.
+        Open your eye
       </button>
-      <Timeline scrolled={scrolled} gsapTimeline={gsapTimeline.current} />
+      <Timeline
+        dayOfTheWeek={
+          hasDate()
+            ? new Date(year!, month!, day!).toLocaleDateString("en-US", {
+                weekday: "long",
+              })
+            : null
+        }
+        scrolled={scrolled}
+        gsapTimeline={gsapTimeline.current}
+      />
     </div>
   );
 }

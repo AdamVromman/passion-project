@@ -83,12 +83,20 @@ html {
 
   width: calc(100vw - 20px);
   height: calc(100vh - 20px);
-  transform: translateY(calc(100vh - 40px));
+  transform: translateY(calc(100vh - 20px - 10px));
 
   @media (width >= 64rem) {
     width: calc(100vw - 60px);
     height: calc(100vh - 60px);
-    transform: translateY(calc(100vh - 90px));
+    transform: translateY(calc(100vh - 60px - 30px));
+  }
+
+  .timeline-cta {
+    @apply absolute top-0 right-0;
+    @apply w-full h-[20px] lg:h-[60px];
+    @apply flex flex-row justify-center items-center;
+    @apply px-30 lg:px-90;
+    @apply text-2xl font-bold text-BROWN;
   }
 }
 

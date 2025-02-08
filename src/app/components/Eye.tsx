@@ -261,7 +261,7 @@ const Eye = ({ eyeOpen, dailyData }: Props) => {
     <div>
       <svg
         ref={ref}
-        className="absolute top-0 left-0 w-screen h-screen p-60 pb-120 fill-BEIGE opacity-20 scale-50"
+        className="absolute top-0 left-0 w-screen h-screen p-60 pb-120 fill-BEIGE opacity-0 scale-50"
         viewBox="0 0 1356.03 696.86"
       >
         <defs>
