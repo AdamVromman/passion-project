@@ -378,7 +378,7 @@ export default function Home() {
       <BackgroundText windowWidth={windowWidth} eyeOpen={eyeOpen} />
       <Eye windowWidth={windowWidth} eyeOpen={eyeOpen} dailyData={dailyData} />
       <div className="fixed top-0 left-0 w-screen h-screen flex flex-col p-20 justify-start items-center text-WHITE">
-        <div className="fixed opacity-0 pointer-events-none text-3xl lg:text-6xl font-bold">
+        <div className="fixed opacity-0 pointer-events-none text-2xl lg:text-6xl font-bold">
           {month !== undefined && (
             <span className="border-2 border-transparent" ref={monthRef}>
               {monthToString(month)}
@@ -482,18 +482,16 @@ export default function Home() {
           </div>
         )}
         {hasDate() && dataLoaded && (
-          <div className="mt-8">
+          <div className="mt-8 text-xl lg:text-3xl font-bold italic text-center">
             {dayInTheFuture && (
-              <span className="text-3xl font-bold italic text-RED">
-                This day is in the future.
-              </span>
+              <span className=" text-RED">This day is in the future.</span>
             )}
             {!dataGaza &&
               !dataWestBank &&
               searchedGaza &&
               searchedWestBank &&
               !dayInTheFuture && (
-                <span className="text-3xl font-bold italic text-RED">
+                <span className=" text-RED">
                   There is no data available for this day.
                 </span>
               )}
@@ -502,7 +500,7 @@ export default function Home() {
               dailyData.gazaKilled === 0 &&
               dailyData.westBankInjured === 0 &&
               dailyData.westBankKilled === 0 && (
-                <span className="text-3xl font-bold italic text-GREEN">
+                <span className=" text-GREEN">
                   No deaths or injuries have been reported for this day!
                 </span>
               )}

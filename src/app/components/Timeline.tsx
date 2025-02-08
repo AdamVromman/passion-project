@@ -1365,8 +1365,10 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   return (
     <div ref={timelineRef} className="timeline-section">
       <div className="timeline-cta">
-        The crimes against Palestinians did not start on October 07, 2023.
-        Scroll down to see more.
+        <span>
+          The crimes against Palestinians did not start on October 07, 2023.
+          <span className="text-BLACK"> Scroll down to see more.</span>
+        </span>
       </div>
 
       <div className="timeline-main opacity-0 w-full h-full">
