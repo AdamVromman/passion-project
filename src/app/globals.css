@@ -323,9 +323,14 @@ html {
 }
 
 #mouseElement {
-  @apply fixed -left-30 -top-30;
-  @apply p-10;
+  @apply fixed -bottom-[10px] -left-[10px] -right-[10px] lg:-left-30 lg:-top-30;
+  @apply p-0 lg:p-10;
   @apply pointer-events-none;
+
+  @media (width >= 64rem) {
+    bottom: unset;
+    right: unset;
+  }
 
   &.selected {
     @apply pointer-events-auto;
@@ -346,7 +351,7 @@ html {
   }
 
   .event {
-    @apply w-[500px];
+    @apply w-full lg:w-[500px];
     .title {
       @apply text-center text-2xl font-bold;
     }
