@@ -274,7 +274,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
     <div>
       <svg
         ref={ref}
-        className="absolute top-0 left-0 w-screen h-screen lg:p-60 lg:pb-120 fill-BEIGE opacity-0 scale-50"
+        className="absolute top-0 left-0 w-dvw h-dvh lg:p-60 lg:pb-120 fill-BEIGE opacity-0 scale-50"
         viewBox={
           windowWidth >= 1024 ? "0 0 1356.03 696.86" : "0 0 885.63 1021.6"
         }
