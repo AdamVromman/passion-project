@@ -83,7 +83,7 @@ html {
 
   width: calc(100dvw - 20px);
   height: calc(100dvh - 20px);
-  transform: translateY(calc(100dvh - 150px - 10px));
+  transform: translateY(calc(100dvh - 100px - 10px));
 
   @media (width >= 64rem) {
     width: calc(100dvw - 60px);
@@ -93,7 +93,7 @@ html {
 
   .timeline-cta {
     @apply absolute top-0 right-0;
-    @apply w-full h-[160px] lg:h-[60px];
+    @apply w-full h-[110px] lg:h-[60px];
     @apply flex flex-row justify-center items-center;
     @apply px-30 lg:px-90;
     @apply text-xl lg:text-2xl font-bold text-BROWN;
