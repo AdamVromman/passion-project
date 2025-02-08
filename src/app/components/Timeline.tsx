@@ -21,6 +21,7 @@ import {
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
 import { dataTypeAndDataToString } from "../services/functions";
+import { animate } from "motion";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60, rx: 60 };
 const PADDING_MOBILE = { top: 30, left: 20, right: 20, bottom: 20, rx: 20 };
@@ -438,9 +439,20 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   });
 
   const animateEventOpen = contextSafe(() => {
-    d3.select("#mouseElement").attr("class", "selected");
-    window.onmousemove = null;
-    setSelectedDataPoint(null);
+    if (windowWidth >= 1024) {
+      d3.select("#mouseElement").attr("class", "selected");
+      window.onmousemove = null;
+
+      gsap.from("#mouseElement .event .event-full", {
+        height: 0,
+        opacity: 0,
+        paddingTop: 0,
+        duration: 0.6,
+        ease: "power4.out",
+      });
+    }
+
+    gsap.set("#mouseElement .event .event-full", { display: "block" });
 
     gsap.to("#mouseElementContent", {
       scale: 1,
@@ -448,34 +460,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       ease: "power4.out",
       overwrite: true,
     });
-
-    gsap.set("#mouseElement .event .event-full", { display: "block" });
-    gsap.from("#mouseElement .event .event-full", {
-      height: 0,
-      opacity: 0,
-      paddingTop: 0,
-      duration: 0.6,
-      ease: "power4.out",
-    });
-  });
-
-  const animateEventOpenMobile = contextSafe(() => {
-    d3.select("#mouseElement").attr("class", "selected");
-    window.onmousemove = null;
-    setSelectedDataPoint(null);
-
-    gsap.set("#mouseElement .event .event-full", { display: "block" });
-
-    gsap.fromTo(
-      "#mouseElementContent",
-      { scale: 0, y: "100%" },
-      {
-        scale: 1,
-        y: 0,
-        ease: "power4.out",
-        duration: 0.6,
-      }
-    );
   });
 
   //--------------------------------DRAWING DATA--------------------------------
@@ -604,7 +588,14 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         animateMouseHoverReverse();
       })
       .on("click", (_, d) => {
-        if (d[type]) {
+        if (windowWidth < 1024) {
+          if (d[type]) {
+            setSelectedDataPoint({
+              year: d.year,
+              type: type,
+              amount: d[type],
+            });
+          }
         }
       });
   };
@@ -707,7 +698,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             });
         })
         .on("mouseleave", () => {
-          setSelectedDataPoint(null);
+          animateMouseHoverReverse();
+        })
+        .on("click", (_, d) => {
+          if (windowWidth < 1024) {
+            setSelectedDataPoint({
+              year: d.startYear,
+              endYear: d.endYear,
+              type: type,
+              amount: d.amount,
+            });
+          }
         });
     }
   };
@@ -831,7 +832,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         }
       })
       .on("mouseleave", () => {
-        setSelectedDataPoint(null);
+        animateMouseHoverReverse();
+      })
+      .on("click", (_, d) => {
+        if (windowWidth < 1024) {
+          setSelectedDataPoint({
+            year: d.startYear,
+            endYear: d.endYear,
+            type: type,
+            amount: d.amount,
+          });
+        }
       });
   };
 
@@ -1052,7 +1063,11 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     if (selectedEvent) {
       setSelectedButton(null);
       setSelectedDataPoint(null);
-      animateMouseHover();
+      if (windowWidth >= 1024) {
+        animateMouseHover();
+      } else {
+        animateEventOpen();
+      }
     }
   }, [selectedEvent]);
 
@@ -1085,6 +1100,11 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             resistance: 0.5,
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
+            onClick: () => {
+              if (windowWidth < 1024) {
+                setSelectedButton(key as SelectableDataType);
+              }
+            },
             onDragStart: () => {
               animateMouseHoverReverse();
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
@@ -1155,6 +1175,11 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             inertia: true,
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
+            onClick: () => {
+              if (windowWidth < 1024) {
+                setSelectedButton(key);
+              }
+            },
             onDragStart: () => {
               animateMouseHoverReverse();
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
@@ -1408,17 +1433,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     }
   }, [svgWidth, svgHeight, scrolled]);
 
-  useGSAP(
-    () => {
-      if (selectedEvent !== null) {
-        if (windowWidth < 1024) {
-          animateEventOpenMobile();
-        }
-      }
-    },
-    { scope: timelineRef, dependencies: [selectedEvent] }
-  );
-
   //--------------------------------MAIN USE EFFECT--------------------------------
 
   useEffect(() => {
@@ -1482,15 +1496,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       })
 
       .on("mouseleave", () => {
-        setSelectedDataPoint(null);
+        animateMouseHoverReverse();
       })
       .on("click", (_, d) => {
-        if (d[type]) {
-          setSelectedDataPoint({
-            year: d.year,
-            type: type,
-            amount: d[type],
-          });
+        if (windowWidth < 1024) {
+          if (d[type]) {
+            setSelectedDataPoint({
+              year: d.year,
+              type: type,
+              amount: d[type],
+            });
+          }
         }
       });
   };

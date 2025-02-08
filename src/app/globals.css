@@ -350,7 +350,11 @@ html {
     @apply flex flex-col items-center justify-center;
     @apply overflow-hidden;
     @apply scale-0;
-    transform-origin: top center;
+    transform-origin: bottom center;
+
+    @media (width >= 64rem) {
+      transform-origin: top center;
+    }
   }
 
   #mouseElementContentVisibility {
@@ -402,34 +406,6 @@ html {
       @apply mt-4 italic;
     }
   }
-
-  /* .event {
-    @apply bg-BLACK text-WHITE;
-    @apply flex flex-col justify-start items-center;
-    @apply opacity-0 rounded-2xl;
-    @apply pointer-events-none;
-    @apply relative overflow-hidden;
-    @apply max-w-[300px];
-
-    &.selected,
-    &.hovering {
-      @apply pointer-events-auto;
-      @apply opacity-100;
-    }
-
-    &.selected {
-      @apply p-4;
-       .event-full {
-        @apply block;
-      } 
-    }
-
-     &.hovering {
-      .event-full {
-        @apply hidden;
-      }
-    } 
-  } */
 }
 
 .event-svg {
