@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import {
   DataEvent,
@@ -21,10 +21,9 @@ import {
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
 import { dataTypeAndDataToString } from "../services/functions";
-import { animate } from "motion";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60, rx: 60 };
-const PADDING_MOBILE = { top: 30, left: 20, right: 20, bottom: 20, rx: 20 };
+const PADDING_MOBILE = { top: 30, left: 30, right: 30, bottom: 20, rx: 20 };
 const HEIGHT_TIMELINE = 150;
 const LUSTRUM_ZOOM = 2;
 const REGULAR_ZOOM = 6;
@@ -910,20 +909,38 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         yArray.push((maxValue / nrOfTicks) * i);
       }
 
-      d3.select(graphRef.current)
+      const group = d3
+        .select(graphRef.current)
         .append("g")
         .attr("class", `y-axis ${side}`)
         .selectAll<Element, number>("text.y-axis")
         .data(yArray)
         .enter()
-        .append("text")
-        .attr("class", "y-axis")
-        .text((d) => Intl.NumberFormat("en-US").format(d))
-        .attr("text-anchor", side === Side.LEFT ? "end" : "start")
+        .append("g");
+
+      group
+        .append("rect")
+        .attr("class", "y-axis-rect")
         .attr(
           "x",
           side === Side.LEFT
-            ? getResponsivePadding().left - PATH_PADDING
+            ? getResponsivePadding().left
+            : svgWidth - getResponsivePadding().right + PATH_PADDING
+        )
+        .attr("y", (d) => getLinearScale(side)(d))
+        .attr("width", (d) => Intl.NumberFormat("en-US").format(d).length * 10)
+        .attr("height", 0)
+        .attr("fill", "black");
+
+      group
+        .append("text")
+        .attr("class", "y-axis")
+        .text((d) => Intl.NumberFormat("en-US").format(d))
+        .attr("text-anchor", "start")
+        .attr(
+          "x",
+          side === Side.LEFT
+            ? getResponsivePadding().left
             : svgWidth - getResponsivePadding().right + PATH_PADDING
         )
         .attr("y", (d) => getLinearScale(side)(d));
@@ -1041,7 +1058,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   }, [rightData]);
 
   useEffect(() => {
-    console.log("selectedButton", selectedButton);
     if (selectedButton) {
       setSelectedDataPoint(null);
       setSelectedEvent(null);
@@ -1050,7 +1066,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   }, [selectedButton]);
 
   useEffect(() => {
-    console.log("selectedDataPoint", selectedDataPoint);
     if (selectedDataPoint) {
       setSelectedButton(null);
       setSelectedEvent(null);
@@ -1059,7 +1074,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   }, [selectedDataPoint]);
 
   useEffect(() => {
-    console.log("selectedEvent", selectedEvent);
     if (selectedEvent) {
       setSelectedButton(null);
       setSelectedDataPoint(null);
