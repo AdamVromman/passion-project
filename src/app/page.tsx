@@ -378,7 +378,7 @@ export default function Home() {
       <BackgroundText windowWidth={windowWidth} eyeOpen={eyeOpen} />
       <Eye windowWidth={windowWidth} eyeOpen={eyeOpen} dailyData={dailyData} />
       <div className="fixed top-0 left-0 w-screen h-screen flex flex-col p-20 justify-start items-center text-WHITE">
-        <div className="fixed opacity-0 pointer-events-none text-6xl font-bold">
+        <div className="fixed opacity-0 pointer-events-none text-3xl lg:text-6xl font-bold">
           {month !== undefined && (
             <span className="border-2 border-transparent" ref={monthRef}>
               {monthToString(month)}
@@ -398,16 +398,16 @@ export default function Home() {
         {hasDate() && (
           <div
             id="eye-buttons"
-            className="flex flex-row items-center gap-12 opacity-0 scale-50"
+            className="flex flex-row items-center gap-6 lg:gap-12 opacity-0 scale-50"
           >
             <button
-              className="cursor-pointer"
+              className="w-6 lg:w-14 cursor-pointer"
               onClick={() => {
                 dayMinus();
                 setEyeOpen(false);
               }}
             >
-              <svg className="fill-WHITE w-14" viewBox="0 0 37.76 43.44">
+              <svg className="fill-WHITE" viewBox="0 0 37.76 43.44">
                 <path d="M.03,21.79c.13.1,4.11,2.11,9.72,5.61,3.39,1.51,6.65,4.23,9.46,5.63,2.2,1.92,5.28,3.04,8.59,4.79,6.48,3.28,9.85,4.59,9.72,5.61.06-.58-.27-5.09,0-11.23.33-2.27-.13-6.8.23-10.28-.26-4.28.22-7.62-.23-10.57-.62-5.57.27-11.83,0-11.23.06-.81-3.39,2.08-9.72,5.61-3.17,1.65-5.68,2.58-9.21,5.06-3.91,1.35-6.6,3.32-8.85,5.36C4.46,19.17-.4,21.78.03,21.79Z" />
               </svg>
             </button>
@@ -432,7 +432,7 @@ export default function Home() {
                 })}
               </select>
 
-              <div>
+              <div className="flex flex-row flex-nowrap">
                 <select
                   onChange={(e) => {
                     setEyeOpen(false);
@@ -469,13 +469,13 @@ export default function Home() {
               </select>
             </div>
             <button
-              className="cursor-pointer"
+              className="cursor-pointer w-6 lg:w-14"
               onClick={() => {
                 dayPlus();
                 setEyeOpen(false);
               }}
             >
-              <svg className="fill-WHITE w-14" viewBox="0 0 37.81 43.32">
+              <svg className="fill-WHITE" viewBox="0 0 37.81 43.32">
                 <path d="M37.73,21.67c-.34.49-4.88-2.53-9.72-5.61-3.04-1.89-5.67-3.74-8.85-5.24-2.83-1.84-7.62-3.58-9.21-5.18C4.13,2.61.15-.12.23.02.55-.36-.42,5.22.23,11.24c-.37,3.43.25,7.02.17,10.7.31,3.71.09,7.21-.17,10.15.07,7,.79,11.05,0,11.23.11-.42,4.54-2.5,9.72-5.61,2.94-1.98,6.6-3.94,9.04-5.18,2.63-1.25,6.32-3.25,9.02-5.24,6.3-3.74,10.45-5.59,9.72-5.61Z" />
               </svg>
             </button>

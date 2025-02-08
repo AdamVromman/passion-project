@@ -103,7 +103,7 @@ html {
 .eye-date-picker {
   @apply flex flex-row items-center gap-2;
 
-  @apply text-6xl font-bold text-WHITE;
+  @apply text-3xl lg:text-6xl font-bold text-WHITE;
 
   & select {
     -webkit-appearance: none;
