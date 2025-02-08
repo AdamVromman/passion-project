@@ -1271,6 +1271,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     resizeTicks();
     resizeDataPoints();
     resizePeriods();
+    resizeYAxis();
 
     if (svgHeight < HEIGHT_TIMELINE + 120) {
       //TODO: ANIMATE EXIT GRAPH
@@ -1405,6 +1406,15 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .select("rect.event-rect")
       .attr("x", (d) => 25 + (d.date.getMonth() * getTickWidth()) / 12)
       .attr("width", getEventWidth);
+  };
+
+  const resizeYAxis = () => {
+    if (rightData) {
+      updateYAxis(Side.RIGHT);
+    }
+    if (getActiveLeft().length > 0) {
+      updateYAxis(Side.LEFT);
+    }
   };
 
   const onResize = () => {
