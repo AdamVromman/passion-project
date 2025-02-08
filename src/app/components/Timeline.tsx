@@ -39,9 +39,10 @@ const EVENT_HEIGHT = 50;
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
   scrolled: boolean;
+  windowWidth: number;
 }
 
-const Timeline = ({ gsapTimeline, scrolled }: Props) => {
+const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
@@ -197,13 +198,8 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
     );
   };
 
-  const getWindowWidth = () => {
-    if (typeof window !== "undefined") return window.innerWidth;
-    return 768;
-  };
-
   const getResponsivePadding = () => {
-    return getWindowWidth() >= 1024 ? PADDING : PADDING_MOBILE;
+    return windowWidth >= 1024 ? PADDING : PADDING_MOBILE;
   };
 
   //--------------------------------ANIMATIONS--------------------------------
@@ -1079,6 +1075,7 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
             },
             "0"
           )
+          .to(".timeline-cta", { opacity: 0, duration: 0.5 }, "<")
           .to(
             ".timeline-main",
             {
@@ -1367,6 +1364,13 @@ const Timeline = ({ gsapTimeline, scrolled }: Props) => {
 
   return (
     <div ref={timelineRef} className="timeline-section">
+      <div className="timeline-cta">
+        <span>
+          The crimes against Palestinians did not start on October 07, 2023.
+          <span className="text-BLACK"> Scroll down to see more.</span>
+        </span>
+      </div>
+
       <div className="timeline-main opacity-0 w-full h-full">
         <div className="h-2/5 lg:h-1/5 flex flex-col-reverse lg:flex-row justify-between gap-8 items-center pb-4">
           <div id="data-icon-bounds">
