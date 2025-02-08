@@ -73,6 +73,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     null
   );
 
+  const [selectedButton, setSelectedButton] =
+    useState<SelectableDataType | null>(null);
+
   const [svgWidth, setSvgWidth] = useState(1000);
   const [svgHeight, setSvgHeight] = useState(500);
 
@@ -407,20 +410,26 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     }
   });
 
-  const animateMouseHover = contextSafe((element: DataEvent | DataPoint) => {
-    if ("name" in element) {
-      setSelectedEvent(element);
-    } else if ("year" in element) {
-      setSelectedDataPoint(element);
-    }
+  const animateMouseHover = contextSafe(
+    (element: DataEvent | DataPoint | SelectableDataType) => {
+      if (typeof element === "string") {
+        setSelectedButton(element);
+      } else {
+        if ("name" in element) {
+          setSelectedEvent(element);
+        } else if ("year" in element) {
+          setSelectedDataPoint(element);
+        }
+      }
 
-    gsap.to("#mouseElementContent", {
-      scale: 1,
-      duration: 0.4,
-      ease: "power4.out",
-      overwrite: true,
-    });
-  });
+      gsap.to("#mouseElementContent", {
+        scale: 1,
+        duration: 0.4,
+        ease: "power4.out",
+        overwrite: true,
+      });
+    }
+  );
 
   const animateMouseHoverReverse = contextSafe(() => {
     d3.select("#mouseElement").attr("class", "");
@@ -1033,6 +1042,11 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     animateData(Side.RIGHT);
   }, [rightData]);
 
+  useEffect(() => {
+    console.log("selectedButton", selectedButton);
+    if (selectedButton) animateMouseHover(selectedButton);
+  }, [selectedButton]);
+
   useGSAP(
     () => {
       gsap.registerPlugin(Draggable);
@@ -1063,6 +1077,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
             onDragStart: () => {
+              setSelectedButton(null);
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
             },
             onDragEnd: () => {
@@ -1132,6 +1147,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
             onDragStart: () => {
+              setSelectedButton(null);
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
             },
             onDragEnd: () => {
@@ -1582,6 +1598,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                       <button
                         id={`timeline-data-icon-${key}`}
                         className={`data-button data-icon ${key} left`}
+                        onMouseEnter={() => {
+                          setSelectedButton(key as SelectableDataType);
+                        }}
                       >
                         {key[0]}
                       </button>
@@ -1596,9 +1615,11 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                       id={`active-row-return-${key}`}
                     >
                       <button
+                        onMouseEnter={() => {
+                          setSelectedButton(key as SelectableDataType);
+                        }}
                         id={`timeline-data-icon-${key}`}
                         className={`data-button data-icon ${key} right`}
-                        key={key}
                       >
                         {key[0]}
                       </button>
@@ -1757,6 +1778,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       >
         <div id="mouseElementContent">
           <div id="mouseElementContentVisibility">
+            {selectedButton && (
+              <span>{dataTypeAndDataToString(selectedButton)}</span>
+            )}
             {selectedDataPoint && (
               <div className="datapoint">
                 <span className="number">
