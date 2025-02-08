@@ -65,14 +65,14 @@ html {
 }
 
 .scroller {
-  height: calc(100vh + 50px);
+  height: calc(100dvh + 50px);
   width: 20px;
 }
 
 .main {
   @apply bg-BLACK;
   @apply overflow-hidden;
-  @apply max-w-screen max-h-screen;
+  @apply max-w-dvw max-h-dvh;
   @apply fixed top-0 left-0;
 }
 
@@ -81,14 +81,14 @@ html {
   @apply absolute top-[10px] left-[10px] lg:left-30 lg:top-30;
   @apply rounded-30 lg:rounded-90 p-15 lg:p-60;
 
-  width: calc(100vw - 20px);
-  height: calc(100vh - 20px);
-  transform: translateY(calc(100vh - 150px - 10px));
+  width: calc(100dvw - 20px);
+  height: calc(100dvh - 20px);
+  transform: translateY(calc(100dvh - 150px - 10px));
 
   @media (width >= 64rem) {
-    width: calc(100vw - 60px);
-    height: calc(100vh - 60px);
-    transform: translateY(calc(100vh - 60px - 30px));
+    width: calc(100dvw - 60px);
+    height: calc(100dvh - 60px);
+    transform: translateY(calc(100dvh - 60px - 30px));
   }
 
   .timeline-cta {

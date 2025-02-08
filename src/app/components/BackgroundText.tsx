@@ -33,7 +33,7 @@ const BackgroundText = ({ eyeOpen, windowWidth }: Props) => {
   return (
     <svg
       ref={ref}
-      className="w-screen h-screen lg:p-60 lg:pb-120 fill-BEIGE origin-center"
+      className="w-dvw h-dvh lg:p-60 lg:pb-120 fill-BEIGE origin-center"
       viewBox={windowWidth >= 1024 ? "0 0 1356.03 696.86" : "0 0 885.63 1021.6"}
     >
       {windowWidth >= 1024 ? (

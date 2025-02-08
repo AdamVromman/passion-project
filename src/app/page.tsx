@@ -377,7 +377,7 @@ export default function Home() {
     <div ref={mainRef} className="main">
       <BackgroundText windowWidth={windowWidth} eyeOpen={eyeOpen} />
       <Eye windowWidth={windowWidth} eyeOpen={eyeOpen} dailyData={dailyData} />
-      <div className="fixed top-0 left-0 w-screen h-screen flex flex-col p-20 justify-start items-center text-WHITE">
+      <div className="fixed top-0 left-0 w-dvw h-dvh flex flex-col p-20 justify-start items-center text-WHITE">
         <div className="fixed opacity-0 pointer-events-none text-2xl lg:text-6xl font-bold">
           {month !== undefined && (
             <span className="border-2 border-transparent" ref={monthRef}>
