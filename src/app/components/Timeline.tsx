@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import {
   DataEvent,
@@ -410,26 +410,14 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     }
   });
 
-  const animateMouseHover = contextSafe(
-    (element: DataEvent | DataPoint | SelectableDataType) => {
-      if (typeof element === "string") {
-        setSelectedButton(element);
-      } else {
-        if ("name" in element) {
-          setSelectedEvent(element);
-        } else if ("year" in element) {
-          setSelectedDataPoint(element);
-        }
-      }
-
-      gsap.to("#mouseElementContent", {
-        scale: 1,
-        duration: 0.4,
-        ease: "power4.out",
-        overwrite: true,
-      });
-    }
-  );
+  const animateMouseHover = contextSafe(() => {
+    gsap.to("#mouseElementContent", {
+      scale: 1,
+      duration: 0.4,
+      ease: "power4.out",
+      overwrite: true,
+    });
+  });
 
   const animateMouseHoverReverse = contextSafe(() => {
     d3.select("#mouseElement").attr("class", "");
@@ -441,6 +429,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       onComplete: () => {
         setSelectedEvent(null);
         setSelectedDataPoint(null);
+        setSelectedButton(null);
         if (windowWidth >= 1024) {
           window.onmousemove = onMouseMove;
         }
@@ -602,8 +591,8 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .attr("class", "datapoint-svg-circle unzoom")
       .attr("transform", `scale(${1 / zoomLevel}, 1)`)
       .on("mouseenter", (_, d) => {
-        if (d[type]) {
-          animateMouseHover({
+        if (d[type] && windowWidth >= 1024) {
+          setSelectedDataPoint({
             year: d.year,
             type: type,
             amount: d[type],
@@ -616,11 +605,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       })
       .on("click", (_, d) => {
         if (d[type]) {
-          animateMouseHover({
-            year: d.year,
-            type: type,
-            amount: d[type],
-          });
         }
       });
   };
@@ -714,15 +698,16 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
 
       svg
         .on("mouseenter", (_, d) => {
-          animateMouseHover({
-            year: d.startYear,
-            endYear: d.endYear,
-            type: type,
-            amount: d.amount,
-          });
+          if (windowWidth >= 1024)
+            setSelectedDataPoint({
+              year: d.startYear,
+              endYear: d.endYear,
+              type: type,
+              amount: d.amount,
+            });
         })
         .on("mouseleave", () => {
-          animateMouseHoverReverse();
+          setSelectedDataPoint(null);
         });
     }
   };
@@ -836,15 +821,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         (d) => TICK_OFFSET + getActualTickWidth() * (d.endYear - d.startYear)
       )
       .on("mouseenter", (_, d) => {
-        animateMouseHover({
-          year: d.startYear,
-          endYear: d.endYear,
-          type: type,
-          amount: d.amount,
-        });
+        if (windowWidth >= 1024) {
+          setSelectedDataPoint({
+            year: d.startYear,
+            endYear: d.endYear,
+            type: type,
+            amount: d.amount,
+          });
+        }
       })
       .on("mouseleave", () => {
-        animateMouseHoverReverse();
+        setSelectedDataPoint(null);
       });
   };
 
@@ -1044,8 +1031,30 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
 
   useEffect(() => {
     console.log("selectedButton", selectedButton);
-    if (selectedButton) animateMouseHover(selectedButton);
+    if (selectedButton) {
+      setSelectedDataPoint(null);
+      setSelectedEvent(null);
+      animateMouseHover();
+    }
   }, [selectedButton]);
+
+  useEffect(() => {
+    console.log("selectedDataPoint", selectedDataPoint);
+    if (selectedDataPoint) {
+      setSelectedButton(null);
+      setSelectedEvent(null);
+      animateMouseHover();
+    }
+  }, [selectedDataPoint]);
+
+  useEffect(() => {
+    console.log("selectedEvent", selectedEvent);
+    if (selectedEvent) {
+      setSelectedButton(null);
+      setSelectedDataPoint(null);
+      animateMouseHover();
+    }
+  }, [selectedEvent]);
 
   useGSAP(
     () => {
@@ -1077,7 +1086,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
             onDragStart: () => {
-              setSelectedButton(null);
+              animateMouseHoverReverse();
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
             },
             onDragEnd: () => {
@@ -1147,7 +1156,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
             onDragStart: () => {
-              setSelectedButton(null);
+              animateMouseHoverReverse();
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
             },
             onDragEnd: () => {
@@ -1461,21 +1470,23 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           (d.year - timeline[0].year) * getTickWidth()
       )
       .on("mouseenter", (_, d) => {
-        if (d[type]) {
-          animateMouseHover({
-            year: d.year,
-            type: type,
-            amount: d[type],
-          });
+        if (windowWidth >= 1024) {
+          if (d[type]) {
+            setSelectedDataPoint({
+              year: d.year,
+              type: type,
+              amount: d[type],
+            });
+          }
         }
       })
 
       .on("mouseleave", () => {
-        animateMouseHoverReverse();
+        setSelectedDataPoint(null);
       })
       .on("click", (_, d) => {
         if (d[type]) {
-          animateMouseHover({
+          setSelectedDataPoint({
             year: d.year,
             type: type,
             amount: d[type],
@@ -1514,7 +1525,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .on("mouseenter", (_, d) => {
         if (windowWidth >= 1024) {
           window.onmousemove = onMouseMove;
-          animateMouseHover(d);
+          setSelectedEvent(d);
         }
       })
       .on("mouseleave", (e: MouseEvent) => {
@@ -1601,6 +1612,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                         onMouseEnter={() => {
                           setSelectedButton(key as SelectableDataType);
                         }}
+                        onMouseLeave={() => {
+                          animateMouseHoverReverse();
+                        }}
                       >
                         {key[0]}
                       </button>
@@ -1617,6 +1631,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                       <button
                         onMouseEnter={() => {
                           setSelectedButton(key as SelectableDataType);
+                        }}
+                        onMouseLeave={() => {
+                          animateMouseHoverReverse();
                         }}
                         id={`timeline-data-icon-${key}`}
                         className={`data-button data-icon ${key} right`}
