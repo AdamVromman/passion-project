@@ -210,10 +210,12 @@ export default function Home() {
   };
 
   const onResize = () => {
+    updateWidths();
     setWindowWidth(getWindowWidth());
   };
 
   useEffect(() => {
+    setWindowWidth(getWindowWidth());
     addEventListener("resize", onResize);
     if (window.innerWidth > 1024) {
       window.onmousemove = onMouseMove;
@@ -344,7 +346,6 @@ export default function Home() {
             duration: 0.3,
             ease: "power4.in",
             onComplete: () => {
-              console.log("start");
               window.onmousemove = null;
             },
           });
@@ -520,7 +521,7 @@ export default function Home() {
           });
           getLastUpdatedDate();
         }}
-        className="fixed top-15 left-1/2 -translate-x-1/2 lg:-translate-x-0 lg:scale-0 origin-center z-50 text-WHITE bg-RED px-8 py-4 rounded-full cursor-pointer"
+        className="fixed top-15 left-1/2 -translate-x-1/2 lg:top-0 lg:left-0 lg:-translate-x-0 lg:scale-0 origin-center z-50 text-WHITE bg-RED px-8 py-4 rounded-full cursor-pointer"
       >
         <span className="whitespace-nowrap">Click anywhere to start.</span>
       </button>

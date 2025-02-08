@@ -434,11 +434,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     });
   });
 
-  const animateEventOpen = contextSafe((event: DataEvent) => {
+  const animateEventOpen = contextSafe(() => {
     d3.select("#mouseElement").attr("class", "selected");
     window.onmousemove = null;
     setSelectedDataPoint(null);
-    setSelectedEvent(event);
+
+    gsap.to("#mouseElementContent", {
+      scale: 1,
+      duration: 0.4,
+      ease: "power4.out",
+      overwrite: true,
+    });
 
     gsap.set("#mouseElement .event .event-full", { display: "block" });
     gsap.from("#mouseElement .event .event-full", {
@@ -576,6 +582,15 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .attr("transform", `scale(${1 / zoomLevel}, 1)`)
       .on("mouseleave", () => {
         animateMouseHoverReverse();
+      })
+      .on("click", (_, d) => {
+        if (d[type]) {
+          animateMouseHover({
+            year: d.year,
+            type: type,
+            amount: d[type],
+          });
+        }
       });
   };
 
@@ -731,8 +746,10 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .attr("height", EVENT_HEIGHT)
       .attr("width", 0)
       .on("mouseenter", (_, d) => {
-        window.onmousemove = onMouseMove;
-        animateMouseHover(d);
+        if (windowWidth >= 1024) {
+          window.onmousemove = onMouseMove;
+          animateMouseHover(d);
+        }
       })
       .on("mouseleave", (e) => {
         if (e.relatedTarget.id !== "mouseElement") {
@@ -740,7 +757,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         }
       })
       .on("click", (_, d) => {
-        animateEventOpen(d);
+        setSelectedEvent(d);
       });
   };
 
@@ -1216,6 +1233,8 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     { scope: timelineRef, dependencies: [gsapTimeline] }
   );
 
+  useEffect(() => {}, [windowWidth]);
+
   useEffect(() => {
     drawTimeline();
     resizeTicks();
@@ -1259,6 +1278,15 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     }
   }, [svgWidth, svgHeight]);
 
+  useGSAP(
+    () => {
+      if (selectedEvent !== null) {
+        animateEventOpen();
+      }
+    },
+    { scope: timelineRef, dependencies: [selectedEvent] }
+  );
+
   //--------------------------------MAIN USE EFFECT--------------------------------
 
   useEffect(() => {
@@ -1276,7 +1304,11 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     drawPeriods(Side.RIGHT);
 
     window.onresize = onResize;
-    window.onmousemove = onMouseMove;
+
+    if (windowWidth >= 1024) {
+      window.onmousemove = onMouseMove;
+    }
+
     return () => {
       window.onmousemove = null;
       window.onresize = null;

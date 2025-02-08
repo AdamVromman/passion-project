@@ -83,7 +83,7 @@ html {
 
   width: calc(100dvw - 20px);
   height: calc(100dvh - 20px);
-  transform: translateY(calc(100dvh - 150px - 10px));
+  transform: translateY(calc(100dvh - 100px - 10px));
 
   @media (width >= 64rem) {
     width: calc(100dvw - 60px);
@@ -93,7 +93,7 @@ html {
 
   .timeline-cta {
     @apply absolute top-0 right-0;
-    @apply w-full h-[160px] lg:h-[60px];
+    @apply w-full h-[110px] lg:h-[60px];
     @apply flex flex-row justify-center items-center;
     @apply px-30 lg:px-90;
     @apply text-xl lg:text-2xl font-bold text-BROWN;
@@ -200,7 +200,7 @@ html {
 }
 
 #data-icon-bounds {
-  @apply flex flex-row lg:flex-row gap-4 lg:gap-8 justify-start;
+  @apply flex flex-col lg:flex-row gap-2 lg:gap-8 justify-start;
 
   .separator {
     @apply h-full w-[4px] bg-BROWN rounded-full;
@@ -219,6 +219,10 @@ html {
   .active {
     @apply lg:h-full lg:w-1/2;
     @apply flex flex-col lg:flex-row gap-2 lg:gap-4 items-start;
+  }
+
+  .active {
+    @apply flex-row;
   }
 
   .active-row-placeholder {
@@ -319,9 +323,14 @@ html {
 }
 
 #mouseElement {
-  @apply fixed -left-30 -top-30;
-  @apply p-10;
+  @apply fixed -bottom-[10px] -left-[10px] -right-[10px] lg:-left-30 lg:-top-30;
+  @apply p-0 lg:p-10;
   @apply pointer-events-none;
+
+  @media (width >= 64rem) {
+    bottom: unset;
+    right: unset;
+  }
 
   &.selected {
     @apply pointer-events-auto;
@@ -342,7 +351,7 @@ html {
   }
 
   .event {
-    @apply w-[500px];
+    @apply w-full lg:w-[500px];
     .title {
       @apply text-center text-2xl font-bold;
     }
