@@ -26,6 +26,9 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
+  const [noDataGaza, setNoDataGaza] = useState(false);
+  const [noDataWestBank, setNoDataWestBank] = useState(false);
+
   const mainRef = useRef<HTMLDivElement>(null);
   const gsapTimeline = useRef<gsap.core.Timeline>(null);
 
@@ -50,7 +53,10 @@ export default function Home() {
           });
 
           if (date1) {
+            setNoDataGaza(false);
             setDataGaza(date1);
+          } else {
+            setNoDataGaza(true);
           }
         });
       }
@@ -70,6 +76,7 @@ export default function Home() {
           });
 
           if (date1) {
+            setNoDataWestBank(false);
             setDataWestBank(date1);
             if (!date1.verified) {
               const previousDay = data.find((d: WestBankData) => {
@@ -84,6 +91,8 @@ export default function Home() {
                 setDataWestBankPrevious(previousDay);
               }
             }
+          } else {
+            setNoDataWestBank(true);
           }
         });
       }
@@ -425,11 +434,19 @@ export default function Home() {
           </div>
         )}
         {hasDate() &&
-          new Date(year!, month!, day!).getTime() > new Date().getTime() && (
-            <span className="text-3xl font-bold italic text-RED">
-              This day is in the future.
-            </span>
-          )}
+        new Date(year!, month!, day!).getTime() > new Date().getTime() ? (
+          <span className="text-3xl font-bold italic text-RED">
+            This day is in the future.
+          </span>
+        ) : (
+          <>
+            {noDataGaza && noDataWestBank && (
+              <span className="text-3xl font-bold italic text-RED">
+                no data
+              </span>
+            )}
+          </>
+        )}
       </div>
       <button
         id="start-experience"
