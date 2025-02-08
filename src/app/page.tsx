@@ -286,7 +286,8 @@ export default function Home() {
   }, [dataGaza, dataWestBank, dataWestBankPrevious]);
 
   useEffect(() => {
-    if (dayInTheFuture) setDataLoaded(true);
+    if (dayInTheFuture || (searchedGaza && searchedWestBank))
+      setDataLoaded(true);
   }, [searchedGaza, searchedWestBank, dayInTheFuture, dataLoaded]);
 
   useEffect(() => {
