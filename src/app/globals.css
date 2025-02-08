@@ -92,6 +92,40 @@ html {
   }
 }
 
+.eye-date-picker {
+  @apply flex flex-row items-center gap-2;
+
+  @apply text-6xl font-bold text-WHITE;
+
+  & select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: "";
+  }
+
+  & input,
+  & select {
+    @apply inline-block;
+    @apply w-min;
+    @apply border-2 border-transparent;
+    @apply cursor-pointer;
+
+    &:hover,
+    &:focus {
+      @apply underline;
+    }
+  }
+
+  .input-day {
+    @apply w-14;
+  }
+
+  .input-year {
+    @apply w-24;
+  }
+}
+
 .datapoint-svg,
 .period-svg {
   & .short {
