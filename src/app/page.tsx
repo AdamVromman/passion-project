@@ -30,6 +30,8 @@ export default function Home() {
   const [searchedWestBank, setSearchedWestBank] = useState(false);
   const [dayInTheFuture, setDayInTheFuture] = useState(false);
 
+  const [windowWidth, setWindowWidth] = useState(0);
+
   const mainRef = useRef<HTMLDivElement>(null);
   const gsapTimeline = useRef<gsap.core.Timeline>(null);
 
@@ -155,6 +157,11 @@ export default function Home() {
     }
   };
 
+  const getWindowWidth = () => {
+    if (typeof window !== "undefined") return window.innerWidth;
+    return 768;
+  };
+
   const dayToString = (day: number) => {
     if (day < 10) {
       return "0" + day;
@@ -202,11 +209,18 @@ export default function Home() {
     });
   };
 
+  const onResize = () => {
+    setWindowWidth(getWindowWidth());
+  };
+
   useEffect(() => {
-    window.onmousemove = onMouseMove;
-    console.log(hasDate());
+    addEventListener("resize", onResize);
+    if (window.innerWidth > 1024) {
+      window.onmousemove = onMouseMove;
+    }
     return () => {
       window.onmousemove = null;
+      removeEventListener("resize", onResize);
     };
   }, []);
 
@@ -361,8 +375,8 @@ export default function Home() {
 
   return (
     <div ref={mainRef} className="main">
-      <BackgroundText eyeOpen={eyeOpen} />
-      <Eye eyeOpen={eyeOpen} dailyData={dailyData} />
+      <BackgroundText windowWidth={windowWidth} eyeOpen={eyeOpen} />
+      <Eye windowWidth={windowWidth} eyeOpen={eyeOpen} dailyData={dailyData} />
       <div className="fixed top-0 left-0 w-screen h-screen flex flex-col p-20 justify-start items-center text-WHITE">
         <div className="fixed opacity-0 pointer-events-none text-6xl font-bold">
           {month !== undefined && (
@@ -508,18 +522,12 @@ export default function Home() {
           });
           getLastUpdatedDate();
         }}
-        className="fixed top-0 left-0 scale-0 origin-center z-50 text-WHITE bg-RED p-4 rounded-full cursor-pointer"
+        className="fixed top-15 left-1/2 -translate-x-1/2 lg:-translate-x-0 lg:scale-0 origin-center z-50 text-WHITE bg-RED px-8 py-4 rounded-full cursor-pointer"
       >
-        Open your eye
+        <span className="whitespace-nowrap">Click anywhere to start.</span>
       </button>
       <Timeline
-        dayOfTheWeek={
-          hasDate()
-            ? new Date(year!, month!, day!).toLocaleDateString("en-US", {
-                weekday: "long",
-              })
-            : null
-        }
+        windowWidth={windowWidth}
         scrolled={scrolled}
         gsapTimeline={gsapTimeline.current}
       />

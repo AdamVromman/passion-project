@@ -39,10 +39,10 @@ const EVENT_HEIGHT = 50;
 interface Props {
   gsapTimeline: gsap.core.Timeline | null;
   scrolled: boolean;
-  dayOfTheWeek: string | null;
+  windowWidth: number;
 }
 
-const Timeline = ({ gsapTimeline, scrolled, dayOfTheWeek }: Props) => {
+const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   const graphRef = useRef<SVGSVGElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
@@ -198,13 +198,8 @@ const Timeline = ({ gsapTimeline, scrolled, dayOfTheWeek }: Props) => {
     );
   };
 
-  const getWindowWidth = () => {
-    if (typeof window !== "undefined") return window.innerWidth;
-    return 768;
-  };
-
   const getResponsivePadding = () => {
-    return getWindowWidth() >= 1024 ? PADDING : PADDING_MOBILE;
+    return windowWidth >= 1024 ? PADDING : PADDING_MOBILE;
   };
 
   //--------------------------------ANIMATIONS--------------------------------
