@@ -456,6 +456,25 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     });
   });
 
+  const animateEventOpenMobile = contextSafe(() => {
+    d3.select("#mouseElement").attr("class", "selected");
+    window.onmousemove = null;
+    setSelectedDataPoint(null);
+
+    gsap.set("#mouseElement .event .event-full", { display: "block" });
+
+    gsap.fromTo(
+      "#mouseElementContent",
+      { scale: 0, y: "100%" },
+      {
+        scale: 1,
+        y: 0,
+        ease: "power4.out",
+        duration: 0.6,
+      }
+    );
+  });
+
   //--------------------------------DRAWING DATA--------------------------------
 
   const drawTicks = () => {
@@ -751,9 +770,15 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           animateMouseHover(d);
         }
       })
-      .on("mouseleave", (e) => {
-        if (e.relatedTarget.id !== "mouseElement") {
-          animateMouseHoverReverse();
+      .on("mouseleave", (e: MouseEvent) => {
+        if (windowWidth >= 1024) {
+          if (e.relatedTarget.id !== "mouseElement") {
+            animateMouseHoverReverse();
+          }
+        } else {
+          if (!e.relatedTarget.classList.contains("event-rect")) {
+            animateMouseHoverReverse();
+          }
         }
       })
       .on("click", (_, d) => {
@@ -1281,7 +1306,11 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   useGSAP(
     () => {
       if (selectedEvent !== null) {
-        animateEventOpen();
+        if (windowWidth >= 1024) {
+          animateEventOpen();
+        } else {
+          animateEventOpenMobile();
+        }
       }
     },
     { scope: timelineRef, dependencies: [selectedEvent] }
