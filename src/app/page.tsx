@@ -364,12 +364,13 @@ export default function Home() {
 
   useGSAP(
     () => {
-      gsap.to("#eye-buttons", {
-        scale: 1,
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out",
-      });
+      if (hasDate())
+        gsap.to("#eye-buttons", {
+          scale: 1,
+          opacity: 1,
+          duration: 1,
+          ease: "power2.out",
+        });
     },
     { scope: mainRef, dependencies: [eyeOpen] }
   );

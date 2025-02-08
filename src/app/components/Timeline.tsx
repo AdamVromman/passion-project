@@ -979,34 +979,36 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   }, [zoomLevel, panLevel]);
 
   useEffect(() => {
-    if (zoomLevelFloored >= LUSTRUM_ZOOM) {
-      animateLustra();
-      animateData(Side.LEFT);
-      animateData(Side.RIGHT);
-    } else {
-      reverseLustra();
-    }
+    if (scrolled) {
+      if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+        animateLustra();
+        animateData(Side.LEFT);
+        animateData(Side.RIGHT);
+      } else {
+        reverseLustra();
+      }
 
-    if (zoomLevelFloored >= REGULAR_ZOOM) {
-      animateRegular();
-      animateData(Side.LEFT);
-      animateData(Side.RIGHT);
-    } else {
-      reverseRegular();
-    }
+      if (zoomLevelFloored >= REGULAR_ZOOM) {
+        animateRegular();
+        animateData(Side.LEFT);
+        animateData(Side.RIGHT);
+      } else {
+        reverseRegular();
+      }
 
-    if (
-      (getActiveLeft().length > 0 || rightData) &&
-      zoomLevelFloored >= SHORT_ZOOM
-    ) {
-      animateShort();
-    }
+      if (
+        (getActiveLeft().length > 0 || rightData) &&
+        zoomLevelFloored >= SHORT_ZOOM
+      ) {
+        animateShort();
+      }
 
-    if (
-      (getActiveLeft().length > 0 || rightData) &&
-      zoomLevelFloored < SHORT_ZOOM
-    ) {
-      reverseShort();
+      if (
+        (getActiveLeft().length > 0 || rightData) &&
+        zoomLevelFloored < SHORT_ZOOM
+      ) {
+        reverseShort();
+      }
     }
   }, [zoomLevelFloored]);
 
@@ -1374,8 +1376,8 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       resizeEvents();
       animateMain();
       animateDecades();
-      if (zoomLevel > 2) animateLustra();
-      if (zoomLevel > 6) animateRegular();
+      if (zoomLevel >= LUSTRUM_ZOOM) animateLustra();
+      if (zoomLevel >= REGULAR_ZOOM) animateRegular();
       updateHeights(Side.RIGHT);
       updateHeights(Side.LEFT);
     }
@@ -1403,6 +1405,10 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
 
     drawTimeline();
     drawEvents();
+    drawData(Side.LEFT);
+    drawData(Side.RIGHT);
+    drawPeriods(Side.LEFT);
+    drawPeriods(Side.RIGHT);
 
     window.onresize = onResize;
 
@@ -1634,7 +1640,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           ref={graphRef}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className=" w-full h-3/5 lg:h-4/5 max-h-full rounded-[20px] lg:rounded-60 origin-center"
+          className=" w-full h-3/5 lg:h-4/5 max-h-full rounded-[20px] lg:rounded-60 origin-center overscroll-contain"
         >
           <linearGradient id="fade-to-right">
             <stop
