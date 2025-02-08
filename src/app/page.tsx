@@ -159,8 +159,8 @@ export default function Home() {
   };
 
   const dayMinus = () => {
-    if (day !== undefined && month !== undefined && year !== undefined) {
-      const date = new Date(year, month, day);
+    if (hasDate()) {
+      const date = new Date(year!, month!, day!);
       const newDate = new Date(date.getTime() - 24 * 60 * 60 * 1000);
       setDay(newDate.getDate());
       setMonth(newDate.getMonth());
@@ -169,8 +169,8 @@ export default function Home() {
   };
 
   const dayPlus = () => {
-    if (day !== undefined && month !== undefined && year !== undefined) {
-      const date = new Date(year, month, day);
+    if (hasDate()) {
+      const date = new Date(year!, month!, day!);
       const newDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
       setDay(newDate.getDate());
       setMonth(newDate.getMonth());
@@ -178,17 +178,40 @@ export default function Home() {
     }
   };
 
+  const onMouseMove = (e: MouseEvent) => {
+    const { width, height } = document
+      .getElementById("start-experience")
+      ?.getBoundingClientRect() || { width: 0, height: 0 };
+
+    gsap.to("#start-experience", {
+      scale: 1,
+      x: e.clientX - width / 2,
+      y: e.clientY - height / 2,
+      duration: 0.2,
+      overwrite: true,
+    });
+  };
+
   useEffect(() => {
-    getLastUpdatedDate();
+    window.onmousemove = onMouseMove;
+
+    return () => {
+      window.onmousemove = null;
+    };
   }, []);
+
+  const hasDate = () =>
+    day !== undefined && month !== undefined && year !== undefined;
 
   useEffect(() => {
     if (loaded) getData();
   }, [loaded]);
 
   const getData = () => {
-    if (year && month && day) {
-      const date = new Date(year, month, day);
+    console.log("getting data");
+    console.log(day, month, year);
+    if (hasDate()) {
+      const date = new Date(year!, month!, day!);
 
       if (date) {
         getDataGaza(date);
@@ -198,10 +221,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (day !== undefined && month !== undefined && year !== undefined) {
+    let timeout: NodeJS.Timeout;
+    if (hasDate()) {
       updateWidths();
+      timeout = setTimeout(getData, 300);
     }
-    const timeout = setTimeout(getData, 300);
+
     return () => {
       clearTimeout(timeout);
     };
@@ -273,6 +298,21 @@ export default function Home() {
             gsapTimeline?.current?.reverse();
           },
         },
+        onStart: () => {
+          gsap.to("#start-experience", {
+            scale: 0,
+            duration: 0.3,
+            ease: "power4.in",
+            onComplete: () => {
+              console.log("start");
+              window.onmousemove = null;
+            },
+          });
+        },
+        onReverseComplete: () => {
+          //TODO: hide button when already clicked and after scroll
+          if (hasDate()) window.onmousemove = onMouseMove;
+        },
         onComplete: () => {
           setScrolled(true);
         },
@@ -303,7 +343,7 @@ export default function Home() {
             </span>
           )}
         </div>
-        {day !== undefined && month !== undefined && year !== undefined && (
+        {hasDate() && (
           <div className="flex flex-row items-center gap-12">
             <button
               onClick={() => {
@@ -319,6 +359,7 @@ export default function Home() {
             <div className="eye-date-picker">
               <select
                 onChange={(e) => {
+                  setEyeOpen(false);
                   setMonth(Number.parseInt(e.target.value));
                 }}
                 value={month}
@@ -338,12 +379,13 @@ export default function Home() {
               <div>
                 <select
                   onChange={(e) => {
+                    setEyeOpen(false);
                     setDay(Number.parseInt(e.target.value));
                   }}
                   value={day}
                   ref={dayInputRef}
                 >
-                  {new Array(new Date(year, month + 1, 0).getDate())
+                  {new Array(new Date(year!, month! + 1, 0).getDate())
                     .fill(0)
                     .map((_, i) => {
                       return (
@@ -358,6 +400,7 @@ export default function Home() {
 
               <select
                 onChange={(e) => {
+                  setEyeOpen(false);
                   setYear(Number.parseInt(e.target.value));
                 }}
                 ref={yearInputRef}
@@ -381,7 +424,30 @@ export default function Home() {
             </button>
           </div>
         )}
+        {hasDate() &&
+          new Date(year!, month!, day!).getTime() > new Date().getTime() && (
+            <span className="text-3xl font-bold italic text-RED">
+              This day is in the future.
+            </span>
+          )}
       </div>
+      <button
+        id="start-experience"
+        onClick={() => {
+          gsap.to("#start-experience", {
+            scale: 0,
+            duration: 0.3,
+            ease: "power4.in",
+            onComplete: () => {
+              window.onmousemove = null;
+            },
+          });
+          getLastUpdatedDate();
+        }}
+        className="fixed top-0 left-0 scale-0 origin-center z-50 text-WHITE bg-RED p-4 rounded-full cursor-pointer"
+      >
+        Open your eye.
+      </button>
       <Timeline scrolled={scrolled} gsapTimeline={gsapTimeline.current} />
     </div>
   );
