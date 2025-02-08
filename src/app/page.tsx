@@ -25,9 +25,10 @@ export default function Home() {
 
   const [scrolled, setScrolled] = useState(false);
   const [loaded, setLoaded] = useState(false);
-
-  const [noDataGaza, setNoDataGaza] = useState(false);
-  const [noDataWestBank, setNoDataWestBank] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [searchedGaza, setSearchedGaza] = useState(false);
+  const [searchedWestBank, setSearchedWestBank] = useState(false);
+  const [dayInTheFuture, setDayInTheFuture] = useState(false);
 
   const mainRef = useRef<HTMLDivElement>(null);
   const gsapTimeline = useRef<gsap.core.Timeline>(null);
@@ -53,11 +54,11 @@ export default function Home() {
           });
 
           if (date1) {
-            setNoDataGaza(false);
             setDataGaza(date1);
           } else {
-            setNoDataGaza(true);
+            setDataGaza(null);
           }
+          setSearchedGaza(true);
         });
       }
     });
@@ -76,7 +77,6 @@ export default function Home() {
           });
 
           if (date1) {
-            setNoDataWestBank(false);
             setDataWestBank(date1);
             if (!date1.verified) {
               const previousDay = data.find((d: WestBankData) => {
@@ -92,8 +92,9 @@ export default function Home() {
               }
             }
           } else {
-            setNoDataWestBank(true);
+            setDataWestBank(null);
           }
+          setSearchedWestBank(true);
         });
       }
     });
@@ -203,7 +204,7 @@ export default function Home() {
 
   useEffect(() => {
     window.onmousemove = onMouseMove;
-
+    console.log(hasDate());
     return () => {
       window.onmousemove = null;
     };
@@ -217,8 +218,6 @@ export default function Home() {
   }, [loaded]);
 
   const getData = () => {
-    console.log("getting data");
-    console.log(day, month, year);
     if (hasDate()) {
       const date = new Date(year!, month!, day!);
 
@@ -232,8 +231,18 @@ export default function Home() {
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (hasDate()) {
+      setDailyData(null);
       updateWidths();
-      timeout = setTimeout(getData, 300);
+      const dayInTheFutureLocal = new Date(year!, month!, day!) > new Date();
+
+      setSearchedGaza(false);
+      setSearchedWestBank(false);
+      setDataLoaded(false);
+      setDayInTheFuture(dayInTheFutureLocal);
+
+      if (!dayInTheFutureLocal) {
+        timeout = setTimeout(getData, 300);
+      }
     }
 
     return () => {
@@ -270,8 +279,15 @@ export default function Home() {
           });
         }
       }
+    } else {
+      setDailyData(null);
     }
+    setDataLoaded(true);
   }, [dataGaza, dataWestBank, dataWestBankPrevious]);
+
+  useEffect(() => {
+    if (dayInTheFuture) setDataLoaded(true);
+  }, [searchedGaza, searchedWestBank, dayInTheFuture, dataLoaded]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -433,19 +449,32 @@ export default function Home() {
             </button>
           </div>
         )}
-        {hasDate() &&
-        new Date(year!, month!, day!).getTime() > new Date().getTime() ? (
-          <span className="text-3xl font-bold italic text-RED">
-            This day is in the future.
-          </span>
-        ) : (
-          <>
-            {noDataGaza && noDataWestBank && (
+        {hasDate() && dataLoaded && (
+          <div className="mt-8">
+            {dayInTheFuture && (
               <span className="text-3xl font-bold italic text-RED">
-                no data
+                This day is in the future.
               </span>
             )}
-          </>
+            {!dataGaza &&
+              !dataWestBank &&
+              searchedGaza &&
+              searchedWestBank &&
+              !dayInTheFuture && (
+                <span className="text-3xl font-bold italic text-RED">
+                  There is no data available for this day.
+                </span>
+              )}
+            {dailyData &&
+              dailyData.gazaInjured === 0 &&
+              dailyData.gazaKilled === 0 &&
+              dailyData.westBankInjured === 0 &&
+              dailyData.westBankKilled === 0 && (
+                <span className="text-3xl font-bold italic text-GREEN">
+                  No deaths or injuries have been reported for this day!
+                </span>
+              )}
+          </div>
         )}
       </div>
       <button
