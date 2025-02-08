@@ -486,10 +486,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .enter()
       .append("svg")
       .attr("id", (d) => `tick-${d.year}`)
-      .attr(
-        "x",
-        (_, i) => getResponsivePadding().left + i * getActualTickWidth()
-      )
+      .attr("x", (_, i) => {
+        return getResponsivePadding().left + i * getActualTickWidth();
+      })
       .attr("y", 0)
       .attr(
         "class",
@@ -537,8 +536,8 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
 
   const drawTimeline = () => {
     drawTicks();
+    drawEvents();
 
-    // This function allows zoom/pan and also limits the zoom and the pan to a certain extent.
     const zoomFunction = d3
       .zoom<SVGSVGElement, unknown>()
       .on("zoom", handleZoom)
@@ -556,7 +555,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         ],
       ]);
 
-    // Attach the zoom/pan functionality to the svg element.
     if (graphRef.current) {
       d3.select(graphRef.current).call(zoomFunction);
     }
@@ -750,12 +748,12 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .enter()
       .append("svg")
       .attr("class", "event-svg")
-      .attr(
-        "x",
-        (d) =>
+      .attr("x", (d) => {
+        return (
           getResponsivePadding().left +
           (d.date.getFullYear() - timeline[0].year) * getActualTickWidth()
-      )
+        );
+      })
       .attr("y", 0)
       .append("rect")
       .attr("class", "event-rect unzoom")
@@ -1248,6 +1246,14 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           );
 
         d3.select(graphRef.current)
+          .selectAll<Element, DataEvent>("svg.event-svg")
+          .attr("x", (d) => {
+            return (
+              getResponsivePadding().left +
+              (d.date.getFullYear() - timeline[0].year) * getTickWidth()
+            );
+          });
+        d3.select(graphRef.current)
           .selectAll<Element, DataEvent>(".event-svg .event-rect")
           .each((d, i, nodes) => {
             gsapTimeline.to(
@@ -1308,7 +1314,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       updateHeights(Side.RIGHT);
       updateHeights(Side.LEFT);
     }
-  }, [svgWidth, svgHeight]);
+  }, [svgWidth, svgHeight, scrolled]);
 
   useGSAP(
     () => {
@@ -1359,12 +1365,12 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     d3.select(graphRef.current)
       .select("#group-timeline")
       .selectAll<Element, TimelineYear>("svg.tick")
-      .attr(
-        "x",
-        (d) =>
+      .attr("x", (d) => {
+        return (
           getResponsivePadding().left +
           (d.year - timeline[0].year) * getTickWidth()
-      );
+        );
+      });
   };
 
   const resizeDataPoints = () => {
@@ -1397,12 +1403,12 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     d3.select(graphRef.current)
       .select("#group-timeline-events")
       .selectAll<Element, DataEvent>("svg.event-svg")
-      .attr(
-        "x",
-        (d) =>
+      .attr("x", (d) => {
+        return (
           getResponsivePadding().left +
           (d.date.getFullYear() - timeline[0].year) * getTickWidth()
-      )
+        );
+      })
       .select("rect.event-rect")
       .attr("x", (d) => 25 + (d.date.getMonth() * getTickWidth()) / 12)
       .attr("width", getEventWidth);
