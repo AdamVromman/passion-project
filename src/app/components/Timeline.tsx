@@ -772,11 +772,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       })
       .on("mouseleave", (e: MouseEvent) => {
         if (windowWidth >= 1024) {
-          if (e.relatedTarget.id !== "mouseElement") {
+          if (
+            e.relatedTarget &&
+            (e.relatedTarget as Element).id !== "mouseElement"
+          ) {
             animateMouseHoverReverse();
           }
         } else {
-          if (!e.relatedTarget.classList.contains("event-rect")) {
+          if (
+            e.relatedTarget &&
+            !(e.relatedTarget as Element).classList.contains("event-rect")
+          ) {
             animateMouseHoverReverse();
           }
         }
