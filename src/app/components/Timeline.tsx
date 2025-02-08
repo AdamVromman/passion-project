@@ -20,6 +20,7 @@ import {
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
+import { dataTypeAndDataToString } from "../services/functions";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60, rx: 60 };
 const PADDING_MOBILE = { top: 30, left: 20, right: 20, bottom: 20, rx: 20 };
@@ -31,7 +32,6 @@ const PATH_PADDING = 16;
 const TICK_OFFSET = 25;
 const DATA_POINT_SIZE = 7;
 const DATA_POINT_SIZE_PERIOD = 4;
-const SNAP_DISTANCE = 100;
 const MOUSE_ELEMENT_PADDING = 30;
 const EVENT_MIN_WIDTH = 10;
 const EVENT_HEIGHT = 50;
@@ -1068,7 +1068,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
               returnElement.classList.remove("closer");
               placeholder.classList.remove("closer");
             },
-
             liveSnap: {
               points: (point) => {
                 if (point.x <= halfwayX) {
@@ -1758,12 +1757,12 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                   {selectedDataPoint.endYear ? (
                     <>
                       <span>
-                        {Intl.NumberFormat("en-US").format(
+                        {dataTypeAndDataToString(
+                          selectedDataPoint.type,
                           selectedDataPoint.amount.number
                         )}
                       </span>{" "}
-                      <span>{selectedDataPoint.type}</span> between{" "}
-                      <span>{selectedDataPoint.year}</span> and{" "}
+                      between <span>{selectedDataPoint.year}</span> and{" "}
                       <span>{selectedDataPoint.endYear}</span>(avg.{" "}
                       {Intl.NumberFormat("en-US", {
                         maximumFractionDigits: 0,
@@ -1778,12 +1777,12 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                   ) : (
                     <>
                       <span>
-                        {Intl.NumberFormat("en-US").format(
+                        {dataTypeAndDataToString(
+                          selectedDataPoint.type,
                           selectedDataPoint.amount.number
                         )}
                       </span>{" "}
-                      <span>{selectedDataPoint.type}</span> in{" "}
-                      <span>{selectedDataPoint.year}</span>
+                      in <span>{selectedDataPoint.year}</span>
                     </>
                   )}
                 </span>
