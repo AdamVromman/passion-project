@@ -12,7 +12,9 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 export default function Home() {
   const [eyeOpen, setEyeOpen] = useState(false);
 
-  const [day, setDay] = useState<Date | null>(null);
+  const [day, setDay] = useState<number>(24);
+  const [month, setMonth] = useState<number>(6);
+  const [year, setYear] = useState<number>(2024);
 
   const [dailyData, setDailyData] = useState<DailyData | null>(null);
 
@@ -30,19 +32,20 @@ export default function Home() {
   const monthRef = useRef<HTMLSpanElement | null>(null);
   const yearRef = useRef<HTMLSpanElement | null>(null);
 
-  const dayInputRef = useRef<HTMLInputElement | null>(null);
+  const dayInputRef = useRef<HTMLSelectElement | null>(null);
   const monthInputRef = useRef<HTMLSelectElement | null>(null);
-  const yearInputRef = useRef<HTMLInputElement | null>(null);
+  const yearInputRef = useRef<HTMLSelectElement | null>(null);
 
-  const getDataGaza = async (day: Date) => {
+  const getDataGaza = async (date: Date) => {
     await fetch(
       "https://data.techforpalestine.org/api/v2/casualties_daily.json"
     ).then(async (response) => {
       if (response.ok) {
         await response.json().then((data: GazaData[]) => {
           const date1 = data.find((d: GazaData) => {
-            const date = new Date(d.report_date);
-            return date.getTime() === day.getTime();
+            const localDate = new Date(d.report_date);
+            localDate.setHours(0, 0, 0, 0);
+            return localDate.getTime() === date.getTime();
           });
 
           if (date1) {
@@ -53,23 +56,27 @@ export default function Home() {
     });
   };
 
-  const getDataWestBank = async (day: Date) => {
+  const getDataWestBank = async (date: Date) => {
     await fetch(
       "https://data.techforpalestine.org/api/v2/west_bank_daily.json"
     ).then(async (response) => {
       if (response.ok) {
         await response.json().then((data: WestBankData[]) => {
           const date1 = data.find((d: WestBankData) => {
-            const date = new Date(d.report_date);
-            return date.getTime() === day.getTime();
+            const localDate = new Date(d.report_date);
+            localDate.setHours(0, 0, 0, 0);
+            return localDate.getTime() === date.getTime();
           });
 
           if (date1) {
             setDataWestBank(date1);
             if (!date1.verified) {
               const previousDay = data.find((d: WestBankData) => {
-                const date = new Date(d.report_date);
-                return date.getTime() === day.getTime() - 24 * 60 * 60 * 1000;
+                const localDate = new Date(d.report_date);
+                localDate.setHours(0, 0, 0, 0);
+                return (
+                  localDate.getTime() === date.getTime() - 24 * 60 * 60 * 1000
+                );
               });
 
               if (previousDay) {
@@ -109,7 +116,9 @@ export default function Home() {
       }
     });
 
-    setDay(lastDate);
+    setDay(lastDate.getDate());
+    setMonth(lastDate.getMonth());
+    setYear(lastDate.getFullYear());
   };
 
   const updateWidths = () => {
@@ -132,17 +141,55 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    getLastUpdatedDate();
-  }, []);
+  const dayToString = (day: number) => {
+    const date = new Date();
+    date.setDate(day);
+    return date.toLocaleDateString("en-US", { day: "numeric" });
+  };
+
+  const monthToString = (month: number) => {
+    const date = new Date();
+    date.setMonth(month);
+    return date.toLocaleDateString("en-US", { month: "long" });
+  };
+
+  const dayMinus = () => {
+    const date = new Date(year, month, day);
+    const newDate = new Date(date.getTime() - 24 * 60 * 60 * 1000);
+    setDay(newDate.getDate());
+    setMonth(newDate.getMonth());
+    setYear(newDate.getFullYear());
+  };
+
+  const dayPlus = () => {
+    const date = new Date(year, month, day);
+    const newDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+    setDay(newDate.getDate());
+    setMonth(newDate.getMonth());
+    setYear(newDate.getFullYear());
+  };
 
   useEffect(() => {
-    if (day) {
-      getDataGaza(day);
-      getDataWestBank(day);
+    getLastUpdatedDate();
+    getData();
+  }, []);
+
+  const getData = () => {
+    if (year && month && day) {
+      const date = new Date(year, month, day);
+
+      if (date) {
+        getDataGaza(date);
+        getDataWestBank(date);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (day && month && year) {
       updateWidths();
     }
-  }, [day]);
+  }, [day, month, year]);
 
   useEffect(() => {
     if (
@@ -221,24 +268,36 @@ export default function Home() {
   return (
     <div ref={mainRef} className="main">
       <BackgroundText eyeOpen={eyeOpen} />
-      <Eye eyeOpen={eyeOpen} dailyData={dailyData} />
+      <Eye
+        getData={() => {
+          getData();
+        }}
+        eyeOpen={eyeOpen}
+        dailyData={dailyData}
+      />
       <div className="fixed top-0 left-0 w-screen h-screen flex flex-col p-20 justify-start items-center text-WHITE">
         <div className="fixed opacity-0 pointer-events-none text-6xl font-bold">
-          <span className="border-2 border-transparent" ref={monthRef}>
-            {day?.toLocaleDateString("en-US", { month: "long" })}
-          </span>
-          <span className="border-2 border-transparent" ref={dayRef}>
-            {day?.toLocaleDateString("en-US", { day: "2-digit" })}
-          </span>
-          <span className="border-2 border-transparent" ref={yearRef}>
-            {day?.toLocaleDateString("en-US", { year: "numeric" })}
-          </span>
+          {month && (
+            <span className="border-2 border-transparent" ref={monthRef}>
+              {monthToString(month)}
+            </span>
+          )}
+          {day && (
+            <span className="border-2 border-transparent" ref={dayRef}>
+              {dayToString(day)}
+            </span>
+          )}
+          {year && (
+            <span className="border-2 border-transparent" ref={yearRef}>
+              {year}
+            </span>
+          )}
         </div>
         <div className="flex flex-row items-center gap-12">
           <button
             onClick={() => {
+              dayMinus();
               setEyeOpen(false);
-              if (day) setDay(new Date(day.getTime() - 24 * 60 * 60 * 1000));
             }}
           >
             <svg className="fill-WHITE w-14" viewBox="0 0 37.76 43.44">
@@ -247,47 +306,64 @@ export default function Home() {
           </button>
 
           <div className="eye-date-picker">
-            <select
-              value={day?.toLocaleDateString("en-US", { month: "long" })}
-              ref={monthInputRef}
-            >
-              {new Array(12).fill(0).map((_, i) => {
-                const date = new Date();
-                date.setMonth(i);
-                return (
-                  <option
-                    key={i}
-                    value={date.toLocaleDateString("en-US", { month: "long" })}
-                  >
-                    {date.toLocaleDateString("en-US", { month: "long" })}
-                  </option>
-                );
-              })}
-            </select>
-            <div>
-              <input
-                ref={dayInputRef}
-                className="input-day"
-                type="text"
-                value={day?.toLocaleDateString("en-US", {
-                  day: "2-digit",
+            {month && (
+              <select
+                onChange={(e) => {
+                  setMonth(Number.parseInt(e.target.value));
+                }}
+                value={month}
+                ref={monthInputRef}
+              >
+                {new Array(12).fill(0).map((_, i) => {
+                  const date = new Date();
+                  date.setMonth(i);
+                  return (
+                    <option key={i} value={i}>
+                      {date.toLocaleDateString("en-US", { month: "long" })}
+                    </option>
+                  );
                 })}
-              />
-              <span>,</span>
-            </div>
-            <input
-              ref={yearInputRef}
-              className="input-year"
-              type="text"
-              value={day?.toLocaleDateString("en-US", {
-                year: "numeric",
-              })}
-            />
+              </select>
+            )}
+            {day && (
+              <div>
+                <select
+                  onChange={(e) => {
+                    setDay(Number.parseInt(e.target.value));
+                  }}
+                  value={day}
+                  ref={dayInputRef}
+                >
+                  {new Array(31).fill(0).map((_, i) => {
+                    return (
+                      <option key={i + 1} value={i + 1}>
+                        {dayToString(i + 1)}
+                      </option>
+                    );
+                  })}
+                </select>
+                <span>,</span>
+              </div>
+            )}
+            {year && (
+              <select
+                onChange={(e) => {
+                  setYear(Number.parseInt(e.target.value));
+                }}
+                ref={yearInputRef}
+                className="input-year"
+                value={year}
+              >
+                <option value={2023}>2023</option>
+                <option value={2024}>2024</option>
+                <option value={2025}>2025</option>
+              </select>
+            )}
           </div>
           <button
             onClick={() => {
+              dayPlus();
               setEyeOpen(false);
-              if (day) setDay(new Date(day.getTime() + 24 * 60 * 60 * 1000));
             }}
           >
             <svg className="fill-WHITE w-14" viewBox="0 0 37.81 43.32">
