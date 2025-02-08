@@ -252,7 +252,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
         gsap.to(ref.current, {
           duration: 1,
           opacity: 1,
-          scale: 1,
+          scale: windowWidth >= 1024 ? 1 : 1.2,
           ease: "power2.out",
         });
 
