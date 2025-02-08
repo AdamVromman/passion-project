@@ -65,7 +65,6 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
 
   const { contextSafe } = useGSAP(
     () => {
-      console.log(windowWidth);
       const tl = gsap.timeline({ paused: true });
       tl.to(eyeRef.current, {
         morphSVG: windowWidth >= 1024 ? OPEN_LID : OPEN_LID_MOBILE,

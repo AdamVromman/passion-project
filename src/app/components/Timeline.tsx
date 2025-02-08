@@ -20,9 +20,10 @@ import {
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
+import { dataTypeAndDataToString } from "../services/functions";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60, rx: 60 };
-const PADDING_MOBILE = { top: 30, left: 20, right: 20, bottom: 20, rx: 20 };
+const PADDING_MOBILE = { top: 30, left: 30, right: 30, bottom: 20, rx: 20 };
 const HEIGHT_TIMELINE = 150;
 const LUSTRUM_ZOOM = 2;
 const REGULAR_ZOOM = 6;
@@ -31,7 +32,6 @@ const PATH_PADDING = 16;
 const TICK_OFFSET = 25;
 const DATA_POINT_SIZE = 7;
 const DATA_POINT_SIZE_PERIOD = 4;
-const SNAP_DISTANCE = 100;
 const MOUSE_ELEMENT_PADDING = 30;
 const EVENT_MIN_WIDTH = 10;
 const EVENT_HEIGHT = 50;
@@ -56,6 +56,8 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   });
 
   const [rightData, setRightData] = useState<SelectableDataType | null>(null);
+  const [previousRightData, setPreviousRightData] =
+    useState<SelectableDataType | null>(null);
 
   const [leftYear, setLeftYear] = useState(timeline[0].year);
   const [rightYear, setRightYear] = useState(
@@ -70,6 +72,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   const [selectedDataPoint, setSelectedDataPoint] = useState<DataPoint | null>(
     null
   );
+
+  const [selectedButton, setSelectedButton] =
+    useState<SelectableDataType | null>(null);
 
   const [svgWidth, setSvgWidth] = useState(1000);
   const [svgHeight, setSvgHeight] = useState(500);
@@ -405,13 +410,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     }
   });
 
-  const animateMouseHover = contextSafe((element: DataEvent | DataPoint) => {
-    if ("name" in element) {
-      setSelectedEvent(element);
-    } else if ("year" in element) {
-      setSelectedDataPoint(element);
-    }
-
+  const animateMouseHover = contextSafe(() => {
     gsap.to("#mouseElementContent", {
       scale: 1,
       duration: 0.4,
@@ -430,29 +429,35 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       onComplete: () => {
         setSelectedEvent(null);
         setSelectedDataPoint(null);
+        setSelectedButton(null);
+        if (windowWidth >= 1024) {
+          window.onmousemove = onMouseMove;
+        }
       },
     });
   });
 
   const animateEventOpen = contextSafe(() => {
-    d3.select("#mouseElement").attr("class", "selected");
-    window.onmousemove = null;
-    setSelectedDataPoint(null);
+    if (windowWidth >= 1024) {
+      d3.select("#mouseElement").attr("class", "selected");
+      window.onmousemove = null;
+
+      gsap.from("#mouseElement .event .event-full", {
+        height: 0,
+        opacity: 0,
+        paddingTop: 0,
+        duration: 0.6,
+        ease: "power4.out",
+      });
+    }
+
+    gsap.set("#mouseElement .event .event-full", { display: "block" });
 
     gsap.to("#mouseElementContent", {
       scale: 1,
       duration: 0.4,
       ease: "power4.out",
       overwrite: true,
-    });
-
-    gsap.set("#mouseElement .event .event-full", { display: "block" });
-    gsap.from("#mouseElement .event .event-full", {
-      height: 0,
-      opacity: 0,
-      paddingTop: 0,
-      duration: 0.6,
-      ease: "power4.out",
     });
   });
 
@@ -467,10 +472,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .enter()
       .append("svg")
       .attr("id", (d) => `tick-${d.year}`)
-      .attr(
-        "x",
-        (_, i) => getResponsivePadding().left + i * getActualTickWidth()
-      )
+      .attr("x", (_, i) => {
+        return getResponsivePadding().left + i * getActualTickWidth();
+      })
       .attr("y", 0)
       .attr(
         "class",
@@ -519,7 +523,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   const drawTimeline = () => {
     drawTicks();
 
-    // This function allows zoom/pan and also limits the zoom and the pan to a certain extent.
     const zoomFunction = d3
       .zoom<SVGSVGElement, unknown>()
       .on("zoom", handleZoom)
@@ -537,7 +540,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         ],
       ]);
 
-    // Attach the zoom/pan functionality to the svg element.
     if (graphRef.current) {
       d3.select(graphRef.current).call(zoomFunction);
     }
@@ -570,26 +572,29 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .attr("cy", (d) => getLinearScale(side)(d[type]?.number ?? 0))
       .attr("r", 0)
       .attr("class", "datapoint-svg-circle unzoom")
+      .attr("transform", `scale(${1 / zoomLevel}, 1)`)
       .on("mouseenter", (_, d) => {
-        if (d[type]) {
-          animateMouseHover({
+        if (d[type] && windowWidth >= 1024) {
+          setSelectedDataPoint({
             year: d.year,
             type: type,
             amount: d[type],
           });
         }
       })
-      .attr("transform", `scale(${1 / zoomLevel}, 1)`)
+
       .on("mouseleave", () => {
         animateMouseHoverReverse();
       })
       .on("click", (_, d) => {
-        if (d[type]) {
-          animateMouseHover({
-            year: d.year,
-            type: type,
-            amount: d[type],
-          });
+        if (windowWidth < 1024) {
+          if (d[type]) {
+            setSelectedDataPoint({
+              year: d.year,
+              type: type,
+              amount: d[type],
+            });
+          }
         }
       });
   };
@@ -683,15 +688,26 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
 
       svg
         .on("mouseenter", (_, d) => {
-          animateMouseHover({
-            year: d.startYear,
-            endYear: d.endYear,
-            type: type,
-            amount: d.amount,
-          });
+          if (windowWidth >= 1024)
+            setSelectedDataPoint({
+              year: d.startYear,
+              endYear: d.endYear,
+              type: type,
+              amount: d.amount,
+            });
         })
         .on("mouseleave", () => {
           animateMouseHoverReverse();
+        })
+        .on("click", (_, d) => {
+          if (windowWidth < 1024) {
+            setSelectedDataPoint({
+              year: d.startYear,
+              endYear: d.endYear,
+              type: type,
+              amount: d.amount,
+            });
+          }
         });
     }
   };
@@ -727,16 +743,21 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     d3.select(graphRef.current)
       .select("#group-timeline-events")
       .selectAll("svg.event-svg")
+      .remove();
+
+    d3.select(graphRef.current)
+      .select("#group-timeline-events")
+      .selectAll("svg.event-svg")
       .data(events)
       .enter()
       .append("svg")
       .attr("class", "event-svg")
-      .attr(
-        "x",
-        (d) =>
+      .attr("x", (d) => {
+        return (
           getResponsivePadding().left +
           (d.date.getFullYear() - timeline[0].year) * getActualTickWidth()
-      )
+        );
+      })
       .attr("y", 0)
       .append("rect")
       .attr("class", "event-rect unzoom")
@@ -744,21 +765,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .attr("x", (d) => 25 + (d.date.getMonth() * getActualTickWidth()) / 12)
       .attr("rx", (EVENT_MIN_WIDTH / 2) * zoomLevel)
       .attr("height", EVENT_HEIGHT)
-      .attr("width", 0)
-      .on("mouseenter", (_, d) => {
-        if (windowWidth >= 1024) {
-          window.onmousemove = onMouseMove;
-          animateMouseHover(d);
-        }
-      })
-      .on("mouseleave", (e) => {
-        if (e.relatedTarget.id !== "mouseElement") {
-          animateMouseHoverReverse();
-        }
-      })
-      .on("click", (_, d) => {
-        setSelectedEvent(d);
-      });
+      .attr("width", 0);
   };
 
   //--------------------------------UPDATING DATA--------------------------------
@@ -793,8 +800,8 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     }
   };
 
-  const updatePeriods = () => {
-    const svg = d3.selectAll<Element, DataPeriod>("svg.period-svg");
+  const updatePeriods = (type: SelectableDataType) => {
+    const svg = d3.selectAll<Element, DataPeriod>(`svg.period-svg.${type}`);
 
     svg
       .select("line.period-svg-line")
@@ -812,7 +819,30 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       .attr(
         "cx",
         (d) => TICK_OFFSET + getActualTickWidth() * (d.endYear - d.startYear)
-      );
+      )
+      .on("mouseenter", (_, d) => {
+        if (windowWidth >= 1024) {
+          setSelectedDataPoint({
+            year: d.startYear,
+            endYear: d.endYear,
+            type: type,
+            amount: d.amount,
+          });
+        }
+      })
+      .on("mouseleave", () => {
+        animateMouseHoverReverse();
+      })
+      .on("click", (_, d) => {
+        if (windowWidth < 1024) {
+          setSelectedDataPoint({
+            year: d.startYear,
+            endYear: d.endYear,
+            type: type,
+            amount: d.amount,
+          });
+        }
+      });
   };
 
   const updateHeightsOfType = (type: SelectableDataType, side: Side) => {
@@ -879,20 +909,38 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         yArray.push((maxValue / nrOfTicks) * i);
       }
 
-      d3.select(graphRef.current)
+      const group = d3
+        .select(graphRef.current)
         .append("g")
         .attr("class", `y-axis ${side}`)
         .selectAll<Element, number>("text.y-axis")
         .data(yArray)
         .enter()
-        .append("text")
-        .attr("class", "y-axis")
-        .text((d) => Intl.NumberFormat("en-US").format(d))
-        .attr("text-anchor", side === Side.LEFT ? "end" : "start")
+        .append("g");
+
+      group
+        .append("rect")
+        .attr("class", "y-axis-rect")
         .attr(
           "x",
           side === Side.LEFT
-            ? getResponsivePadding().left - PATH_PADDING
+            ? getResponsivePadding().left
+            : svgWidth - getResponsivePadding().right + PATH_PADDING
+        )
+        .attr("y", (d) => getLinearScale(side)(d))
+        .attr("width", (d) => Intl.NumberFormat("en-US").format(d).length * 10)
+        .attr("height", 0)
+        .attr("fill", "black");
+
+      group
+        .append("text")
+        .attr("class", "y-axis")
+        .text((d) => Intl.NumberFormat("en-US").format(d))
+        .attr("text-anchor", "start")
+        .attr(
+          "x",
+          side === Side.LEFT
+            ? getResponsivePadding().left
             : svgWidth - getResponsivePadding().right + PATH_PADDING
         )
         .attr("y", (d) => getLinearScale(side)(d));
@@ -913,24 +961,32 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     setPanLevel(() => e.transform.x);
   };
 
+  const movingRightSideBack = contextSafe((key: SelectableDataType) => {
+    const icon = document.getElementById(`timeline-data-icon-${key}`);
+
+    gsap.killTweensOf(icon);
+
+    gsap.to(icon, { x: 0, y: 0, duration: 1, ease: "power4.out" });
+  });
+
   //--------------------------------USE EFFECTS--------------------------------
 
   useEffect(() => {
     updateYears();
     updateEvents();
     setZoomLevelFloored(() => Math.floor(zoomLevel));
-    if (!Object.values(leftData).every((value) => !value)) {
+    getActiveLeft().forEach((data) => {
       getMaxValueOnScreen(Side.LEFT);
       updateHeights(Side.LEFT);
-      updatePeriods();
+      updatePeriods(data);
       updateYAxis(Side.LEFT);
-    }
+    });
 
     if (rightData) {
       getMaxValueOnScreen(Side.RIGHT);
       updateHeights(Side.RIGHT);
       updateYAxis(Side.RIGHT);
-      updatePeriods();
+      updatePeriods(rightData);
     }
 
     d3.select(graphRef.current)
@@ -947,34 +1003,36 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   }, [zoomLevel, panLevel]);
 
   useEffect(() => {
-    if (zoomLevelFloored >= LUSTRUM_ZOOM) {
-      animateLustra();
-      animateData(Side.LEFT);
-      animateData(Side.RIGHT);
-    } else {
-      reverseLustra();
-    }
+    if (scrolled) {
+      if (zoomLevelFloored >= LUSTRUM_ZOOM) {
+        animateLustra();
+        animateData(Side.LEFT);
+        animateData(Side.RIGHT);
+      } else {
+        reverseLustra();
+      }
 
-    if (zoomLevelFloored >= REGULAR_ZOOM) {
-      animateRegular();
-      animateData(Side.LEFT);
-      animateData(Side.RIGHT);
-    } else {
-      reverseRegular();
-    }
+      if (zoomLevelFloored >= REGULAR_ZOOM) {
+        animateRegular();
+        animateData(Side.LEFT);
+        animateData(Side.RIGHT);
+      } else {
+        reverseRegular();
+      }
 
-    if (
-      (getActiveLeft().length > 0 || rightData) &&
-      zoomLevelFloored >= SHORT_ZOOM
-    ) {
-      animateShort();
-    }
+      if (
+        (getActiveLeft().length > 0 || rightData) &&
+        zoomLevelFloored >= SHORT_ZOOM
+      ) {
+        animateShort();
+      }
 
-    if (
-      (getActiveLeft().length > 0 || rightData) &&
-      zoomLevelFloored < SHORT_ZOOM
-    ) {
-      reverseShort();
+      if (
+        (getActiveLeft().length > 0 || rightData) &&
+        zoomLevelFloored < SHORT_ZOOM
+      ) {
+        reverseShort();
+      }
     }
   }, [zoomLevelFloored]);
 
@@ -987,12 +1045,45 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
   }, [leftData]);
 
   useEffect(() => {
+    if (previousRightData) {
+      movingRightSideBack(previousRightData);
+    }
+    setPreviousRightData(rightData);
+
     getMaxValueOnScreen(Side.RIGHT);
     drawData(Side.RIGHT);
     drawPeriods(Side.RIGHT);
     updateYAxis(Side.RIGHT);
     animateData(Side.RIGHT);
   }, [rightData]);
+
+  useEffect(() => {
+    if (selectedButton) {
+      setSelectedDataPoint(null);
+      setSelectedEvent(null);
+      animateMouseHover();
+    }
+  }, [selectedButton]);
+
+  useEffect(() => {
+    if (selectedDataPoint) {
+      setSelectedButton(null);
+      setSelectedEvent(null);
+      animateMouseHover();
+    }
+  }, [selectedDataPoint]);
+
+  useEffect(() => {
+    if (selectedEvent) {
+      setSelectedButton(null);
+      setSelectedDataPoint(null);
+      if (windowWidth >= 1024) {
+        animateMouseHover();
+      } else {
+        animateEventOpen();
+      }
+    }
+  }, [selectedEvent]);
 
   useGSAP(
     () => {
@@ -1005,9 +1096,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           `active-row-placeholder-${key}`
         );
 
-        if (icon && placeholder) {
+        const returnElement = document.getElementById(
+          `active-row-return-${key}`
+        );
+
+        if (icon && placeholder && returnElement) {
           const { x: iconX, y: iconY } = icon.getBoundingClientRect();
           const { x: spotX, y: spotY } = placeholder.getBoundingClientRect();
+          const { x: returnX, y: returnY } =
+            returnElement.getBoundingClientRect();
+
+          const halfwayX = Math.abs(spotX - returnX) / 2;
 
           Draggable.create(icon, {
             inertia: true,
@@ -1015,22 +1114,43 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             resistance: 0.5,
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
+            onClick: () => {
+              if (windowWidth < 1024) {
+                setSelectedButton(key as SelectableDataType);
+              }
+            },
             onDragStart: () => {
+              animateMouseHoverReverse();
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
             },
             onDragEnd: () => {
               gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+              returnElement.classList.remove("closer");
+              placeholder.classList.remove("closer");
+            },
+            liveSnap: {
+              points: (point) => {
+                if (point.x <= halfwayX) {
+                  returnElement.classList.add("closer");
+                  placeholder.classList.remove("closer");
+                } else {
+                  returnElement.classList.remove("closer");
+                  placeholder.classList.add("closer");
+                }
+
+                return point;
+              },
             },
             snap: {
               points: (point) => {
-                if (point.x < SNAP_DISTANCE && point.y < SNAP_DISTANCE) {
+                if (point.x <= halfwayX) {
                   setLeftData((prev) => {
                     const newData = { ...prev };
                     newData[key as keyof LeftData] = false;
                     return newData;
                   });
 
-                  return { x: 0, y: 0 };
+                  return { x: returnX - iconX, y: returnY - iconY };
                 }
 
                 setLeftData((prev) => {
@@ -1051,26 +1171,56 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           `active-row-placeholder-right`
         );
 
-        if (icon && placeholder) {
+        const returnElement = document.getElementById(
+          `active-row-return-${key}`
+        );
+
+        if (icon && placeholder && returnElement) {
           const { x: iconX, y: iconY } = icon.getBoundingClientRect();
           const { x: spotX, y: spotY } = placeholder.getBoundingClientRect();
+
+          const { x: returnX, y: returnY } =
+            returnElement.getBoundingClientRect();
+
+          const halfwayX = Math.abs(spotX - returnX) / 2;
 
           Draggable.create(icon, {
             type: "x,y",
             inertia: true,
             edgeResistance: 0.5,
             bounds: "#data-icon-bounds",
+            onClick: () => {
+              if (windowWidth < 1024) {
+                setSelectedButton(key);
+              }
+            },
             onDragStart: () => {
+              animateMouseHoverReverse();
               gsap.to(icon, { scale: 0.7, borderRadius: "100%" });
             },
             onDragEnd: () => {
               gsap.to(icon, { scale: 1, borderRadius: "7.5px" });
+              returnElement.classList.remove("closer");
+              placeholder.classList.remove("closer");
+            },
+            liveSnap: {
+              points: (point) => {
+                if (point.x <= halfwayX) {
+                  returnElement.classList.add("closer");
+                  placeholder.classList.remove("closer");
+                } else {
+                  returnElement.classList.remove("closer");
+                  placeholder.classList.add("closer");
+                }
+
+                return point;
+              },
             },
             snap: {
               points: (point) => {
-                if (point.x < SNAP_DISTANCE && point.y < SNAP_DISTANCE) {
+                if (point.x <= halfwayX) {
                   setRightData(null);
-                  return { x: 0, y: 0 };
+                  return { x: returnX - iconX, y: returnY - iconY };
                 }
 
                 setRightData(key);
@@ -1217,6 +1367,14 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           );
 
         d3.select(graphRef.current)
+          .selectAll<Element, DataEvent>("svg.event-svg")
+          .attr("x", (d) => {
+            return (
+              getResponsivePadding().left +
+              (d.date.getFullYear() - timeline[0].year) * getTickWidth()
+            );
+          });
+        d3.select(graphRef.current)
           .selectAll<Element, DataEvent>(".event-svg .event-rect")
           .each((d, i, nodes) => {
             gsapTimeline.to(
@@ -1233,13 +1391,24 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     { scope: timelineRef, dependencies: [gsapTimeline] }
   );
 
-  useEffect(() => {}, [windowWidth]);
-
   useEffect(() => {
     drawTimeline();
     resizeTicks();
-    resizeDataPoints();
-    resizePeriods();
+    getActiveLeft().forEach((data) => {
+      resizeDataPoints(data);
+      resizePeriods(data);
+    });
+
+    if (rightData) {
+      resizeDataPoints(rightData);
+      resizePeriods(rightData);
+    }
+
+    if (windowWidth >= 1024) {
+      window.onmousemove = onMouseMove;
+    }
+
+    resizeYAxis();
 
     if (svgHeight < HEIGHT_TIMELINE + 120) {
       //TODO: ANIMATE EXIT GRAPH
@@ -1271,21 +1440,12 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       resizeEvents();
       animateMain();
       animateDecades();
-      if (zoomLevel > 2) animateLustra();
-      if (zoomLevel > 6) animateRegular();
+      if (zoomLevel >= LUSTRUM_ZOOM) animateLustra();
+      if (zoomLevel >= REGULAR_ZOOM) animateRegular();
       updateHeights(Side.RIGHT);
       updateHeights(Side.LEFT);
     }
-  }, [svgWidth, svgHeight]);
-
-  useGSAP(
-    () => {
-      if (selectedEvent !== null) {
-        animateEventOpen();
-      }
-    },
-    { scope: timelineRef, dependencies: [selectedEvent] }
-  );
+  }, [svgWidth, svgHeight, scrolled]);
 
   //--------------------------------MAIN USE EFFECT--------------------------------
 
@@ -1305,10 +1465,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
 
     window.onresize = onResize;
 
-    if (windowWidth >= 1024) {
-      window.onmousemove = onMouseMove;
-    }
-
     return () => {
       window.onmousemove = null;
       window.onresize = null;
@@ -1323,15 +1479,15 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     d3.select(graphRef.current)
       .select("#group-timeline")
       .selectAll<Element, TimelineYear>("svg.tick")
-      .attr(
-        "x",
-        (d) =>
+      .attr("x", (d) => {
+        return (
           getResponsivePadding().left +
           (d.year - timeline[0].year) * getTickWidth()
-      );
+        );
+      });
   };
 
-  const resizeDataPoints = () => {
+  const resizeDataPoints = (type: SelectableDataType) => {
     d3.select(graphRef.current)
       .select("#group-timeline")
       .selectAll<Element, TimelineYear>("svg.datapoint-svg")
@@ -1340,13 +1496,39 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         (d) =>
           getResponsivePadding().left +
           (d.year - timeline[0].year) * getTickWidth()
-      );
+      )
+      .on("mouseenter", (_, d) => {
+        if (windowWidth >= 1024) {
+          if (d[type]) {
+            setSelectedDataPoint({
+              year: d.year,
+              type: type,
+              amount: d[type],
+            });
+          }
+        }
+      })
+
+      .on("mouseleave", () => {
+        animateMouseHoverReverse();
+      })
+      .on("click", (_, d) => {
+        if (windowWidth < 1024) {
+          if (d[type]) {
+            setSelectedDataPoint({
+              year: d.year,
+              type: type,
+              amount: d[type],
+            });
+          }
+        }
+      });
   };
 
-  const resizePeriods = () => {
+  const resizePeriods = (type: SelectableDataType) => {
     d3.select(graphRef.current)
       .select("#group-timeline")
-      .selectAll<Element, DataPeriod>("svg.period-svg")
+      .selectAll<Element, DataPeriod>(`svg.period-svg.${type}`)
       .attr(
         "x",
         (d) =>
@@ -1354,22 +1536,61 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           (d.startYear - timeline[0].year) * getTickWidth()
       );
 
-    updatePeriods();
+    updatePeriods(type);
   };
 
   const resizeEvents = () => {
     d3.select(graphRef.current)
       .select("#group-timeline-events")
       .selectAll<Element, DataEvent>("svg.event-svg")
-      .attr(
-        "x",
-        (d) =>
+      .attr("x", (d) => {
+        return (
           getResponsivePadding().left +
           (d.date.getFullYear() - timeline[0].year) * getTickWidth()
-      )
+        );
+      })
       .select("rect.event-rect")
       .attr("x", (d) => 25 + (d.date.getMonth() * getTickWidth()) / 12)
-      .attr("width", getEventWidth);
+      .attr("width", getEventWidth)
+      .on("mouseenter", (_, d) => {
+        if (windowWidth >= 1024) {
+          window.onmousemove = onMouseMove;
+          setSelectedEvent(d);
+        }
+      })
+      .on("mouseleave", (e: MouseEvent) => {
+        if (windowWidth >= 1024) {
+          if (
+            e.relatedTarget &&
+            (e.relatedTarget as Element).id !== "mouseElement"
+          ) {
+            animateMouseHoverReverse();
+          }
+        } else {
+          if (
+            e.relatedTarget &&
+            !(e.relatedTarget as Element).classList.contains("event-rect")
+          ) {
+            animateMouseHoverReverse();
+          }
+        }
+      })
+      .on("click", (_, d) => {
+        if (windowWidth >= 1024) {
+          animateEventOpen();
+        } else {
+          setSelectedEvent(d);
+        }
+      });
+  };
+
+  const resizeYAxis = () => {
+    if (rightData) {
+      updateYAxis(Side.RIGHT);
+    }
+    if (getActiveLeft().length > 0) {
+      updateYAxis(Side.LEFT);
+    }
   };
 
   const onResize = () => {
@@ -1410,24 +1631,46 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
               <div className="data-icon-row left">
                 {Object.keys(leftData).map((key) => {
                   return (
-                    <button
-                      id={`timeline-data-icon-${key}`}
-                      className={`data-button data-icon ${key} left`}
+                    <div
+                      id={`active-row-return-${key}`}
+                      className="data-button active-row-placeholder"
                       key={key}
                     >
-                      {key[0]}
-                    </button>
+                      <button
+                        id={`timeline-data-icon-${key}`}
+                        className={`data-button data-icon ${key} left`}
+                        onMouseEnter={() => {
+                          setSelectedButton(key as SelectableDataType);
+                        }}
+                        onMouseLeave={() => {
+                          animateMouseHoverReverse();
+                        }}
+                      >
+                        {key[0]}
+                      </button>
+                    </div>
                   );
                 })}
                 {getRightSideButtons().map((key) => {
                   return (
-                    <button
-                      id={`timeline-data-icon-${key}`}
-                      className={`data-button data-icon ${key} right`}
+                    <div
+                      className="data-button active-row-placeholder"
                       key={key}
+                      id={`active-row-return-${key}`}
                     >
-                      {key[0]}
-                    </button>
+                      <button
+                        onMouseEnter={() => {
+                          setSelectedButton(key as SelectableDataType);
+                        }}
+                        onMouseLeave={() => {
+                          animateMouseHoverReverse();
+                        }}
+                        id={`timeline-data-icon-${key}`}
+                        className={`data-button data-icon ${key} right`}
+                      >
+                        {key[0]}
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -1440,9 +1683,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                     key={key}
                     id={`active-row-placeholder-${key}`}
                     className="data-button active-row-placeholder"
-                  >
-                    {key[0]}
-                  </div>
+                  ></div>
                 ))}
               </div>
               <div className="separator-vertical"></div>
@@ -1450,9 +1691,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                 <div
                   id={`active-row-placeholder-right`}
                   className="data-button active-row-placeholder"
-                >
-                  r
-                </div>
+                ></div>
               </div>
             </div>
           </div>
@@ -1469,7 +1708,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           ref={graphRef}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className=" w-full h-3/5 lg:h-4/5 max-h-full rounded-[20px] lg:rounded-60 origin-center"
+          className=" w-full h-3/5 lg:h-4/5 max-h-full rounded-[20px] lg:rounded-60 origin-center overscroll-contain"
         >
           <linearGradient id="fade-to-right">
             <stop
@@ -1586,18 +1825,21 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       >
         <div id="mouseElementContent">
           <div id="mouseElementContentVisibility">
+            {selectedButton && (
+              <span>{dataTypeAndDataToString(selectedButton)}</span>
+            )}
             {selectedDataPoint && (
               <div className="datapoint">
                 <span className="number">
                   {selectedDataPoint.endYear ? (
                     <>
                       <span>
-                        {Intl.NumberFormat("en-US").format(
+                        {dataTypeAndDataToString(
+                          selectedDataPoint.type,
                           selectedDataPoint.amount.number
                         )}
                       </span>{" "}
-                      <span>{selectedDataPoint.type}</span> between{" "}
-                      <span>{selectedDataPoint.year}</span> and{" "}
+                      between <span>{selectedDataPoint.year}</span> and{" "}
                       <span>{selectedDataPoint.endYear}</span>(avg.{" "}
                       {Intl.NumberFormat("en-US", {
                         maximumFractionDigits: 0,
@@ -1612,12 +1854,12 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                   ) : (
                     <>
                       <span>
-                        {Intl.NumberFormat("en-US").format(
+                        {dataTypeAndDataToString(
+                          selectedDataPoint.type,
                           selectedDataPoint.amount.number
                         )}
                       </span>{" "}
-                      <span>{selectedDataPoint.type}</span> in{" "}
-                      <span>{selectedDataPoint.year}</span>
+                      in <span>{selectedDataPoint.year}</span>
                     </>
                   )}
                 </span>
