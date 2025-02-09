@@ -54,7 +54,6 @@ export const dataTypeAndDataToString = (
 };
 
 export const dataAndTypeToStringEye = (amount: number, type: string) => {
-  console.log(type);
   switch (type) {
     case "gazaKilled":
       return `${amount} ${amount === 1 ? "person" : "people"} killed in Gaza`;

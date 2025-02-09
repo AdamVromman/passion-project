@@ -424,11 +424,6 @@ html {
 
   transform: translate(-50%, -50%);
 
-  &.gazaInjured,
-  &.westBankInjured {
-    @apply w-[40vh] h-[40vh] lg:w-[20vw] lg:h-[20vw];
-  }
-
   &.gazaKilled,
   &.gazaInjured {
     .rotating-value {
@@ -449,7 +444,9 @@ html {
 
   .rotating-value {
     @apply absolute;
-    @apply text-xs font-bold text-WHITE;
-    @apply px-2 py-0.5 rounded-full;
+    @apply -translate-x-1/2;
+    @apply text-xs lg:text-base font-bold text-WHITE;
+    @apply px-2 lg:px-4 py-0.5 rounded-lg;
+    @apply max-w-[100px] lg:max-w-screen text-center;
   }
 }

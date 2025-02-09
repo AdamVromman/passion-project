@@ -235,17 +235,22 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
         .forEach(([key], i) => {
           const randomRotate = Math.random() * 30;
           const startingValue = 130;
-          const rotate = startingValue + i * 40 + randomRotate;
+          const rotate = startingValue + (i + 1) * 40 + randomRotate;
+
+          gsap.to(`#rotating-value-${key}`, {
+            opacity: 1,
+            duration: 0.5,
+            delay: 0.5,
+          });
 
           gsap.fromTo(
             `#rotating-value-${key}`,
             {
-              rotate: startingValue,
+              rotate: startingValue + randomRotate,
             },
             {
               rotate: rotate,
-              opacity: 1,
-              duration: 2.5,
+              duration: 5,
               ease: "power3.out",
               delay: 0.5,
             }
@@ -254,11 +259,11 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
           gsap.fromTo(
             `#rotating-value-${key} .rotating-value`,
             {
-              rotate: -startingValue,
+              rotate: -startingValue - randomRotate,
             },
             {
               rotate: -rotate,
-              duration: 2.5,
+              duration: 5,
               ease: "power3.out",
               delay: 0.5,
             }
