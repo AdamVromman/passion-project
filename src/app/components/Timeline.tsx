@@ -890,6 +890,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
     }
   };
 
+  const yAxisNumberToWidth = (number: number, side: Side) => {
+    return (
+      20 +
+      number.toString().length * 10 +
+      (side === Side.RIGHT &&
+      rightData === SelectableDataType.PERCENTAGE_OF_PALESTINIAN_LAND_STOLEN
+        ? 20
+        : 0)
+    );
+  };
+
   const updateYAxis = (side: Side) => {
     d3.select(graphRef.current).selectAll(`.y-axis.${side}`).remove();
     if (
@@ -920,27 +931,53 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
       group
         .append("rect")
         .attr("class", "y-axis-rect")
-        .attr(
-          "x",
+        .attr("x", (d) =>
           side === Side.LEFT
-            ? getResponsivePadding().left
-            : svgWidth - getResponsivePadding().right + PATH_PADDING
+            ? (windowWidth >= 1024
+                ? getResponsivePadding().left
+                : getResponsivePadding().left * 3) -
+              PATH_PADDING -
+              yAxisNumberToWidth(d, side)
+            : svgWidth -
+              (windowWidth >= 1024
+                ? getResponsivePadding().right
+                : getResponsivePadding().right * 2) -
+              PATH_PADDING
         )
-        .attr("y", (d) => getLinearScale(side)(d))
-        .attr("width", (d) => Intl.NumberFormat("en-US").format(d).length * 10)
-        .attr("height", 0)
-        .attr("fill", "black");
+        .attr("y", (d) => getLinearScale(side)(d) - 15)
+        .attr("width", (d) => yAxisNumberToWidth(d, side))
+        .attr("height", 20)
+        .attr("fill", "#171717")
+        .attr("rx", 10);
 
       group
         .append("text")
         .attr("class", "y-axis")
-        .text((d) => Intl.NumberFormat("en-US").format(d))
-        .attr("text-anchor", "start")
-        .attr(
-          "x",
+        .text(
+          (d) =>
+            Intl.NumberFormat("en-US").format(d) +
+            (side === Side.RIGHT &&
+            rightData ===
+              SelectableDataType.PERCENTAGE_OF_PALESTINIAN_LAND_STOLEN
+              ? "%"
+              : "")
+        )
+        .attr("text-anchor", "middle")
+        .attr("fill", "#ebebeb")
+        .attr("x", (d) =>
           side === Side.LEFT
-            ? getResponsivePadding().left
-            : svgWidth - getResponsivePadding().right + PATH_PADDING
+            ? (windowWidth >= 1024
+                ? getResponsivePadding().left
+                : getResponsivePadding().left * 3) -
+              PATH_PADDING -
+              yAxisNumberToWidth(d, side) +
+              yAxisNumberToWidth(d, side) / 2
+            : svgWidth -
+              (windowWidth >= 1024
+                ? getResponsivePadding().right
+                : getResponsivePadding().right * 2) -
+              PATH_PADDING +
+              yAxisNumberToWidth(d, side) / 2
         )
         .attr("y", (d) => getLinearScale(side)(d));
     }
