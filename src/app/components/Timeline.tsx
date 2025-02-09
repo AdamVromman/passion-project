@@ -1935,11 +1935,17 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                   })}
                   {selectedEvent.endDate && " - "}
                   {selectedEvent.endDate &&
-                    selectedEvent.endDate.toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                  selectedEvent.endDate.getFullYear() === 2025 ? (
+                    "ongoing"
+                  ) : (
+                    <>
+                      {selectedEvent?.endDate?.toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}{" "}
+                    </>
+                  )}
                 </div>
                 <div className="event-full">
                   <div className="description">

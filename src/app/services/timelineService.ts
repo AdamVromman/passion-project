@@ -14,15 +14,16 @@ export enum Source {
   MIDDLE_EAST_EYE = "Middle East Eye",
   UNIVERSITY_OF_MICHIGAN = "University of Michigan",
   UN = "United Nations",
+  JOURNAL_OF_PALESTINE_STUDIES = "Journal of Palestine Studies",
+  MIDDLE_EAST_RESEARCH_AND_INFORMATION_PROJECT = "Middle East Research and Information Project",
+  JERUSALUM_QUARTERLY = "Jerusalem Quarterly",
 }
 
 export interface DataEvent {
   name: string;
-  arabicName?: string;
   description: string;
   date: Date;
   endDate?: Date;
-  location: string;
   link: string;
   source: Source[];
 }
@@ -59,7 +60,6 @@ export const events: DataEvent[] = [
     description:
       "The Balfour declaration was the open support of the establishment of a Jewish state and the promise of that land being Palestine. The declaration was made by the British Foreign Secretary Arthur Balfour in a letter to Lord Rothschild, a leader of the British Jewish community.",
     date: new Date("1917-11-02"),
-    location: "The United Kingdom",
     link: "https://www.aljazeera.com/features/2018/11/2/more-than-a-century-on-the-balfour-declaration-explained",
     source: [Source.AL_JAZEERA, Source.MIDDLE_EAST_EYE, Source.CBS],
   },
@@ -69,19 +69,16 @@ export const events: DataEvent[] = [
       "During the first world war, Great Britain promised the Arabs independence in return for their support in fighting the Ottoman Empire. However, after the war was over, the British and French divided the Middle East between themselves and called these colonies mandates. Palestine was one of these mandates.",
     date: new Date("1920-07-01"),
     endDate: new Date("1948-05-15"),
-    location: "Palestine and Transjordan",
     link: "https://lsa.umich.edu/content/dam/cmenas-assets/cmenas-documents/unit-of-israel-palestine/Section1_BritishMandateInPalestine.pdf",
     source: [Source.UNIVERSITY_OF_MICHIGAN],
   },
 
   {
     name: "The Nakba",
-    arabicName: "النَّكْبَة",
     description:
       "The Nakba (The Great Catastrophe) is the term used by Palestinians to describe the ethnic cleansing campaign that took place after Israel declared independence and the British mandate ended. During these months, over 750,000 Palestinians were expelled from their homes through massacres, bombings and psychological warfare. In total, 15,000 people were killed and over 500 villages were destroyed.",
     date: new Date("1947-12-01"),
     endDate: new Date("1949-07-20"),
-    location: "Palestine",
     link: "https://www.middleeasteye.net/news/israel-palestine-nakba-ethnic-cleansing-explained-five-maps-charts",
     source: [Source.AL_JAZEERA, Source.MIDDLE_EAST_EYE, Source.CBS],
   },
@@ -90,95 +87,126 @@ export const events: DataEvent[] = [
     description:
       "With resolution 181, also know as the United Nations Partition Plan, the UN decided to partition Palestine into two separate states, one Jewish and one Arab. The Jewish state would receive 55% of the land and the Arab state would receive 45%. Jerusalem would remain under international control.",
     date: new Date("1947-11-29"),
-    location: "New York City",
     link: "https://www.un.org/unispal/data-collection/general-assembly/",
     source: [Source.AL_JAZEERA, Source.UN],
   },
   {
     name: "The Suez Crisis",
-    description: "",
+    description:
+      "In 1956, Egyptian leader Gamal Abdel Nasser nationalised the Suez Canal, an important artificial sea-level waterway. In consequence, Israel, Great Britain and France launched a joint attack against Egypt. The goal was to depose President Nasser. Although the charismatic leader lost in military terms, he won the war politically: the conflict marked the decline of Britain and France’s influence in the Middle East, with the US becoming the most influential power in that region.",
     date: new Date("1956-10-29"),
     endDate: new Date("1956-11-07"),
-    location: "",
-    link: "",
-    source: [],
+
+    link: "https://www.aljazeera.com/news/2008/2/29/the-1956-suez-war",
+    source: [Source.AL_JAZEERA],
   },
   {
     name: "Creation of the Palestinian Liberation Organization",
-    description: "",
+    description:
+      "In 1964, the Arab League established the PLO with the intention of containing Palestinian nationalism, while appearing to support it. The PLO was relatively inconsequential until after the Arab states were defeated by Israel in the Six-Day War. The defeat allowed Yasser Arafat's Fatah party to take control over the PLO, prying it away from Arab state management and embracing a more radical agenda.",
     date: new Date("1964-05-28"),
-    location: "",
-    link: "",
-    source: [],
+
+    link: "https://www.palestine-studies.org/en/node/1649968",
+    source: [
+      Source.JOURNAL_OF_PALESTINE_STUDIES,
+      Source.MIDDLE_EAST_RESEARCH_AND_INFORMATION_PROJECT,
+    ],
   },
   {
     name: "The Six-Day War",
-    description: "",
+    description:
+      "Despite the 1949 Armistice Agreements, the tensions between Israel and the Arab states kept raising dangerously throughout the years, reaching a tipping point in June 1967. Amidst a military and diplomatic crisis, Israel attacked Egypt and Syria, effectively and swiftly destroying their air forces on the ground. Jordan joined the fight, but Israel decisively defeated the Egyptian, Syrian and Jordanian armies in only six days. This marked the Israeli occupation of the West Bank (captured from Jordan) and the Gaza Strip (captured from Egypt), and the birth of the illegal settler movement.",
     date: new Date("1967-06-05"),
     endDate: new Date("1967-06-10"),
-    location: "",
-    link: "",
-    source: [],
+
+    link: "https://www.palestine-studies.org/en/node/1649968",
+    source: [
+      Source.JOURNAL_OF_PALESTINE_STUDIES,
+      Source.MIDDLE_EAST_RESEARCH_AND_INFORMATION_PROJECT,
+    ],
   },
   {
     name: "The War of Attrition",
-    description: "",
+    description:
+      "After the Six-Day War, there was a lack of diplomatic efforts to resolve the Arab-Israeli conflict. Conscious of its military inferiority, Egypt opted for an attritive war, trying to wear down Israel’s will to continue the fight without making concessions. The war between Egypt and Israel continued between March 1969 and August 1970. A ceasefire was achieved via negotiations led by the US, in an attempt to de-escalate conflict in the region.",
     date: new Date("1967-06-05"),
     endDate: new Date("1970-08-07"),
-    location: "",
-    link: "",
-    source: [],
-  },
-  {
-    name: "Munich Olympics Massacre",
-    description: "",
-    date: new Date("1972-09-05"),
-    location: "",
-    link: "",
-    source: [],
+
+    link: "https://www.tandfonline.com/doi/epdf/10.2307/2535528?needAccess=true",
+    source: [Source.JOURNAL_OF_PALESTINE_STUDIES],
   },
   {
     name: "The Yom Kippur War",
-    description: "",
+    description:
+      "In 1971, the Egyptian government proposed a peace agreement on the condition that Israel return the Sinai Peninsula, a former Egyptian territory captured in 1967. Israel and the US ignored the proposal, and Egypt and Syria led a surprise attack on Israeli forces during the Jewish holy day of Yom Kippur. Caught off guard, Israel faced some military loses, and the Yom Kippur War became a deep psychological wound for the country. This loss prompted the US to increase political intervention in the area and military aid to Israel.",
     date: new Date("1973-10-06"),
     endDate: new Date("1973-10-25"),
-    location: "",
-    link: "",
-    source: [],
+
+    link: "https://www.palestine-studies.org/en/node/192924",
+    source: [
+      Source.JERUSALUM_QUARTERLY,
+      Source.MIDDLE_EAST_RESEARCH_AND_INFORMATION_PROJECT,
+    ],
   },
   {
     name: "Camp David Accords",
-    description: "",
+    description:
+      "In 1978, US President Jimmy Carter invited Egyptian President Anwar al-Sadat and  Israeli Prime Minister Menachem Begin to the Camp David presidential retreat in Maryland. They discussed two issues: a peace treaty between Egypt and Israel (eventually signed in 1979), and the Palestinian question. While the idea of grating autonomy to the Palestinians in the West Bank and the Gaza Strip for an interim period was discussed, it was never implemented. Israel ultimately violated the commitments Begin made to Carter at Camp Davis, by continuing to annex Palestinian lands and build illegal settlements.",
     date: new Date("1978-09-17"),
-    location: "",
-    link: "",
-    source: [],
+
+    link: "https://merip.org/wp-content/uploads/2017/02/Primer_on_Palestine-IsraelMERIP_February2014final.pdf",
+    source: [Source.MIDDLE_EAST_RESEARCH_AND_INFORMATION_PROJECT],
   },
   {
     name: "The First Intifada",
-    description: "",
+    description:
+      "In 1987, an Israeli military truck killed four Palestinian labourers from Gaza. During the demonstrations that followed in the largest refugee camp in Palestine, Hatem al-Sisi –a 17-year-old Palestinian boy– was murdered by an Israeli soldier. Protests immediately spread into what became a transformational event: the first mass uprising against the Israeli occupation. The popular mobilization lasted years and involved hundreds of thousands of Palestinians, including teenagers and children, who engaged in many forms of civil disobedience.",
     date: new Date("1987-12-08"),
     endDate: new Date("1993-09-13"),
-    location: "",
-    link: "",
-    source: [],
+
+    link: "https://merip.org/wp-content/uploads/2017/02/Primer_on_Palestine-IsraelMERIP_February2014final.pdf",
+    source: [
+      Source.MIDDLE_EAST_RESEARCH_AND_INFORMATION_PROJECT,
+      Source.INTERACTIVE_ENCYCLOPEDIA_OF_PALESTINE_QUESTION,
+    ],
   },
   {
     name: "The Oslo Accords",
-    description: "",
+    description:
+      "In 1993, secret negotiations were conducted in the Norwegian city of Oslo, between Israel and PLO representatives. The outcome was the Israel-PLO Declaration of Principles, signed in Washington. The deeply flawed agreement established that Israel would withdraw from the Gaza Strip, Jericho, and some unspecified areas of the West Bank, during an interim period of five years. Yet, it did not specify the nature of the Palestinian entity to be established, the status of Jerusalem, the future of the Israeli settlements, or other key issues.",
     date: new Date("1993-09-13"),
-    location: "",
-    link: "",
-    source: [],
+
+    link: "https://merip.org/wp-content/uploads/2017/02/Primer_on_Palestine-IsraelMERIP_February2014final.pdf",
+    source: [Source.MIDDLE_EAST_RESEARCH_AND_INFORMATION_PROJECT],
+  },
+  {
+    name: "Creation of the Palestinian Authority",
+    description:
+      "In 1994, the PLO created a Palestinian Authority (PA) for the areas from which Israeli forces were redeployed.",
+    date: new Date("1994-05-04"),
+
+    link: "https://merip.org/wp-content/uploads/2017/02/Primer_on_Palestine-IsraelMERIP_February2014final.pdf",
+    source: [Source.MIDDLE_EAST_RESEARCH_AND_INFORMATION_PROJECT],
   },
   {
     name: "The Second Intifada",
-    description: "",
+    description:
+      "In 2000, several issues led to a second mass uprising: the “peace process” initiated at Oslo stalled and later collapsed, the Palestinians in the Occupied Territories were suffering daily humiliations by Israeli settlers, and the PA was becoming increasingly corrupt. Israel’s response to the Second Intifada was a conscious escalation in the use of force. In consequence, the second uprising was much bloodier than the first.",
     date: new Date("2000-09-28"),
     endDate: new Date("2005-02-08"),
-    location: "",
-    link: "",
-    source: [],
+
+    link: "https://merip.org/wp-content/uploads/2017/02/Primer_on_Palestine-IsraelMERIP_February2014final.pdf",
+    source: [Source.MIDDLE_EAST_RESEARCH_AND_INFORMATION_PROJECT],
+  },
+  {
+    name: "The ongoing genocide",
+    description:
+      " On October 7, 2023, the Palestinian organization known as Hamas led an attack on southern Israel, killing 1154 Israelis and foreign nationals. In retaliation, Israel started a still ongoing process of collective punishment and ethnic cleansing against the Palestinian civilian population. Since then, Israel’s war on Gaza has killed over 46,700 people, and wounded more than 110,00 others. 11,000 people are missing and presumed dead. The majority of the victims are women and children.",
+    date: new Date("2023-10-07"),
+    endDate: new Date(),
+
+    link: "https://www.middleeasteye.net/news/what-you-need-know-about-ceasefire-deal",
+    source: [Source.MIDDLE_EAST_EYE, Source.AL_JAZEERA],
   },
 ];
 
