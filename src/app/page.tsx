@@ -24,6 +24,7 @@ export default function Home() {
     useState<WestBankData | null>(null);
 
   const [scrolled, setScrolled] = useState(false);
+  const [clicked, setClicked] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [searchedGaza, setSearchedGaza] = useState(false);
@@ -212,14 +213,20 @@ export default function Home() {
   const onResize = () => {
     updateWidths();
     setWindowWidth(getWindowWidth());
+    if (windowWidth >= 1024) {
+      window.onmousemove = onMouseMove;
+    }
   };
+
+  useEffect(() => {
+    if (windowWidth >= 1024) {
+      window.onmousemove = onMouseMove;
+    }
+  }, [windowWidth]);
 
   useEffect(() => {
     setWindowWidth(getWindowWidth());
     addEventListener("resize", onResize);
-    if (window.innerWidth > 1024) {
-      window.onmousemove = onMouseMove;
-    }
     return () => {
       window.onmousemove = null;
       removeEventListener("resize", onResize);
@@ -340,20 +347,6 @@ export default function Home() {
             gsapTimeline?.current?.reverse();
           },
         },
-        onStart: () => {
-          gsap.to("#start-experience", {
-            scale: 0,
-            duration: 0.3,
-            ease: "power4.in",
-            onComplete: () => {
-              window.onmousemove = null;
-            },
-          });
-        },
-        onReverseComplete: () => {
-          //TODO: hide button when already clicked and after scroll
-          if (hasDate()) window.onmousemove = onMouseMove;
-        },
         onComplete: () => {
           setScrolled(true);
         },
@@ -373,6 +366,36 @@ export default function Home() {
         });
     },
     { scope: mainRef, dependencies: [eyeOpen] }
+  );
+
+  useGSAP(
+    () => {
+      if (clicked) {
+        window.onmousemove = null;
+        gsap.to("#click-anywhere", {
+          scale: 0,
+          duration: 0.4,
+          ease: "power4.out",
+        });
+      } else {
+        if (scrolled) {
+          window.onmousemove = null;
+          gsap.to("#click-anywhere", {
+            scale: 0,
+            duration: 0.4,
+            ease: "power4.out",
+          });
+        } else {
+          gsap.to("#click-anywhere", {
+            scale: 1,
+            duration: 0.4,
+            ease: "power4.out",
+          });
+          window.onmousemove = onMouseMove;
+        }
+      }
+    },
+    { scope: mainRef, dependencies: [clicked, scrolled] }
   );
 
   return (
@@ -509,23 +532,23 @@ export default function Home() {
           </div>
         )}
       </div>
-      <button
-        id="start-experience"
+
+      <div
+        id="click-anywhere"
+        className="fixed top-0 left-0 w-screen h-screen cursor-pointer"
         onClick={() => {
-          gsap.to("#start-experience", {
-            scale: 0,
-            duration: 0.3,
-            ease: "power4.in",
-            onComplete: () => {
-              window.onmousemove = null;
-            },
-          });
+          setClicked(true);
           getLastUpdatedDate();
         }}
-        className="fixed top-15 left-1/2 -translate-x-1/2 lg:top-0 lg:left-0 lg:-translate-x-0 lg:scale-0 origin-center z-50 text-WHITE bg-RED px-8 py-4 rounded-full cursor-pointer"
       >
-        <span className="whitespace-nowrap">Click anywhere to start.</span>
-      </button>
+        <button
+          id="start-experience"
+          className="fixed top-15 left-1/2 -translate-x-1/2 lg:top-0 lg:left-0 lg:-translate-x-0 lg:scale-0 origin-center z-50 text-WHITE bg-RED px-8 py-4 rounded-full cursor-pointer pointer-events-none"
+        >
+          <span className="whitespace-nowrap">Click anywhere to start.</span>
+        </button>
+      </div>
+
       <Timeline
         windowWidth={windowWidth}
         scrolled={scrolled}
