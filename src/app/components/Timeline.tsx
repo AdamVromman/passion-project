@@ -1106,7 +1106,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           const { x: returnX, y: returnY } =
             returnElement.getBoundingClientRect();
 
-          const halfwayX = Math.abs(spotX - returnX) / 2;
+          const halfway =
+            Math.abs(windowWidth >= 1024 ? spotX - returnX : spotY - returnY) /
+            2;
 
           Draggable.create(icon, {
             inertia: true,
@@ -1130,7 +1132,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             },
             liveSnap: {
               points: (point) => {
-                if (point.x <= halfwayX) {
+                if ((windowWidth >= 1024 ? point.x : point.y) <= halfway) {
                   returnElement.classList.add("closer");
                   placeholder.classList.remove("closer");
                 } else {
@@ -1143,7 +1145,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             },
             snap: {
               points: (point) => {
-                if (point.x <= halfwayX) {
+                if ((windowWidth >= 1024 ? point.x : point.y) <= halfway) {
                   setLeftData((prev) => {
                     const newData = { ...prev };
                     newData[key as keyof LeftData] = false;
@@ -1182,7 +1184,9 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
           const { x: returnX, y: returnY } =
             returnElement.getBoundingClientRect();
 
-          const halfwayX = Math.abs(spotX - returnX) / 2;
+          const halfway =
+            Math.abs(windowWidth >= 1024 ? spotX - returnX : spotY - returnY) /
+            2;
 
           Draggable.create(icon, {
             type: "x,y",
@@ -1205,7 +1209,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             },
             liveSnap: {
               points: (point) => {
-                if (point.x <= halfwayX) {
+                if ((windowWidth >= 1024 ? point.x : point.y) <= halfway) {
                   returnElement.classList.add("closer");
                   placeholder.classList.remove("closer");
                 } else {
@@ -1218,7 +1222,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             },
             snap: {
               points: (point) => {
-                if (point.x <= halfwayX) {
+                if ((windowWidth >= 1024 ? point.x : point.y) <= halfway) {
                   setRightData(null);
                   return { x: returnX - iconX, y: returnY - iconY };
                 }
