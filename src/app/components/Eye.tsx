@@ -23,6 +23,7 @@ import {
   DEFS,
   DEFS_MOBILE,
 } from "../services/statics";
+import { dataAndTypeToStringEye } from "../services/functions";
 
 interface Props {
   eyeOpen: boolean;
@@ -34,6 +35,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
   gsap.registerPlugin(MorphSVGPlugin);
 
   const ref = useRef(null);
+  const svgRef = useRef(null);
   const eyeRef = useRef(null);
   const clipRef = useRef(null);
 
@@ -93,6 +95,11 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
 
   const animateCloseEye = contextSafe(() => {
     if (timeline) {
+      gsap.to(".rotating-value-wrapper", {
+        opacity: 0,
+        duration: 3,
+        ease: "power3.out",
+      });
       timeline.reverse();
     }
   });
@@ -222,6 +229,41 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
           }
         );
       }
+
+      Object.entries(dailyData)
+        .filter(([, value]) => value > 0)
+        .forEach(([key], i) => {
+          const randomRotate = Math.random() * 30;
+          const startingValue = 130;
+          const rotate = startingValue + i * 40 + randomRotate;
+
+          gsap.fromTo(
+            `#rotating-value-${key}`,
+            {
+              rotate: startingValue,
+            },
+            {
+              rotate: rotate,
+              opacity: 1,
+              duration: 2.5,
+              ease: "power3.out",
+              delay: 0.5,
+            }
+          );
+
+          gsap.fromTo(
+            `#rotating-value-${key} .rotating-value`,
+            {
+              rotate: -startingValue,
+            },
+            {
+              rotate: -rotate,
+              duration: 2.5,
+              ease: "power3.out",
+              delay: 0.5,
+            }
+          );
+        });
     }
 
     gsap.fromTo(
@@ -253,7 +295,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
   useGSAP(
     () => {
       if (eyeOpen) {
-        gsap.to(ref.current, {
+        gsap.to(svgRef.current, {
           duration: 1,
           opacity: 1,
           scale: windowWidth ? 1 : 1.2,
@@ -295,9 +337,9 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
   }, [windowWidth]);
 
   return (
-    <div>
+    <div ref={ref}>
       <svg
-        ref={ref}
+        ref={svgRef}
         className="absolute top-0 left-0 w-dvw h-dvh lg:p-60 lg:pb-120 fill-BEIGE opacity-0 scale-50"
         viewBox={viewBox}
       >
@@ -364,6 +406,18 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
           </g>
         </g>
       </svg>
+      {dailyData &&
+        Object.entries(dailyData).map(([key, value]) => (
+          <div
+            key={key}
+            id={`rotating-value-${key}`}
+            className={`rotating-value-wrapper ${key}`}
+          >
+            <span className="rotating-value">
+              {dataAndTypeToStringEye(value, key)}
+            </span>
+          </div>
+        ))}
     </div>
   );
 };

@@ -52,3 +52,21 @@ export const dataTypeAndDataToString = (
       } of Palestinian land stolen`;
   }
 };
+
+export const dataAndTypeToStringEye = (amount: number, type: string) => {
+  console.log(type);
+  switch (type) {
+    case "gazaKilled":
+      return `${amount} ${amount === 1 ? "person" : "people"} killed in Gaza`;
+    case "gazaInjured":
+      return `${amount} ${amount === 1 ? "person" : "people"} injured in Gaza`;
+    case "westBankKilled":
+      return `${amount} ${
+        amount === 1 ? "person" : "people"
+      } killed in the West Bank`;
+    case "westBankInjured":
+      return `${amount} ${
+        amount === 1 ? "person" : "people"
+      } injured in the West Bank`;
+  }
+};

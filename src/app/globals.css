@@ -416,3 +416,40 @@ html {
     @apply stroke-4 stroke-BLACK;
   }
 }
+
+.rotating-value-wrapper {
+  @apply fixed z-50 opacity-0;
+  @apply w-[30vh] h-[30vh] lg:w-[20vw] lg:h-[20vw];
+  @apply top-1/2 left-1/2;
+
+  transform: translate(-50%, -50%);
+
+  &.gazaInjured,
+  &.westBankInjured {
+    @apply w-[40vh] h-[40vh] lg:w-[20vw] lg:h-[20vw];
+  }
+
+  &.gazaKilled,
+  &.gazaInjured {
+    .rotating-value {
+      @apply absolute;
+      @apply font-bold text-WHITE;
+      @apply bg-GREEN;
+    }
+  }
+
+  &.westBankKilled,
+  &.westBankInjured {
+    .rotating-value {
+      @apply absolute;
+      @apply font-bold text-WHITE;
+      @apply bg-RED;
+    }
+  }
+
+  .rotating-value {
+    @apply absolute;
+    @apply text-xs font-bold text-WHITE;
+    @apply px-2 py-0.5 rounded-full;
+  }
+}
