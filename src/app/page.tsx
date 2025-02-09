@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BackgroundText from "./components/BackgroundText";
 import Eye from "./components/Eye";
 import { DailyData, GazaData, WestBankData } from "./services/types";
@@ -16,6 +16,10 @@ export default function Home() {
   const [month, setMonth] = useState<number>();
   const [year, setYear] = useState<number>();
 
+  const [allDataGaza, setAllDataGaza] = useState<GazaData[] | null>(null);
+  const [allDataWestBank, setAllDataWestBank] = useState<WestBankData[] | null>(
+    null
+  );
   const [dailyData, setDailyData] = useState<DailyData | null>(null);
 
   const [dataGaza, setDataGaza] = useState<GazaData | null>(null);
@@ -44,64 +48,81 @@ export default function Home() {
   const monthInputRef = useRef<HTMLSelectElement | null>(null);
   const yearInputRef = useRef<HTMLSelectElement | null>(null);
 
-  const getDataGaza = async (date: Date) => {
+  const getAllData = async () => {
     await fetch(
       "https://data.techforpalestine.org/api/v2/casualties_daily.json"
     ).then(async (response) => {
       if (response.ok) {
-        await response.json().then((data: GazaData[]) => {
-          const date1 = data.find((d: GazaData) => {
-            const localDate = new Date(d.report_date);
-            localDate.setHours(0, 0, 0, 0);
-            return localDate.getTime() === date.getTime();
-          });
-
-          if (date1) {
-            setDataGaza(date1);
-          } else {
-            setDataGaza(null);
-          }
-          setSearchedGaza(true);
+        await response.json().then((data) => {
+          setAllDataGaza(data as GazaData[]);
         });
       }
     });
-  };
 
-  const getDataWestBank = async (date: Date) => {
     await fetch(
       "https://data.techforpalestine.org/api/v2/west_bank_daily.json"
     ).then(async (response) => {
       if (response.ok) {
-        await response.json().then((data: WestBankData[]) => {
-          const date1 = data.find((d: WestBankData) => {
-            const localDate = new Date(d.report_date);
-            localDate.setHours(0, 0, 0, 0);
-            return localDate.getTime() === date.getTime();
-          });
-
-          if (date1) {
-            setDataWestBank(date1);
-            if (!date1.verified) {
-              const previousDay = data.find((d: WestBankData) => {
-                const localDate = new Date(d.report_date);
-                localDate.setHours(0, 0, 0, 0);
-                return (
-                  localDate.getTime() === date.getTime() - 24 * 60 * 60 * 1000
-                );
-              });
-
-              if (previousDay) {
-                setDataWestBankPrevious(previousDay);
-              }
-            }
-          } else {
-            setDataWestBank(null);
-          }
-          setSearchedWestBank(true);
+        await response.json().then((data) => {
+          setAllDataWestBank(data as WestBankData[]);
         });
       }
     });
   };
+
+  const getDataGaza = useCallback(
+    (date: Date) => {
+      if (allDataGaza) {
+        const date1 = allDataGaza.find((d: GazaData) => {
+          const localDate = new Date(d.report_date);
+          localDate.setHours(0, 0, 0, 0);
+          return localDate.getTime() === date.getTime();
+        });
+
+        if (date1) {
+          setDataGaza(date1);
+        } else {
+          setDataGaza(null);
+        }
+      }
+
+      setSearchedGaza(true);
+    },
+    [allDataGaza]
+  );
+
+  const getDataWestBank = useCallback(
+    (date: Date) => {
+      if (allDataWestBank) {
+        const date1 = allDataWestBank.find((d: WestBankData) => {
+          const localDate = new Date(d.report_date);
+          localDate.setHours(0, 0, 0, 0);
+          return localDate.getTime() === date.getTime();
+        });
+
+        if (date1) {
+          setDataWestBank(date1);
+          if (!date1.verified) {
+            const previousDay = allDataWestBank.find((d: WestBankData) => {
+              const localDate = new Date(d.report_date);
+              localDate.setHours(0, 0, 0, 0);
+              return (
+                localDate.getTime() === date.getTime() - 24 * 60 * 60 * 1000
+              );
+            });
+
+            if (previousDay) {
+              setDataWestBankPrevious(previousDay);
+            }
+          }
+        } else {
+          setDataWestBank(null);
+        }
+        setSearchedWestBank(true);
+      }
+    },
+    [allDataWestBank]
+  );
 
   const getLastUpdatedDate = async () => {
     let lastDate: Date = new Date("2025-01-28");
@@ -210,14 +231,6 @@ export default function Home() {
     });
   };
 
-  const onResize = () => {
-    updateWidths();
-    setWindowWidth(getWindowWidth());
-    if (windowWidth >= 1024) {
-      window.onmousemove = onMouseMove;
-    }
-  };
-
   useEffect(() => {
     if (windowWidth >= 1024) {
       window.onmousemove = onMouseMove;
@@ -225,22 +238,31 @@ export default function Home() {
   }, [windowWidth]);
 
   useEffect(() => {
+    const onResize = () => {
+      updateWidths();
+      setWindowWidth(getWindowWidth());
+      if (windowWidth >= 1024) {
+        window.onmousemove = onMouseMove;
+      }
+    };
+
     setWindowWidth(getWindowWidth());
     addEventListener("resize", onResize);
+
+    getAllData();
+
     return () => {
       window.onmousemove = null;
       removeEventListener("resize", onResize);
     };
-  }, []);
+  }, [windowWidth]);
 
-  const hasDate = () =>
-    day !== undefined && month !== undefined && year !== undefined;
+  const hasDate = useCallback(
+    () => day !== undefined && month !== undefined && year !== undefined,
+    [day, month, year]
+  );
 
-  useEffect(() => {
-    if (loaded) getData();
-  }, [loaded]);
-
-  const getData = () => {
+  const getData = useCallback(() => {
     if (hasDate()) {
       const date = new Date(year!, month!, day!);
 
@@ -249,7 +271,11 @@ export default function Home() {
         getDataWestBank(date);
       }
     }
-  };
+  }, [day, getDataGaza, getDataWestBank, hasDate, month, year]);
+
+  useEffect(() => {
+    if (loaded) getData();
+  }, [getData, loaded]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -271,7 +297,7 @@ export default function Home() {
     return () => {
       clearTimeout(timeout);
     };
-  }, [day, month, year]);
+  }, [day, getData, hasDate, month, year]);
 
   useEffect(() => {
     if (
