@@ -1880,7 +1880,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                         )}
                       </span>{" "}
                       between <span>{selectedDataPoint.year}</span> and{" "}
-                      <span>{selectedDataPoint.endYear}</span>(avg.{" "}
+                      <span>{selectedDataPoint.endYear} </span>(avg.{" "}
                       {Intl.NumberFormat("en-US", {
                         maximumFractionDigits: 0,
                       }).format(
@@ -1889,7 +1889,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                             selectedDataPoint.year +
                             1)
                       )}{" "}
-                      per year)
+                      /y)
                     </>
                   ) : (
                     <>
