@@ -114,6 +114,8 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
             rotation: 360 * Math.random(),
             duration: 3 * Math.random() + 2,
             size: 1 + 0.1 * Math.random(),
+            type: "gazaKilled",
+            originalIndex: i,
           });
         }
         return newElements;
@@ -127,6 +129,8 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
             rotation: 360 * Math.random(),
             duration: 3 * Math.random() + 2,
             size: 1 + 0.1 * Math.random(),
+            type: "gazaInjured",
+            originalIndex: i,
           });
         }
         return newElements;
@@ -140,6 +144,8 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
             rotation: 360 * Math.random(),
             duration: 3 * Math.random() + 2,
             size: 1 + 0.1 * Math.random(),
+            type: "westBankKilled",
+            originalIndex: i,
           });
         }
         return newElements;
@@ -153,6 +159,8 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
             rotation: 360 * Math.random(),
             duration: 3 * Math.random() + 2,
             size: 1 + 0.1 * Math.random(),
+            type: "westBankInjured",
+            originalIndex: i,
           });
         }
         return newElements;
@@ -160,11 +168,25 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
     }
   };
 
+  const shuffleTwoArray = (
+    array1: EyeLineElement[],
+    array2: EyeLineElement[]
+  ) => {
+    const mergedArray = array1.concat(array2);
+    for (let i = mergedArray.length - 1; i >= 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = mergedArray[i];
+      mergedArray[i] = mergedArray[j];
+      mergedArray[j] = temp;
+    }
+    return mergedArray;
+  };
+
   const animateEye = contextSafe(() => {
     if (dailyData) {
       for (let i = 0; i < dailyData.gazaKilled; i++) {
         gsap.fromTo(
-          `#gaza-killed-${i}`,
+          `#killed-gazaKilled-${i}`,
           {
             rotate: 0,
             transformOrigin: "50% 100%",
@@ -181,7 +203,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
 
       for (let i = 0; i < dailyData.gazaInjured; i++) {
         gsap.fromTo(
-          `#gaza-injured-${i}`,
+          `#injured-gazaInjured-${i}`,
           {
             rotate: 0,
             transformOrigin: "50% 100%",
@@ -198,7 +220,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
 
       for (let i = 0; i < dailyData.westBankKilled; i++) {
         gsap.fromTo(
-          `#west-bank-killed-${i}`,
+          `#killed-westBankKilled-${i}`,
           {
             rotate: 0,
             transformOrigin: "50% 100%",
@@ -215,7 +237,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
 
       for (let i = 0; i < dailyData.westBankInjured; i++) {
         gsap.fromTo(
-          `#west-bank-injured-${i}`,
+          `#injured-westBankInjured-${i}`,
           {
             rotate: 0,
             transformOrigin: "50% 100%",
@@ -357,51 +379,34 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
           <g id="closed">
             <g clipPath="url(#clippath)">
               <g>
-                {westBankInjuredElements.map((element, index) => (
+                {shuffleTwoArray(
+                  westBankInjuredElements,
+                  gazaInjuredElements
+                ).map((element) => (
                   <use
-                    id={`west-bank-injured-${index}`}
+                    id={`injured-${element.type}-${element.originalIndex}`}
                     x={0}
                     y={0}
-                    key={`west-bank-injured-${index}`}
-                    className="eye-line west-bank-killed"
+                    key={`injured-${element.type}-${element.originalIndex}`}
+                    className={`eye-line injured-${element.type}`}
                     href="#trapezium1"
                     fill={element.color}
                   />
                 ))}
-                {gazaInjuredElements.map((element, index) => (
+                {shuffleTwoArray(
+                  westBankKilledElements,
+                  gazaKilledElements
+                ).map((element) => (
                   <use
-                    id={`gaza-injured-${index}`}
+                    id={`killed-${element.type}-${element.originalIndex}`}
                     x={0}
                     y={0}
-                    key={`gaza-injured-${index}`}
-                    className="eye-line gaza-injured"
-                    href="#trapezium1"
-                    fill={element.color}
-                  />
-                ))}
-                {gazaKilledElements.map((element, index) => (
-                  <use
-                    id={`gaza-killed-${index}`}
-                    x={0}
-                    y={0}
-                    key={`gaza-killed-${index}`}
-                    className="eye-line gaza-killed"
+                    key={`killed-${element.type}-${element.originalIndex}`}
+                    className={`eye-line killed-${element.type}`}
                     href="#trapezium2"
                     fill={element.color}
                   />
                 ))}
-                {westBankKilledElements.map((element, index) => (
-                  <use
-                    id={`west-bank-killed-${index}`}
-                    x={0}
-                    y={0}
-                    key={`west-bank-killed-${index}`}
-                    className="eye-line west-bank-killed"
-                    href="#trapezium2"
-                    fill={element.color}
-                  />
-                ))}
-
                 {pupil}
                 {glare1}
                 {glare2}
