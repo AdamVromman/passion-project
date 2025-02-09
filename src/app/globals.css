@@ -107,9 +107,6 @@ html {
 
   & select {
     -webkit-appearance: none;
-    -moz-appearance: none;
-    text-indent: 1px;
-    text-overflow: "";
   }
 
   /* Chrome, Safari, Edge, Opera */
@@ -448,5 +445,50 @@ html {
     @apply text-xs lg:text-base font-bold text-WHITE;
     @apply px-2 lg:px-4 py-0.5 rounded-lg;
     @apply max-w-[100px] lg:max-w-screen text-center;
+  }
+}
+
+.question-mark {
+  @apply relative;
+  .question-mark-button {
+    @apply w-[30px] h-[30px] rounded-full;
+    @apply bg-BLACK text-WHITE opacity-50;
+    @apply text-xl font-bold;
+  }
+
+  .question-mark-explanation {
+    @apply absolute;
+    @apply scale-0;
+    @apply bg-BLACK text-WHITE;
+    @apply p-4 rounded-7.5 lg:rounded-15;
+    @apply min-w-[200px] max-w-[50vw] lg:min-w-[200px] lg:max-w-[400px];
+  }
+
+  &.topRight {
+    .question-mark-explanation {
+      @apply bottom-0 left-0;
+      @apply origin-top-right transform translate-x-[-100%] translate-y-[100%];
+    }
+  }
+
+  &.bottomRight {
+    .question-mark-explanation {
+      @apply top-0 left-0;
+      @apply origin-bottom-right transform translate-x-[-100%] translate-y-[-100%];
+    }
+  }
+
+  &.bottomLeft {
+    .question-mark-explanation {
+      @apply top-0 right-0;
+      @apply origin-bottom-left transform translate-x-[100%] translate-y-[-100%];
+    }
+  }
+
+  &.topLeft {
+    .question-mark-explanation {
+      @apply bottom-0 right-0;
+      @apply origin-top-left transform translate-x-[100%] translate-y-[100%];
+    }
   }
 }

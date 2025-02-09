@@ -426,6 +426,10 @@ export default function Home() {
 
   return (
     <div ref={mainRef} className="main">
+      <h1 className="hidden pointer-events-none">
+        Don&apos;t close your eyes for Israel&apos;s genocide in Gaza and the
+        illegal occupation of Palestinian land
+      </h1>
       <BackgroundText windowWidth={windowWidth} eyeOpen={eyeOpen} />
       <Eye windowWidth={windowWidth} eyeOpen={eyeOpen} dailyData={dailyData} />
       <div className="fixed top-0 left-0 w-dvw h-dvh flex flex-col p-20 justify-start items-center text-WHITE">

@@ -21,6 +21,7 @@ import {
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
 import { dataTypeAndDataToString } from "../services/functions";
+import QuestionMark from "./QuestionMark";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60, rx: 60 };
 const PADDING_MOBILE = { top: 30, left: 30, right: 30, bottom: 20, rx: 20 };
@@ -1713,6 +1714,10 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                     </div>
                   );
                 })}
+                <QuestionMark
+                  side="topRight"
+                  explanation="Drag one of the buttons to the correspond spots to add them to the timeline"
+                />
               </div>
             </div>
             <div className="separator"></div>
@@ -1735,7 +1740,6 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
               </div>
             </div>
           </div>
-
           <div className="text-BLACK text-4xl font-bold flex flex-row lg:flex-col items-end lg:w-1/4">
             <span>{leftYear}</span>
             <span className="lg:hidden">—</span>
@@ -1880,7 +1884,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                         )}
                       </span>{" "}
                       between <span>{selectedDataPoint.year}</span> and{" "}
-                      <span>{selectedDataPoint.endYear}</span>(avg.{" "}
+                      <span>{selectedDataPoint.endYear} </span>(avg.{" "}
                       {Intl.NumberFormat("en-US", {
                         maximumFractionDigits: 0,
                       }).format(
@@ -1889,7 +1893,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
                             selectedDataPoint.year +
                             1)
                       )}{" "}
-                      per year)
+                      /y)
                     </>
                   ) : (
                     <>
@@ -1959,6 +1963,12 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
             )}
           </div>
         </div>
+      </div>
+      <div className="absolute bottom-7_5 left-7_5 lg:bottom-[45px] lg:left-[45px]">
+        <QuestionMark
+          explanation="Zoom and pan to see more or less details of the timeline."
+          side="bottomLeft"
+        />
       </div>
     </div>
   );
