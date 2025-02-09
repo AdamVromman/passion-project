@@ -23,6 +23,7 @@ import {
   DEFS,
   DEFS_MOBILE,
 } from "../services/statics";
+import { dataAndTypeToStringEye } from "../services/functions";
 
 interface Props {
   eyeOpen: boolean;
@@ -34,6 +35,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
   gsap.registerPlugin(MorphSVGPlugin);
 
   const ref = useRef(null);
+  const svgRef = useRef(null);
   const eyeRef = useRef(null);
   const clipRef = useRef(null);
 
@@ -93,6 +95,11 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
 
   const animateCloseEye = contextSafe(() => {
     if (timeline) {
+      gsap.to(".rotating-value-wrapper", {
+        opacity: 0,
+        duration: 3,
+        ease: "power3.out",
+      });
       timeline.reverse();
     }
   });
@@ -107,6 +114,8 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
             rotation: 360 * Math.random(),
             duration: 3 * Math.random() + 2,
             size: 1 + 0.1 * Math.random(),
+            type: "gazaKilled",
+            originalIndex: i,
           });
         }
         return newElements;
@@ -120,6 +129,8 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
             rotation: 360 * Math.random(),
             duration: 3 * Math.random() + 2,
             size: 1 + 0.1 * Math.random(),
+            type: "gazaInjured",
+            originalIndex: i,
           });
         }
         return newElements;
@@ -133,6 +144,8 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
             rotation: 360 * Math.random(),
             duration: 3 * Math.random() + 2,
             size: 1 + 0.1 * Math.random(),
+            type: "westBankKilled",
+            originalIndex: i,
           });
         }
         return newElements;
@@ -146,6 +159,8 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
             rotation: 360 * Math.random(),
             duration: 3 * Math.random() + 2,
             size: 1 + 0.1 * Math.random(),
+            type: "westBankInjured",
+            originalIndex: i,
           });
         }
         return newElements;
@@ -153,11 +168,25 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
     }
   };
 
+  const shuffleTwoArray = (
+    array1: EyeLineElement[],
+    array2: EyeLineElement[]
+  ) => {
+    const mergedArray = array1.concat(array2);
+    for (let i = mergedArray.length - 1; i >= 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = mergedArray[i];
+      mergedArray[i] = mergedArray[j];
+      mergedArray[j] = temp;
+    }
+    return mergedArray;
+  };
+
   const animateEye = contextSafe(() => {
     if (dailyData) {
       for (let i = 0; i < dailyData.gazaKilled; i++) {
         gsap.fromTo(
-          `#gaza-killed-${i}`,
+          `#killed-gazaKilled-${i}`,
           {
             rotate: 0,
             transformOrigin: "50% 100%",
@@ -174,7 +203,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
 
       for (let i = 0; i < dailyData.gazaInjured; i++) {
         gsap.fromTo(
-          `#gaza-injured-${i}`,
+          `#injured-gazaInjured-${i}`,
           {
             rotate: 0,
             transformOrigin: "50% 100%",
@@ -191,7 +220,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
 
       for (let i = 0; i < dailyData.westBankKilled; i++) {
         gsap.fromTo(
-          `#west-bank-killed-${i}`,
+          `#killed-westBankKilled-${i}`,
           {
             rotate: 0,
             transformOrigin: "50% 100%",
@@ -208,7 +237,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
 
       for (let i = 0; i < dailyData.westBankInjured; i++) {
         gsap.fromTo(
-          `#west-bank-injured-${i}`,
+          `#injured-westBankInjured-${i}`,
           {
             rotate: 0,
             transformOrigin: "50% 100%",
@@ -222,6 +251,46 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
           }
         );
       }
+
+      Object.entries(dailyData)
+        .filter(([, value]) => value > 0)
+        .forEach(([key], i) => {
+          const randomRotate = Math.random() * 30;
+          const startingValue = 130;
+          const rotate = startingValue + (i + 1) * 40 + randomRotate;
+
+          gsap.to(`#rotating-value-${key}`, {
+            opacity: 1,
+            duration: 0.5,
+            delay: 0.5,
+          });
+
+          gsap.fromTo(
+            `#rotating-value-${key}`,
+            {
+              rotate: startingValue + randomRotate,
+            },
+            {
+              rotate: rotate,
+              duration: 5,
+              ease: "power3.out",
+              delay: 0.5,
+            }
+          );
+
+          gsap.fromTo(
+            `#rotating-value-${key} .rotating-value`,
+            {
+              rotate: -startingValue - randomRotate,
+            },
+            {
+              rotate: -rotate,
+              duration: 5,
+              ease: "power3.out",
+              delay: 0.5,
+            }
+          );
+        });
     }
 
     gsap.fromTo(
@@ -253,7 +322,7 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
   useGSAP(
     () => {
       if (eyeOpen) {
-        gsap.to(ref.current, {
+        gsap.to(svgRef.current, {
           duration: 1,
           opacity: 1,
           scale: windowWidth ? 1 : 1.2,
@@ -295,9 +364,9 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
   }, [windowWidth]);
 
   return (
-    <div>
+    <div ref={ref}>
       <svg
-        ref={ref}
+        ref={svgRef}
         className="absolute top-0 left-0 w-dvw h-dvh lg:p-60 lg:pb-120 fill-BEIGE opacity-0 scale-50"
         viewBox={viewBox}
       >
@@ -310,51 +379,34 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
           <g id="closed">
             <g clipPath="url(#clippath)">
               <g>
-                {westBankInjuredElements.map((element, index) => (
+                {shuffleTwoArray(
+                  westBankInjuredElements,
+                  gazaInjuredElements
+                ).map((element) => (
                   <use
-                    id={`west-bank-injured-${index}`}
+                    id={`injured-${element.type}-${element.originalIndex}`}
                     x={0}
                     y={0}
-                    key={`west-bank-injured-${index}`}
-                    className="eye-line west-bank-killed"
+                    key={`injured-${element.type}-${element.originalIndex}`}
+                    className={`eye-line injured-${element.type}`}
                     href="#trapezium1"
                     fill={element.color}
                   />
                 ))}
-                {gazaInjuredElements.map((element, index) => (
+                {shuffleTwoArray(
+                  westBankKilledElements,
+                  gazaKilledElements
+                ).map((element) => (
                   <use
-                    id={`gaza-injured-${index}`}
+                    id={`killed-${element.type}-${element.originalIndex}`}
                     x={0}
                     y={0}
-                    key={`gaza-injured-${index}`}
-                    className="eye-line gaza-injured"
-                    href="#trapezium1"
-                    fill={element.color}
-                  />
-                ))}
-                {gazaKilledElements.map((element, index) => (
-                  <use
-                    id={`gaza-killed-${index}`}
-                    x={0}
-                    y={0}
-                    key={`gaza-killed-${index}`}
-                    className="eye-line gaza-killed"
+                    key={`killed-${element.type}-${element.originalIndex}`}
+                    className={`eye-line killed-${element.type}`}
                     href="#trapezium2"
                     fill={element.color}
                   />
                 ))}
-                {westBankKilledElements.map((element, index) => (
-                  <use
-                    id={`west-bank-killed-${index}`}
-                    x={0}
-                    y={0}
-                    key={`west-bank-killed-${index}`}
-                    className="eye-line west-bank-killed"
-                    href="#trapezium2"
-                    fill={element.color}
-                  />
-                ))}
-
                 {pupil}
                 {glare1}
                 {glare2}
@@ -364,6 +416,18 @@ const Eye = ({ eyeOpen, dailyData, windowWidth }: Props) => {
           </g>
         </g>
       </svg>
+      {dailyData &&
+        Object.entries(dailyData).map(([key, value]) => (
+          <div
+            key={key}
+            id={`rotating-value-${key}`}
+            className={`rotating-value-wrapper ${key}`}
+          >
+            <span className="rotating-value">
+              {dataAndTypeToStringEye(value, key)}
+            </span>
+          </div>
+        ))}
     </div>
   );
 };

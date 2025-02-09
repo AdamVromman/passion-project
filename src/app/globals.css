@@ -78,7 +78,7 @@ html {
 
 .timeline-section {
   @apply bg-BEIGE;
-  @apply absolute top-[10px] left-[10px] lg:left-30 lg:top-30;
+  @apply absolute top-[10px] left-[10px] lg:left-30 lg:top-30 z-50;
   @apply rounded-30 lg:rounded-90 p-15 lg:p-60;
 
   width: calc(100dvw - 20px);
@@ -414,5 +414,39 @@ html {
   .event-rect {
     @apply fill-RED;
     @apply stroke-4 stroke-BLACK;
+  }
+}
+
+.rotating-value-wrapper {
+  @apply fixed z-50 opacity-0;
+  @apply w-[30vh] h-[30vh] lg:w-[20vw] lg:h-[20vw];
+  @apply top-1/2 left-1/2;
+
+  transform: translate(-50%, -50%);
+
+  &.gazaKilled,
+  &.gazaInjured {
+    .rotating-value {
+      @apply absolute;
+      @apply font-bold text-WHITE;
+      @apply bg-GREEN;
+    }
+  }
+
+  &.westBankKilled,
+  &.westBankInjured {
+    .rotating-value {
+      @apply absolute;
+      @apply font-bold text-WHITE;
+      @apply bg-RED;
+    }
+  }
+
+  .rotating-value {
+    @apply absolute;
+    @apply -translate-x-1/2;
+    @apply text-xs lg:text-base font-bold text-WHITE;
+    @apply px-2 lg:px-4 py-0.5 rounded-lg;
+    @apply max-w-[100px] lg:max-w-screen text-center;
   }
 }

@@ -66,7 +66,7 @@ export const events: DataEvent[] = [
   {
     name: "The British Mandate",
     description:
-      "During the first world war, Great Britain promised the Arabs independence in return for their support in fighting the Ottoman Empire. However, after the war was over, the British and French divided the Middle East between themselves and called these territories mandates. Palestine was one of these mandates.",
+      "During the first world war, Great Britain promised the Arabs independence in return for their support in fighting the Ottoman Empire. However, after the war was over, the British and French divided the Middle East between themselves and called these colonies mandates. Palestine was one of these mandates.",
     date: new Date("1920-07-01"),
     endDate: new Date("1948-05-15"),
     location: "Palestine and Transjordan",

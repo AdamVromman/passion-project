@@ -28,6 +28,8 @@ export interface EyeLineElement {
   rotation: number;
   duration: number;
   size: number;
+  type: string;
+  originalIndex: number;
 }
 
 export enum SelectableDataType {

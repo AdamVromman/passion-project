@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BackgroundText from "./components/BackgroundText";
 import Eye from "./components/Eye";
 import { DailyData, GazaData, WestBankData } from "./services/types";
@@ -16,6 +16,10 @@ export default function Home() {
   const [month, setMonth] = useState<number>();
   const [year, setYear] = useState<number>();
 
+  const [allDataGaza, setAllDataGaza] = useState<GazaData[] | null>(null);
+  const [allDataWestBank, setAllDataWestBank] = useState<WestBankData[] | null>(
+    null
+  );
   const [dailyData, setDailyData] = useState<DailyData | null>(null);
 
   const [dataGaza, setDataGaza] = useState<GazaData | null>(null);
@@ -24,6 +28,7 @@ export default function Home() {
     useState<WestBankData | null>(null);
 
   const [scrolled, setScrolled] = useState(false);
+  const [clicked, setClicked] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [searchedGaza, setSearchedGaza] = useState(false);
@@ -43,64 +48,81 @@ export default function Home() {
   const monthInputRef = useRef<HTMLSelectElement | null>(null);
   const yearInputRef = useRef<HTMLSelectElement | null>(null);
 
-  const getDataGaza = async (date: Date) => {
+  const getAllData = async () => {
     await fetch(
       "https://data.techforpalestine.org/api/v2/casualties_daily.json"
     ).then(async (response) => {
       if (response.ok) {
-        await response.json().then((data: GazaData[]) => {
-          const date1 = data.find((d: GazaData) => {
-            const localDate = new Date(d.report_date);
-            localDate.setHours(0, 0, 0, 0);
-            return localDate.getTime() === date.getTime();
-          });
-
-          if (date1) {
-            setDataGaza(date1);
-          } else {
-            setDataGaza(null);
-          }
-          setSearchedGaza(true);
+        await response.json().then((data) => {
+          setAllDataGaza(data as GazaData[]);
         });
       }
     });
-  };
 
-  const getDataWestBank = async (date: Date) => {
     await fetch(
       "https://data.techforpalestine.org/api/v2/west_bank_daily.json"
     ).then(async (response) => {
       if (response.ok) {
-        await response.json().then((data: WestBankData[]) => {
-          const date1 = data.find((d: WestBankData) => {
-            const localDate = new Date(d.report_date);
-            localDate.setHours(0, 0, 0, 0);
-            return localDate.getTime() === date.getTime();
-          });
-
-          if (date1) {
-            setDataWestBank(date1);
-            if (!date1.verified) {
-              const previousDay = data.find((d: WestBankData) => {
-                const localDate = new Date(d.report_date);
-                localDate.setHours(0, 0, 0, 0);
-                return (
-                  localDate.getTime() === date.getTime() - 24 * 60 * 60 * 1000
-                );
-              });
-
-              if (previousDay) {
-                setDataWestBankPrevious(previousDay);
-              }
-            }
-          } else {
-            setDataWestBank(null);
-          }
-          setSearchedWestBank(true);
+        await response.json().then((data) => {
+          setAllDataWestBank(data as WestBankData[]);
         });
       }
     });
   };
+
+  const getDataGaza = useCallback(
+    (date: Date) => {
+      if (allDataGaza) {
+        const date1 = allDataGaza.find((d: GazaData) => {
+          const localDate = new Date(d.report_date);
+          localDate.setHours(0, 0, 0, 0);
+          return localDate.getTime() === date.getTime();
+        });
+
+        if (date1) {
+          setDataGaza(date1);
+        } else {
+          setDataGaza(null);
+        }
+      }
+
+      setSearchedGaza(true);
+    },
+    [allDataGaza]
+  );
+
+  const getDataWestBank = useCallback(
+    (date: Date) => {
+      if (allDataWestBank) {
+        const date1 = allDataWestBank.find((d: WestBankData) => {
+          const localDate = new Date(d.report_date);
+          localDate.setHours(0, 0, 0, 0);
+          return localDate.getTime() === date.getTime();
+        });
+
+        if (date1) {
+          setDataWestBank(date1);
+          if (!date1.verified) {
+            const previousDay = allDataWestBank.find((d: WestBankData) => {
+              const localDate = new Date(d.report_date);
+              localDate.setHours(0, 0, 0, 0);
+              return (
+                localDate.getTime() === date.getTime() - 24 * 60 * 60 * 1000
+              );
+            });
+
+            if (previousDay) {
+              setDataWestBankPrevious(previousDay);
+            }
+          }
+        } else {
+          setDataWestBank(null);
+        }
+        setSearchedWestBank(true);
+      }
+    },
+    [allDataWestBank]
+  );
 
   const getLastUpdatedDate = async () => {
     let lastDate: Date = new Date("2025-01-28");
@@ -209,31 +231,38 @@ export default function Home() {
     });
   };
 
-  const onResize = () => {
-    updateWidths();
-    setWindowWidth(getWindowWidth());
-  };
-
   useEffect(() => {
-    setWindowWidth(getWindowWidth());
-    addEventListener("resize", onResize);
-    if (window.innerWidth > 1024) {
+    if (windowWidth >= 1024) {
       window.onmousemove = onMouseMove;
     }
+  }, [windowWidth]);
+
+  useEffect(() => {
+    const onResize = () => {
+      updateWidths();
+      setWindowWidth(getWindowWidth());
+      if (windowWidth >= 1024) {
+        window.onmousemove = onMouseMove;
+      }
+    };
+
+    setWindowWidth(getWindowWidth());
+    addEventListener("resize", onResize);
+
+    getAllData();
+
     return () => {
       window.onmousemove = null;
       removeEventListener("resize", onResize);
     };
-  }, []);
+  }, [windowWidth]);
 
-  const hasDate = () =>
-    day !== undefined && month !== undefined && year !== undefined;
+  const hasDate = useCallback(
+    () => day !== undefined && month !== undefined && year !== undefined,
+    [day, month, year]
+  );
 
-  useEffect(() => {
-    if (loaded) getData();
-  }, [loaded]);
-
-  const getData = () => {
+  const getData = useCallback(() => {
     if (hasDate()) {
       const date = new Date(year!, month!, day!);
 
@@ -242,7 +271,11 @@ export default function Home() {
         getDataWestBank(date);
       }
     }
-  };
+  }, [day, getDataGaza, getDataWestBank, hasDate, month, year]);
+
+  useEffect(() => {
+    if (loaded) getData();
+  }, [getData, loaded]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -264,7 +297,7 @@ export default function Home() {
     return () => {
       clearTimeout(timeout);
     };
-  }, [day, month, year]);
+  }, [day, getData, hasDate, month, year]);
 
   useEffect(() => {
     if (
@@ -340,20 +373,6 @@ export default function Home() {
             gsapTimeline?.current?.reverse();
           },
         },
-        onStart: () => {
-          gsap.to("#start-experience", {
-            scale: 0,
-            duration: 0.3,
-            ease: "power4.in",
-            onComplete: () => {
-              window.onmousemove = null;
-            },
-          });
-        },
-        onReverseComplete: () => {
-          //TODO: hide button when already clicked and after scroll
-          if (hasDate()) window.onmousemove = onMouseMove;
-        },
         onComplete: () => {
           setScrolled(true);
         },
@@ -373,6 +392,36 @@ export default function Home() {
         });
     },
     { scope: mainRef, dependencies: [eyeOpen] }
+  );
+
+  useGSAP(
+    () => {
+      if (clicked) {
+        window.onmousemove = null;
+        gsap.to("#click-anywhere", {
+          scale: 0,
+          duration: 0.4,
+          ease: "power4.out",
+        });
+      } else {
+        if (scrolled) {
+          window.onmousemove = null;
+          gsap.to("#click-anywhere", {
+            scale: 0,
+            duration: 0.4,
+            ease: "power4.out",
+          });
+        } else {
+          gsap.to("#click-anywhere", {
+            scale: 1,
+            duration: 0.4,
+            ease: "power4.out",
+          });
+          window.onmousemove = onMouseMove;
+        }
+      }
+    },
+    { scope: mainRef, dependencies: [clicked, scrolled] }
   );
 
   return (
@@ -509,23 +558,23 @@ export default function Home() {
           </div>
         )}
       </div>
-      <button
-        id="start-experience"
+
+      <div
+        id="click-anywhere"
+        className="fixed top-0 left-0 w-screen h-screen cursor-pointer"
         onClick={() => {
-          gsap.to("#start-experience", {
-            scale: 0,
-            duration: 0.3,
-            ease: "power4.in",
-            onComplete: () => {
-              window.onmousemove = null;
-            },
-          });
+          setClicked(true);
           getLastUpdatedDate();
         }}
-        className="fixed top-15 left-1/2 -translate-x-1/2 lg:top-0 lg:left-0 lg:-translate-x-0 lg:scale-0 origin-center z-50 text-WHITE bg-RED px-8 py-4 rounded-full cursor-pointer"
       >
-        <span className="whitespace-nowrap">Click anywhere to start.</span>
-      </button>
+        <button
+          id="start-experience"
+          className="fixed top-15 left-1/2 -translate-x-1/2 lg:top-0 lg:left-0 lg:-translate-x-0 lg:scale-0 origin-center z-50 text-WHITE bg-RED px-8 py-4 rounded-full cursor-pointer pointer-events-none"
+        >
+          <span className="whitespace-nowrap">Click anywhere to start.</span>
+        </button>
+      </div>
+
       <Timeline
         windowWidth={windowWidth}
         scrolled={scrolled}
