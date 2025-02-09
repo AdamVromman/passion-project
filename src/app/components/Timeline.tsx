@@ -775,12 +775,11 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
 
     if (container) {
       const { left, right } = container.getBoundingClientRect();
-
       for (let i = 0; i < timeline.length; i++) {
         const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickLeft = tick.getBoundingClientRect().left;
-          if (tickLeft >= left + getResponsivePadding().left) {
+          if (tickLeft >= left + getResponsivePadding().left / 2) {
             setLeftYear(timeline[i].year);
             break;
           }
@@ -791,7 +790,7 @@ const Timeline = ({ gsapTimeline, scrolled, windowWidth }: Props) => {
         const tick = document?.getElementById(`tick-${timeline[i].year}`);
         if (tick) {
           const tickRight = tick.getBoundingClientRect().right;
-          if (tickRight <= right - getResponsivePadding().right) {
+          if (tickRight <= right - getResponsivePadding().right / 2) {
             setRightYear(timeline[i].year);
             break;
           }
