@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
-import { MorphSVGPlugin } from "@gsap/shockingly/MorphSVGPlugin";
+import { MorphSVGPlugin } from "gsap-trial/MorphSVGPlugin";
 import { useGSAP } from "@gsap/react";
 import { DailyData, EyeLineElement } from "../services/types";
 import {

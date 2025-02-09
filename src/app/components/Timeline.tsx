@@ -19,7 +19,7 @@ import {
   Side,
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
-import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
+import { InertiaPlugin } from "gsap-trial/InertiaPlugin";
 import { dataTypeAndDataToString } from "../services/functions";
 import QuestionMark from "./QuestionMark";
 

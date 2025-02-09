@@ -1,2 +1,2 @@
-declare module "@gsap/shockingly/MorphSVGPlugin";
-declare module "@gsap/shockingly/InertiaPlugin";
+declare module "gsap-trial/MorphSVGPlugin";
+declare module "gsap-trial/InertiaPlugin";
