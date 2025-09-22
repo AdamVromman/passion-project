@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Open your eyes for Palestine",
@@ -15,6 +16,7 @@ export default function RootLayout({
       <body className={`antialiased`}>
         <div className="scroller"></div>
         {children}
+        <Analytics />
       </body>
     </html>
   );
