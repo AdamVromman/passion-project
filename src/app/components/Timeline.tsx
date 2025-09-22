@@ -19,9 +19,9 @@ import {
   Side,
 } from "../services/types";
 import { Draggable } from "gsap/Draggable";
-import { InertiaPlugin } from "@gsap/shockingly/InertiaPlugin";
 import { dataTypeAndDataToString } from "../services/functions";
 import QuestionMark from "./QuestionMark";
+import { InertiaPlugin } from "gsap/InertiaPlugin";
 
 const PADDING = { top: 30, left: 120, right: 120, bottom: 60, rx: 60 };
 const PADDING_MOBILE = { top: 30, left: 30, right: 30, bottom: 20, rx: 20 };
